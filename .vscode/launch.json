@@ -27,6 +27,17 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "Python: experiment_1",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.experiment_1",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Python: run_tests_debug_mode",
             "type": "debugpy",
             "request": "launch",

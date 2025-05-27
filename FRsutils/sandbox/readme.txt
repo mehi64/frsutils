@@ -1,0 +1,1 @@
+This folder contains some code snippets that are used in development time which are not important for the end-user

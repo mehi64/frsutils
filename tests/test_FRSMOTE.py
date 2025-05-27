@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 def test1():
     # Generate imbalanced data
-    X, y = make_classification(n_samples=1000, n_features=10, n_informative=2, # Increased sample size
+    X, y = make_classification(n_samples=200, n_features=10, n_informative=2, # Increased sample size
                                n_redundant=0, n_repeated=0, n_classes=2,
                                n_clusters_per_class=1, weights=[0.95, 0.05], # More imbalance
                                class_sep=0.7, random_state=42)

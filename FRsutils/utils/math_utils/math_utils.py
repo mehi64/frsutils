@@ -1,28 +1,6 @@
 import numpy as np
-from collections import Counter
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_X_y, check_array, check_random_state
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.neighbors import NearestNeighbors
-import warnings
 import heapq
-import time # For timing comparison if needed
 
-
-# --- Helper Functions (Mostly unchanged) ---
-
-def _owa_weights_linear(n):
-    """Generates linear OWA weights (normalized)."""
-    if n <= 0:
-        return np.array([])
-    if n == 1:
-        return np.array([1.0])
-    weights = np.arange(n, 0, -1)
-    denominator = n * (n + 1) / 2.0
-    if denominator == 0 or not np.isfinite(denominator):
-         # Fallback for very large n where calculation might overflow/be zero
-        return np.full(n, 1.0 / n)
-    return weights / denominator
 
 def _weighted_random_choice(items_with_weights, random_state):
     """Selects one item based on weights using roulette wheel."""
