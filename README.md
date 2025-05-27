@@ -148,6 +148,7 @@ These are two ways:
 ## TODO:
 - Add tests for tnorms with non-binary masks
 - Implemene and debug VQRS (Vaguely Quantified Rough Sets)
+- Change the code to get a class to calculate lower and upper approximations + POS regarding a single class of Y.
 
 ## License
 
