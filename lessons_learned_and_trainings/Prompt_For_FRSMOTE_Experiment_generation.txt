@@ -1,0 +1,15 @@
+I have uploaded some python files for you to use them to develope a python code as follows: 
+
+1- The code you will develope, uses all oversampling methods from imbalance-learn library plus some oversampling methods from smote-variant library. I have developed my own oversampling method entitled FRSMOTE. I want you to use FRSMOTE as well. There is a list (in any form) containing the names of these over sampling methods giving us the freedom to add/remove some methods easily.
+
+2- The datasets are loaded from disk with utilities provided in KEEL_CV_Utility.py. Datasets are of type 5-fold CV. 
+
+3- There is a root directory on disk containing several datasets. Each dataset is inside a folder as 5-fold CV datasets. I need a parameter containing the root directory address and a list (in any form) containing the names of datasets. This list must give us the freedom to add/remove some datasets easily.
+
+4- There is a list (in any form) containing the names of some scikit-learn classifiers (SVC, KNN for now) giving us the freedom to add/remove some classification methods easily.
+
+5- I need the results for each fold (both train and test) for each dataset is reported for these measures: AUC, ROC, Gmean, accuracy, TP, TN, FP, FN, precision, recall, f1 measure. Put all inside some data structures so that I can easily write them based on my need on disk. 
+
+6- Please develope the code modular with all docstrings in doxygen style python style and leave comprehensive comments inside code. 
+
+7- If you think there must be something else that I have forgotten, please add it yourself.

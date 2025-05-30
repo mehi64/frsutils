@@ -74,7 +74,7 @@ class BaseSoloFuzzyRoughResampler(ABC, BaseEstimator, TransformerMixin):
             raise ValueError("Length of y must be equal to the first dimension of X.")
 
         ## All checks passed
-        print("Dataset is valid.")
+        # print("Dataset is valid.")
 
 
     def fit(self, X, y):

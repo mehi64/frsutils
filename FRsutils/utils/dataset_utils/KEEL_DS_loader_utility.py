@@ -2,22 +2,31 @@ import pandas as pd
 import numpy as np
 import os
 import re
+import warnings
+from sklearn.preprocessing import LabelEncoder
+from typing import List, Tuple, Dict
 
 
-def parse_keel_file(file_path, one_hot_encode=True, normalize=True):
+
+def parse_keel_file(file_path, one_hot_encode=False, normalize=True):
     """
-    Parses a KEEL dataset file.
+    @brief Parses a KEEL dataset file (.dat) into a structured DataFrame.
+    NOTE: This method expects each keel dataset file has just one class attribute. NOt more than that
 
-    Parameters:
-        file_path (str): Path to the KEEL .dat file.
-        one_hot_encode (bool): If True, perform one-hot encoding on non-decision categorical features.
-        normalize (bool): If True, normalize numerical input features to [0, 1].
+    @param file_path Path to the KEEL .dat file.
+    @param one_hot_encode If True, perform one-hot encoding on categorical input features. (default: True)
+    @param normalize If True, normalize numerical input features to [0, 1]. (default: True)
 
-    Returns:
-        metadata (dict): Dataset metadata.
-        df (pd.DataFrame): Parsed dataset with class feature as the last column.
-        input_features (list): Names of input features.
-        output_features (list): Names of output features.
+    @return
+    Returns a tuple containing:
+        - metadata (dict): Dataset metadata.
+        - df (pd.DataFrame): The parsed dataset with the output feature(s) at the end.
+        - input_features (list[str]): Names of input (non-class) features.
+        - output_features (list[str]): Names of output (class) features.
+
+    @exception ValueError If the file has a missing @data section or has unrecognized attribute definitions.
+    @exception FileNotFoundError If the specified file does not exist.
+    @exception pd.errors.ParserError If the data section cannot be parsed into a DataFrame.
     """
     with open(file_path, 'r') as f:
         lines = f.readlines()
@@ -34,6 +43,7 @@ def parse_keel_file(file_path, one_hot_encode=True, normalize=True):
 
     for idx, line in enumerate(lines):
         if line.lower().startswith('@relation'):
+            # NOTE: relation name might be different than the file name
             relation = line.split()[1]
 
         elif line.lower().startswith('@attribute'):
@@ -146,24 +156,26 @@ def parse_keel_file(file_path, one_hot_encode=True, normalize=True):
     if normalize:
         metadata, df = _normalize_data(metadata, df, input_features)
 
+    df, label_encoders, mappings = _encode_class_columns(df, output_features)
     return metadata, df, input_features, output_features
 
-
+# TODO: NOT TESTED. TEST IT
 def _apply_one_hot_encoding(metadata, df, input_features, output_features):
     """
-    One-hot encodes all non-decision (input) categorical features in the dataset.
+    @brief One-hot encodes all categorical input features and updates metadata.
 
-    Parameters:
-        metadata (dict): Metadata dictionary.
-        df (pd.DataFrame): Dataset.
-        input_features (list): Names of input features.
-        output_features (list): Names of output features.
+    @param metadata Dictionary of dataset metadata.
+    @param df The original DataFrame.
+    @param input_features List of column names for input features.
+    @param output_features List of column names for output features.
 
-    Returns:
-        updated_metadata (dict): Metadata after encoding.
-        new_df (pd.DataFrame): Encoded dataset with class feature as the last column.
-        new_input_features (list): Updated input feature names.
-        output_features (list): Output features (unchanged).
+    @return A tuple containing:
+        - updated_metadata (dict): Metadata updated for new one-hot columns.
+        - new_df (pd.DataFrame): Transformed DataFrame with binary features.
+        - new_input_features (list[str]): Updated input feature names.
+        - output_features (list[str]): Same as input.
+
+    @exception KeyError If a specified input feature is missing in metadata.
     """
     new_df = df.copy()
     updated_metadata = metadata.copy()
@@ -205,23 +217,43 @@ def _apply_one_hot_encoding(metadata, df, input_features, output_features):
 
 def _normalize_data(metadata, df, input_features):
     """
-    Normalize numerical input features to the [0, 1] range and update metadata accordingly.
+    @brief Normalizes all numerical input features to the range [0, 1].
+    NOTE: Output features will not be normalized.
+    NOTE: min and max are gotten from metadata in the KEEL dataset file header; not fromdata itself.
+    NOTE: if min and max calculated from data are different than those in metadata, 
+    an warning will be printed to the console and normalization will be performed 
+    based on the metadata values.
 
-    Parameters:
-        metadata (dict): Metadata dictionary.
-        df (pd.DataFrame): Dataset.
-        input_features (list): Names of input features.
+    @param metadata Dictionary of dataset metadata (modified in-place).
+    @param df DataFrame containing the dataset.
+    @param input_features List of input feature names to normalize.
 
-    Returns:
-        updated_metadata (dict): Metadata with updated range info.
-        normalized_df (pd.DataFrame): Dataset with normalized features.
+    @return A tuple:
+        - updated_metadata (dict): Metadata with updated range values.
+        - normalized_df (pd.DataFrame): DataFrame with normalized features.
+
+    @exception KeyError If a feature is not found in metadata.
+    @exception ValueError If a feature has invalid min/max values for normalization.
     """
     normalized_df = df.copy()
     for feature in input_features:
         attr_info = metadata['attributes'].get(feature)
         if attr_info and attr_info['type'] in ['real', 'integer']:
+            # errors='coerce' option means any value which can’t be parsed as a number (e.g. '?' or other text) 
+            # will be set to NaN instead of raising an error
             col_data = pd.to_numeric(df[feature], errors='coerce')
             min_val, max_val = col_data.min(), col_data.max()
+            
+            # TODO: Think about this warning
+            # if ((min_val != attr_info['min_range']) or (max_val != attr_info['max_range'])):
+            #     warnings.warn(f"calculated min/max values for feature '{feature}' in dataset '{metadata['file_path']}' are different than those in metadata (KEEL dataset file header). Normalized based on the information inside metadata.",
+            #     category=UserWarning,
+            #     stacklevel=2
+            #     )
+                
+            min_val = attr_info['min_range']
+            max_val = attr_info['max_range']
+                
             if pd.notnull(min_val) and pd.notnull(max_val) and max_val > min_val:
                 normalized_df[feature] = (col_data - min_val) / (max_val - min_val)
                 metadata['attributes'][feature]['min_range'] = 0.0
@@ -229,20 +261,45 @@ def _normalize_data(metadata, df, input_features):
                 metadata['attributes'][feature]['range_source'] = 'normalized'
     return metadata, normalized_df
 
+# TODO: NOTE: Not tested. TEST it
+def _encode_class_columns(df: pd.DataFrame, output_features: List[str]) -> Tuple[pd.DataFrame, List[LabelEncoder], Dict[str, Dict[str, int]]]:
+    """
+    @brief Encodes specified class columns in a DataFrame to integers using LabelEncoder.
+
+    @param df: Input DataFrame with string class columns.
+    @param output_features: List of column names to be encoded.
+
+    @return: 
+        - Transformed DataFrame with encoded class labels.
+        - List of fitted LabelEncoders in order of output_features.
+        - Dictionary of mappings {column_name: {original_label: int_value}}
+    """
+    df = df.copy()
+    label_encoders = []
+    mappings = {}
+
+    for col in output_features:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
+        label_encoders.append(le)
+        mappings[col] = {original: int_val for int_val, original in enumerate(le.classes_)}
+
+    return df, label_encoders, mappings
 
 def create_X_y(df: pd.DataFrame, input_features: list[str], output_features: list[str]) -> tuple[np.ndarray, np.ndarray]:
     """
-    Extracts features (X) and target (y) as NumPy arrays from the KEEL dataset DataFrame.
+    @brief Extracts input and output arrays from a KEEL dataset DataFrame.
+    NOTE: This function assumes that there is just one target variable in the dataset.
+    
+    @param df The full parsed DataFrame returned by parse_keel_file().
+    @param input_features List of column names for input features.
+    @param output_features List of column names for output (target) features.
 
-    Args:
-        df (pd.DataFrame): The full dataset returned by parse_keel_file.
-        input_features (list[str]): List of column names used as input features.
-        output_features (list[str]): List of column names used as output targets.
+    @return A tuple:
+        - X (np.ndarray): Numpy array of input features.
+        - y (np.ndarray): Numpy array of target labels.
 
-    Returns:
-        tuple:
-            X (np.ndarray): NumPy array of input features.
-            y (np.ndarray): NumPy array of target values.
+    @exception ValueError If output_features is empty or contains more than one column.
     """
     if not output_features:
         raise ValueError("Output feature list is empty. Cannot extract target variable.")

@@ -4,7 +4,4 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
-} // used for vscode to understand the paths
-// {
-//     "python.analysis.extraPaths": ["${workspaceFolder}/../FRsutils/core"]
-// }
+}

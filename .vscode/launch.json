@@ -27,10 +27,21 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Python: experiment_1",
+            "name": "Python: experiment_1_non_pipeline",
             "type": "debugpy",
             "request": "launch",
-            "module": "experiments.experiment_1",
+            "module": "experiments.experiment_1_non_pipeline",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: experiment_1_pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.experiment_1_pipeline",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -47,6 +58,52 @@
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug all FR models",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/models_tests/test_itfrs.py",
+                     "tests/models_tests/test_vqrs.py",
+                     "tests/models_tests/test_owafrs.py"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug all core methods",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/core_tests/test_tnorms.py",
+                     "tests/core_tests/test_similarities.py",
+                     "tests/core_tests/test_owa_weights.py",
+                     "tests/core_tests/test_implicators.py",
+                     "tests/core_tests/test_fuzzy_quantifiers.py"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug all KEEL_DS Utilities",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/dataset_utils_tests/test_KEEL_DS_loader_Utility.py",
+                     "tests/dataset_utils_tests/test_KEEL_CV_Utility.py"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }

@@ -9,3 +9,5 @@ build/
 dist/
 FRsutils.egg-info/
 ~$ta_calculations.docx
+*.zip
+*.csv
