@@ -1,56 +1,62 @@
-# frutil/models/vqrs.py
 """
 VQRS implementation.
 """
+
+from FRsutils.core.approximations import FuzzyRoughModel_Base
+import FRsutils.core.tnorms as tn
 import numpy as np
+import FRsutils.core.fuzzy_quantifiers as fq
 
-import sys
-import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../models')))
-
-from approximations import FuzzyRoughModel
-import numpy as np
-
-class VQRS(FuzzyRoughModel):
-    def __init__(self, similarity_matrix: np.ndarray, labels: np.ndarray, alpha: float = 0.5, beta: float = 0.5):
+class VQRS(FuzzyRoughModel_Base):
+    def __init__(self, 
+                 similarity_matrix: np.ndarray, 
+                 labels: np.ndarray, 
+                 alpha_lower: float,
+                 beta_lower: float,
+                 alpha_upper: float,
+                 beta_upper: float):
         super().__init__(similarity_matrix, labels)
-        if not (0.0 <= alpha <= 1.0 and 0.0 <= beta <= 1.0):
-            raise ValueError("Alpha and beta must be in range [0.0, 1.0].")
-        self.alpha = alpha
-        self.beta = beta
+        self.alpha_lower = alpha_lower
+        self.beta_lower = beta_lower
+        self.alpha_upper = alpha_upper
+        self.beta_upper = beta_upper
+
+        self.tnorm = tn.MinTNorm()
+
+    def _interim_calculations(self):
+        label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
+        tnorm_vals = self.tnorm(self.similarity_matrix, label_mask)
+
+        # Since for the calculations of lower and upper approximation in VQRS, 
+        # we use a sum operator, to exclude the same instance from calculations we set to 0.0 which
+        # is ignored by sum operator. To be sure all is correct,
+        # inside code, we set main diagonal to 0.0
+        np.fill_diagonal(tnorm_vals, 0.0)
+        # print(tnorm_vals)
+        nominator =  np.sum(tnorm_vals, axis=1)
+
+        # since the similarity of each instance with itself must not be in the calculations,
+        # we can set the main diagonal of the similarity_matrix to 0.0 as well. But instead we reduce 1.0 from the sum
+        denominator =  np.sum(self.similarity_matrix, axis=1) - 1.0
+
+        result = nominator / denominator
+        return result
 
     def lower_approximation(self):
-        raise NotImplementedError
-        return (self.similarity_matrix >= self.alpha).astype(float).min(axis=1)
+        result = self._interim_calculations()
+        result = fq.fuzzy_quantifier_quad(result,
+                                          self.alpha_lower,
+                                          self.beta_lower)
+
+        return result
 
     def upper_approximation(self):
-        raise NotImplementedError
-        return (self.similarity_matrix >= self.beta).astype(float).max(axis=1)
-    def vqrs_upper_approximation(universe, fuzzy_set, partition, alpha=0.3, beta=0.7):
-        pass
-    # """
-    #     Compute vaguely quantified rough set upper approximation.
+        result = self._interim_calculations()
+        result = fq.fuzzy_quantifier_quad(result,
+                                          self.alpha_upper,
+                                          self.beta_upper)
 
-    #     Parameters:
-    #     - universe: list of elements
-    #     - fuzzy_set: dict or array, fuzzy membership for each element in universe
-    #     - partition: list of lists or sets, representing granules/blocks
-    #     - alpha, beta: quantifier parameters
+        return result
 
-    #     Returns:
-    #     - List of degrees (one per block in partition)
-    #     """
-    #     Q = lambda p: fuzzy_quantifier_quad(np.array([p]), alpha, beta)[0]
-    #     degrees = []
-
-    #     for block in partition:
-    #         block_indices = [universe.index(e) for e in block]
-    #         block_membership_sum = sum(fuzzy_set[i] for i in block_indices)
-    #         block_size = len(block)
-    #         proportion = block_membership_sum / block_size
-    #         degree = Q(proportion)
-    #         degrees.append(degree)
-
-    #     return degrees
+        

@@ -8,5 +8,15 @@ a = np.array([
     [[0.90, 0.04, 0.01],	[0.80, 0.50, 0.46],	[0.27, 0.10, 0.19],	[0.09, 0.20, 0.26],	[0.0, 0.0,0.0]]
 ])
 
-b = 1.0 -a
-print(b)
+# b = 1.0 -a
+# print(b)
+##################################################
+import FRsutils.core.owa_weights as oww
+
+w_inf = oww._owa_suprimum_weights_linear(8)
+print(w_inf)
+w_inf = oww._owa_suprimum_weights_linear(13)
+print(w_inf)
+
+import FRsutils.core.models.vqrs as VQRS_
+

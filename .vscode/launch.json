@@ -5,6 +5,39 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: snippets",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tests.snippets",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: plot_smote",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.utils.plot_SMOTE",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: experiment_1",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.experiment_1",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Python: run_tests_debug_mode",
             "type": "debugpy",
             "request": "launch",
@@ -12,8 +45,8 @@
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
-            ,"cwd": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

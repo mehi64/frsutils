@@ -185,6 +185,33 @@ class syntetic_dataset_factory:
                     }
         return data_dict
     
+    def VQRS_testing_dataset(self):
+        
+        y = np.array([1, 1, 0, 1, 0])
+
+        sim_matrix = np.array([
+            [1.00, 0.54, 0.37, 0.19, 0.10],
+            [0.54, 1.00, 0.35, 0.29, 0.20],
+            [0.37, 0.35, 1.00, 0.55, 0.73],
+            [0.19, 0.29, 0.55, 1.00, 0.74],
+            [0.10, 0.20, 0.73, 0.74, 1.00]
+        ])
+
+        upper_bound = np.array([0.521049496528125,	0.50362976378912,	0.085078125,	0.015835966374605,	0.141019503319767628125])
+        lower_bound = np.array([1.0,	1.0,	0.5582,	0.2344383779189888,	0.718538097101394872])
+
+        data_dict = {"y" : y,
+                     "sim_matrix" : sim_matrix,
+                     "upper_bound" : upper_bound,
+                     "lower_bound" : lower_bound,
+                     "alpha_lower" : 0.1,
+                     "beta_lower"  :0.6,
+                     "alpha_upper" :0.2,
+                     "beta_upper"  :1.0,
+                     "fuzzy_quantifier": 'quadratic'
+                    }
+        return data_dict
+
     def ITFRS_testing_dataset(self):
         
         y = np.array([1, 1, 0, 1, 0])
@@ -216,4 +243,54 @@ class syntetic_dataset_factory:
                      "prod_tn_upperBound" : prod_tn_upperBound,
                      "min_tn_upperBound" : min_tn_upperBound
                     }
+        return data_dict
+    
+    def OWAFRS_testing_dataset(self):
+        
+        y = np.array([1, 1, 0, 1, 0])
+
+        sim_matrix = np.array([
+            [1.00, 0.54, 0.37, 0.19, 0.10],
+            [0.54, 1.00, 0.35, 0.29, 0.20],
+            [0.37, 0.35, 1.00, 0.55, 0.73],
+            [0.19, 0.29, 0.55, 1.00, 0.74],
+            [0.10, 0.20, 0.73, 0.74, 1.00]
+        ])
+
+        owa_linear_Reichenbach_lowerBound = np.array([0.822 , 0.8, 0.599, 0.539, 0.624])
+        owa_linear_KD_lowerBound = np.array([0.822 , 0.8, 0.599, 0.539, 0.624])
+        Luk_lowerBound = np.array([0.63, 0.65, 0.45, 0.26, 0.26])
+        Goedel_lowerBound = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        Gaines_lowerBound = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+
+        prod_tn_upperBound = np.array([0.54, 0.54, 0.73, 0.29, 0.73])
+        min_tn_upperBound = np.array([0.54, 0.54, 0.73, 0.29, 0.73])
+
+        data_dict = {"y" : y,
+                     "sim_matrix" : sim_matrix,
+                     "Reichenbach_lowerBound" : Reichenbach_lowerBound,
+                     "KD_lowerBound" : KD_lowerBound,
+                     "Luk_lowerBound" : Luk_lowerBound,
+                     "Goedel_lowerBound" : Goedel_lowerBound,
+                     "Gaines_lowerBound" : Gaines_lowerBound,
+                     "prod_tn_upperBound" : prod_tn_upperBound,
+                     "min_tn_upperBound" : min_tn_upperBound
+                    }
+        return data_dict
+
+    def owa_weights_linear_testing_data(self):
+        """
+        owa weights
+        """
+        owa_infimum_weights_linear_len_5 = np.array([0.06666667, 0.13333333, 0.2, 0.26666667, 0.33333333])
+        owa_infimum_weights_linear_len_10 = np.array([0.01818182, 0.03636364, 0.05454545, 0.07272727, 0.09090909, 0.10909091, 0.12727273, 0.14545455, 0.16363636, 0.18181818])
+        
+        owa_suprimum_weights_linear_len_8 = np.array([0.22222222, 0.19444444, 0.16666667, 0.13888889, 0.11111111, 0.08333333, 0.05555556, 0.02777778])
+        owa_supriimum_weights_linear_len_13 = np.array([0.14285714, 0.13186813, 0.12087912, 0.10989011, 0.0989011,  0.08791209, 0.07692308, 0.06593407, 0.05494505, 0.04395604, 0.03296703, 0.02197802, 0.01098901])
+        
+
+        data_dict = {"owa_infimum_weights_linear_len_5" : owa_infimum_weights_linear_len_5,
+                     "owa_infimum_weights_linear_len_10" : owa_infimum_weights_linear_len_10,
+                     "owa_suprimum_weights_linear_len_8":owa_suprimum_weights_linear_len_8,
+                     "owa_suprimum_weights_linear_len_13":owa_supriimum_weights_linear_len_13}
         return data_dict

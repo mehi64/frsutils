@@ -37,13 +37,25 @@ A basic Python library needed for fuzzy rough set calculations e.g.:
 - ITFRS (Implicator/T-norm Fuzzy-Rough Sets)
 - OWAFRS (Ordered Weighted Average Fuzzy-Rough Sets) 
 
+## Fuzzy-rough oversampling
+### FRSMOTE
+- Compatible with scikit learn and its pipeline
 ## Notes
+## Notes (considerations on using FRsutils)
 - All functions expect to get normalized scalar of normalized numpy arrays.
 - Make sure the input dataset is normalized. This library expects all inputs to all functions are in range [0,1]
 - This library will use all features of data instances to calculate the fuzzzy-rough measures.
-
+- All datasets have 2 classes.
+- Positive region, lower approximation, upper approximation,etc are calculated based on the class of each instance. Therefore, maximum calculations in POS is ignored and POS is equal to lower approximation value.
 
 ## Some technical information to remember
+### In VQRS
+#### lower and upper approximations for each instance: 
+<img src="images/VQRS/lb_ub.PNG" alt="lower & upper approximation" width="350"/>
+
+#### we use quadratic fyzzy quantifier:
+<img src="images/VQRS/quadratic_fuzzy_quantifier.PNG" alt="quadratic_fuzzy_quantifier" width="350"/>
+
 ### In ITFRS
 #### lower approximation for each instance: 
 <img src="images/ITFRS/lower.JPG" alt="lower aaproximation" width="250"/>
@@ -140,6 +152,7 @@ These are two ways:
 ## TODO:
 - Add tests for tnorms with non-binary masks
 - Implemene and debug VQRS (Vaguely Quantified Rough Sets)
+- Change the code to get a class to calculate lower and upper approximations + POS regarding a single class of Y.
 
 ## License
 

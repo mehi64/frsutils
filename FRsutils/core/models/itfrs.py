@@ -2,20 +2,17 @@
 """
 ITFRS implementation.
 """
-import sys
-import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-
-from approximations import FuzzyRoughModel
-import tnorms
-import implicators
+from FRsutils.core.approximations import FuzzyRoughModel_Base
+import FRsutils.core.tnorms as tn
 import numpy as np
-import similarities
 
-class ITFRS(FuzzyRoughModel):
-    def __init__(self, similarity_matrix: np.ndarray, labels: np.ndarray, tnorm: tnorms.TNorm, implicator):
+class ITFRS(FuzzyRoughModel_Base):
+    def __init__(self, 
+                 similarity_matrix: np.ndarray, 
+                 labels: np.ndarray, 
+                 tnorm: tn.TNorm, 
+                 implicator):
         super().__init__(similarity_matrix, labels)
         self.tnorm = tnorm
         self.implicator = np.vectorize(implicator)

@@ -48,10 +48,19 @@ ti.test_itfrs_approximations_Gaines_imp_product_tnorm()
 
 ##################################################################
 # owafrs
-# import test_owafrs as to
-# to.test_owafrs_approximations_reichenbach_imp_product_tnorm()
+import tests.test_owafrs as to
+to.test_owafrs_approximations_reichenbach_imp_product_tnorm()
 
 
+##################################################################
+# vqrs
+import tests.test_vqrs as tv
+# tv.test_vqrs_lower_upper_approximations_quadratic_fuzzyquantifier()
+
+##################################################################
+# FRSMOTE
+import tests.test_FRSMOTE as tfrsmote
+tfrsmote.test1()
 
 
 

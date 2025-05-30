@@ -2,19 +2,17 @@
 """
 OWAFRS implementation.
 """
-import sys
-import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-import owa_weights as owa_weights
-from approximations import FuzzyRoughModel
+import FRsutils.core.tnorms as tn
+import FRsutils.core.owa_weights as owa_weights
+from FRsutils.core.approximations import FuzzyRoughModel_Base
 import numpy as np
 
-class OWAFRS(FuzzyRoughModel):
-    def __init__(self, similarity_matrix: np.ndarray,
+class OWAFRS(FuzzyRoughModel_Base):
+    def __init__(self, 
+                 similarity_matrix: np.ndarray,
                  labels: np.ndarray,
-                 tnorm,
+                 tnorm: tn.TNorm,
                  implicator,
                  lower_app_weights_method : str,
                  upper_app_weights_method : str):
@@ -37,13 +35,13 @@ class OWAFRS(FuzzyRoughModel):
         # We generate one less element regarding weights, because in calculations of
         # OWA, the same instance will be excluded from calculations. Therefore, 
         # lower and upper approximations have slightly higher values which are 
-        # more realistic
+        # more realistic. 
+        # TODO: check this to be sure the higher values are more realistic 
         if(upper_app_weights_method == 'sup_weights_linear'):
             self.upper_approximation_weights = owa_weights._owa_suprimum_weights_linear(n - 1)
         if(lower_app_weights_method == 'inf_weights_linear'):
             self.lower_approximation_weights = owa_weights._owa_infimum_weights_linear(n - 1)
-
-        
+     
 
     def lower_approximation(self):
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
@@ -56,8 +54,12 @@ class OWAFRS(FuzzyRoughModel):
         # is ignored by the product operator.
 
         np.fill_diagonal(implication_vals, 0.0)
+        # sort row-wise, (left contains the minumum value)
         sorted_matrix = np.sort(implication_vals, axis=1)
+        # change the sort order, (left contains the max value)
         sorted_matrix = sorted_matrix[:, ::-1]
+        # since the right column contains 0 all the time (because we set 
+        # the main diagonal to zero and then sorted that), we remove the right column
         sorted_matrix = sorted_matrix[:, :-1]
 
         result = np.matmul(sorted_matrix, self.lower_approximation_weights)
@@ -65,7 +67,7 @@ class OWAFRS(FuzzyRoughModel):
 
     def upper_approximation(self):
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
-        implication_vals = self.implicator(self.similarity_matrix, label_mask)
+        tnorm_vals = self.tnorm(self.similarity_matrix, label_mask)
         
         # Since for the calculations of upper approximation, 
         # we use OWA operator which is a essentailly a product, 
@@ -73,8 +75,8 @@ class OWAFRS(FuzzyRoughModel):
         # the diagonal to 0.0 which
         # is ignored by the product operator.
 
-        np.fill_diagonal(implication_vals, 0.0)
-        sorted_matrix = np.sort(implication_vals, axis=1)
+        np.fill_diagonal(tnorm_vals, 0.0)
+        sorted_matrix = np.sort(tnorm_vals, axis=1)
         sorted_matrix = sorted_matrix[:, ::-1]
         sorted_matrix = sorted_matrix[:, :-1]
 
