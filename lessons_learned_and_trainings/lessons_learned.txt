@@ -32,5 +32,12 @@ unit testing
 - for testing those conditionss throwing exception the best practice is to use "pytest.raises" function
 - It is great if you run pytest in debug mode. But we did not do that yet
 
+--------------------------------------------------------------------------------------------------------
+
+log reading:
+
+use glogg. it has windows and linux installers
+-----------------------------------------------------------------------------------
+we must check correctness of values where something is created, not initialized. Because we use lazy builders.
 
 

@@ -6,6 +6,7 @@ Provides an extensible and optimized framework to compute T-norms
 import numpy as np
 from abc import ABC, abstractmethod
 
+
 class TNorm(ABC):
     """
     Abstract base class for all T-norms.

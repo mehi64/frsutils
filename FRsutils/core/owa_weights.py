@@ -1,6 +1,6 @@
 import numpy as np
 
-def _owa_suprimum_weights_linear(n: int):
+def owa_suprimum_weights_linear(n: int):
     """Generates linear OWA weights (normalized):
     n: length of the weights array
     used for suprimum operator smoothing
@@ -24,7 +24,7 @@ def _owa_suprimum_weights_linear(n: int):
     assert np.isclose(sum_vals, 1.0)
     return val
 
-def _owa_infimum_weights_linear(n: int):
+def owa_infimum_weights_linear(n: int):
     """Generates OWA weights for infimum operators:
     n: length of the weights array
     used for infimum operator smoothing

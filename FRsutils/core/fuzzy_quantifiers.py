@@ -1,6 +1,6 @@
 import numpy as np
 
-def fuzzy_quantifier1(p, alpha, beta, increasing=True):
+def fuzzy_quantifier_linear(p, alpha, beta):
     """
     Compute the degree of membership to a fuzzy quantifier.
 
@@ -11,28 +11,23 @@ def fuzzy_quantifier1(p, alpha, beta, increasing=True):
         Lower threshold (start of transition).
     - beta : float
         Upper threshold (full membership).
-    - increasing : bool
-        True for quantifiers like "most", False for "few".
 
     Returns:
     - float or np.array
         Degree(s) of truth for the fuzzy quantifier.
     """
+    # raise ValueError("This function is not implemented yet.")
     p = np.asarray(p)
 
-    if increasing:
-        # For quantifiers like "most"
-        return np.where(p <= alpha, 0,
-               np.where(p >= beta, 1,
-                        (p - alpha) / (beta - alpha)))
-    else:
-        # For quantifiers like "few"
-        return np.where(p <= alpha, 1,
-               np.where(p >= beta, 0,
-                        (beta - p) / (beta - alpha)))
+
+    # For quantifiers like "most"
+    return np.where(p <= alpha, 0,
+            np.where(p >= beta, 1,
+                    (p - alpha) / (beta - alpha)))
 
 
-def fuzzy_quantifier_quad(x, alpha, beta):
+
+def fuzzy_quantifier_quadratic(x, alpha, beta):
     """
     Smooth parameterized fuzzy quantifier using quadratic transition.
 

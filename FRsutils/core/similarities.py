@@ -10,7 +10,8 @@ with pluggable similarity functions (using inheritance)
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Callable
-
+# from pydantic import BaseModel, Field
+from typing import Literal, Optional
 
 # ------------------------------------------------------------------------------
 # Similarity Function Base & Implementations

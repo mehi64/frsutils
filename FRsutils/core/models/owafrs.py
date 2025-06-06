@@ -5,10 +5,10 @@ OWAFRS implementation.
 
 import FRsutils.core.tnorms as tn
 import FRsutils.core.owa_weights as owa_weights
-from FRsutils.core.approximations import FuzzyRoughModel_Base
+from FRsutils.core.approximations import BaseFuzzyRoughModel
 import numpy as np
 
-class OWAFRS(FuzzyRoughModel_Base):
+class OWAFRS(BaseFuzzyRoughModel):
     def __init__(self, 
                  similarity_matrix: np.ndarray,
                  labels: np.ndarray,
@@ -38,9 +38,9 @@ class OWAFRS(FuzzyRoughModel_Base):
         # more realistic. 
         # TODO: check this to be sure the higher values are more realistic 
         if(upper_app_weights_method == 'sup_weights_linear'):
-            self.upper_approximation_weights = owa_weights._owa_suprimum_weights_linear(n - 1)
+            self.upper_approximation_weights = owa_weights.owa_suprimum_weights_linear(n - 1)
         if(lower_app_weights_method == 'inf_weights_linear'):
-            self.lower_approximation_weights = owa_weights._owa_infimum_weights_linear(n - 1)
+            self.lower_approximation_weights = owa_weights.owa_infimum_weights_linear(n - 1)
      
 
     def lower_approximation(self):

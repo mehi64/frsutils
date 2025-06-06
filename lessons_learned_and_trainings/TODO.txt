@@ -1,0 +1,7 @@
+- check TODO s inside code
+- unit tests for all
+- change parameters' correctness checks to where something is getting built
+- all classes start with _ (private) and use a factory to be created ???????
+- Think about creation and tests together (params checks at build time)
+- __all__ decide about all parts of the project
+- use logger

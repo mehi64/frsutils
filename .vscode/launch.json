@@ -16,10 +16,43 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Python: plot_smote",
+            "name": "Python: gridsearch FRSMOTE",
             "type": "debugpy",
             "request": "launch",
-            "module": "FRsutils.utils.plot_SMOTE",
+            "module": "FRsutils.sandbox.grid_search_FRSMOTE",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: logger test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tests.utils_tests.logger_tests.logger_test",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: test imbalanced learn with FRSMOTE",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.test_imblearn_pipeline",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: All plots",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.plots.plot_fuzzy_quantifiers.py",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -60,7 +93,7 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Debug all FR models",
+            "name": "Dbg FR models",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
@@ -75,7 +108,20 @@
             }
         },
         {
-            "name": "Debug all core methods",
+            "name": "Dbg builder models",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/utils_tests/constructor_utils_tests/test_tnorm_builders.py", "tests/utils_tests/constructor_utils_tests/test_similarity_builder.py"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Dbg core methods",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
@@ -92,12 +138,25 @@
             }
         },
         {
-            "name": "Debug all KEEL_DS Utilities",
+            "name": "Dbg KEEL_DS Utilities",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
             "args": ["tests/dataset_utils_tests/test_KEEL_DS_loader_Utility.py",
                      "tests/dataset_utils_tests/test_KEEL_CV_Utility.py"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Tst Dbg validation Utils",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/utils_tests/validation_utils_tests/test_validation_utils.py"],
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",

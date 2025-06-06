@@ -2,13 +2,13 @@
 VQRS implementation.
 """
 
-from FRsutils.core.approximations import FuzzyRoughModel_Base
+from FRsutils.core.approximations import BaseFuzzyRoughModel
 import FRsutils.core.tnorms as tn
 import numpy as np
 import FRsutils.core.fuzzy_quantifiers as fq
 
 
-class VQRS(FuzzyRoughModel_Base):
+class VQRS(BaseFuzzyRoughModel):
     def __init__(self, 
                  similarity_matrix: np.ndarray, 
                  labels: np.ndarray, 
@@ -17,6 +17,10 @@ class VQRS(FuzzyRoughModel_Base):
                  alpha_upper: float,
                  beta_upper: float):
         super().__init__(similarity_matrix, labels)
+        
+        if(alpha_lower > beta_lower) or (alpha_upper > beta_upper):
+            raise ValueError("alpha_lower and beta_lower should be smaller than alpha_upper and beta_upper")
+        
         self.alpha_lower = alpha_lower
         self.beta_lower = beta_lower
         self.alpha_upper = alpha_upper
@@ -45,7 +49,7 @@ class VQRS(FuzzyRoughModel_Base):
 
     def lower_approximation(self):
         result = self._interim_calculations()
-        result = fq.fuzzy_quantifier_quad(result,
+        result = fq.fuzzy_quantifier_quadratic(result,
                                           self.alpha_lower,
                                           self.beta_lower)
 
@@ -53,7 +57,7 @@ class VQRS(FuzzyRoughModel_Base):
 
     def upper_approximation(self):
         result = self._interim_calculations()
-        result = fq.fuzzy_quantifier_quad(result,
+        result = fq.fuzzy_quantifier_quadratic(result,
                                           self.alpha_upper,
                                           self.beta_upper)
 

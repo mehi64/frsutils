@@ -2,6 +2,7 @@
 import FRsutils.core.tnorms as tn
 import tests.syntetic_data_for_tests as sds
 import numpy as np
+import sys
 
 def test_tn_minimum_scalar_values():
     data_dict = sds.syntetic_dataset_factory().tnorm_scalar_testing_data()
@@ -17,6 +18,11 @@ def test_tn_minimum_scalar_values():
     
     closeness = np.isclose(result, expected)
     assert np.all(closeness), "outputs are not the expected values"
+
+    # if "pytest" in sys.modules:
+    #     aa = sys.modules["pytest"]
+    if hasattr(sys, 'gettrace') and sys.gettrace():
+        assert False
 
 def test_tn_product_scalar_values():
     data_dict = sds.syntetic_dataset_factory().tnorm_scalar_testing_data()

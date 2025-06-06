@@ -38,21 +38,26 @@ def test1():
     # --- FRSMOTE Example ---
     print("\nApplying FRSMOTE (Optimized)...")
 
-    imp_ = imp.imp_kleene_dienes
-    tnorm_ = tn.MinTNorm()
-    sim_func_ = sim_util.GaussianSimilarity(sigma=0.2)
-    sim_matrix_ = sim_util.calculate_similarity_matrix(X_norm,
-                                                    similarity_func=sim_func_,
-                                                    tnorm=tnorm_)
-    fr_model = ITFRS(similarity_matrix=sim_matrix_,
-                    labels=y,
-                    tnorm=tnorm_,
-                    implicator=imp_)
+#     imp_ = imp.imp_kleene_dienes
+#     tnorm_ = tn.MinTNorm()
+#     sim_func_ = sim_util.GaussianSimilarity(sigma=0.2)
+#     sim_matrix_ = sim_util.calculate_similarity_matrix(X_norm,
+#                                                     similarity_func=sim_func_,
+#                                                     tnorm=tnorm_)
+#     fr_model = ITFRS(similarity_matrix=sim_matrix_,
+#                     labels=y,
+#                     tnorm=tnorm_,
+#                     implicator=imp_)
 
-    frsmote = FRSMOTE_util.FRSMOTE( fr_model=fr_model,
-                                    k_neighbors=5,
+    ITFR_params = {'lb_tnorm' : 'minimum',
+                   'ub_implicator' : 'reichenbach'}
+    frsmote = FRSMOTE_util.FRSMOTE( k_neighbors=5,
                                     bias_interpolation=False,
-                                    random_state=42)
+                                    random_state=42,
+                                    lb_tnorm='minimum',
+                                    ub_implicator='reichenbach')
+    
+    pp = frsmote.set_params()
     X_res_smote, y_res_smote = frsmote.fit_resample(X_norm, y)
     # t_smote_end = time.time()
     print("Resampled dataset shape (FRSMOTE) %s" % Counter(y_res_smote))
