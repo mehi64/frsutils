@@ -1,42 +1,65 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import FRsutils.core.implicators as impl
 
-import sys
-import os
+# --- Configuration ---
+n = 200  # Grid resolution
+# implicator_type = "goguen"
+implicator_type = "luk"
+# implicator_type = "goedel"
+# implicator_type = "kd"
+# implicator_type = "reichenbach"
+# implicator_type = "rescher"
+# implicator_type = "yager"
+# implicator_type = "weber"
+# implicator_type = "fodor"
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../core')))
+# --- Create grid over [0,1] × [0,1] ---
+a_vals = np.linspace(0, 1, n)
+b_vals = np.linspace(0, 1, n)
+A_vals, B_vals = np.meshgrid(a_vals, b_vals)
 
-import implicators as imp
+# --- Create implicator object ---
+implicator = impl.Implicator.create(implicator_type)
+print("Using Implicator:", implicator.name)
 
-# Create a grid of values
-n = 200  # Replace with your desired length (must be even)
-arr = np.concatenate([np.zeros(n // 2), np.ones(n // 2)])
+# --- Compute implication values I(a, b) ---
+I_vals = implicator(A_vals, B_vals)
 
-similarity_vals = np.linspace(0, 1, n)
-b_vals = arr
-AVals, simVals = np.meshgrid(similarity_vals, b_vals)
+# --- Prepare figure with 3D and 2D views ---
+fig = plt.figure(figsize=(14, 6))
 
-# Vectorized computation of the implicator
-ImpVals = np.vectorize(imp.imp_lukasiewicz)(AVals, simVals)
+# --- 3D Surface Scatter Plot ---
+ax3d = fig.add_subplot(1, 2, 1, projection='3d')
+colors = I_vals.ravel()
+scatter = ax3d.scatter(A_vals.ravel(), B_vals.ravel(), I_vals.ravel(),
+                       c=colors, cmap='plasma', marker='.')
 
-# Plotting
-fig = plt.figure(figsize=(10, 7))
-ax = fig.add_subplot(111, projection='3d')
+# Title and labels
+params = implicator.describe_params_detailed()
+param_str = " ".join(f"{k}={v['value']}" for k, v in params.items())
+title = f"{implicator.name} ({param_str})" if param_str else implicator.name
+ax3d.set_title("3D Scatter: " + title)
+ax3d.set_xlabel("a (antecedent)")
+ax3d.set_ylabel("b (consequent)")
+ax3d.set_zlabel("I(a, b)")
+ax3d.set_zlim(0, 1)
 
-# Plot surface with colormap
-# surf = ax.plot_surface(A, B, Z, cmap='hot', edgecolor='none')
-# Plot the points
-ax.scatter(AVals, simVals, ImpVals, c='red', marker='.')
+# Colorbar for 3D
+mappable = plt.cm.ScalarMappable(cmap='plasma')
+mappable.set_array(colors)
+fig.colorbar(mappable, ax=ax3d, shrink=0.6, aspect=10, label="Implicator Output")
 
-# Add color bar
-# fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
+# --- 2D Contour Plot ---
+ax2d = fig.add_subplot(1, 2, 2)
+contour = ax2d.contourf(A_vals, B_vals, I_vals, levels=50, cmap='plasma')
+ax2d.set_title("2D Contour: " + title)
+ax2d.set_xlabel("a (antecedent)")
+ax2d.set_ylabel("b (consequent)")
 
-# Labels and title
-ax.set_title("Luk Implicator")
-ax.set_ylabel("A(y)")
-ax.set_xlabel("similarity (x,y)")
-ax.set_zlabel("I(similarity (x,y), A(y))")
+# Colorbar for 2D
+fig.colorbar(contour, ax=ax2d, shrink=0.9, aspect=10, label="Implicator Output")
 
 plt.tight_layout()
 plt.show()

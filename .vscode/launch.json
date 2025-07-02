@@ -5,10 +5,164 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: snippets",
+            "name": "SNDBX use lazyConstructibleMixin",
             "type": "debugpy",
             "request": "launch",
-            "module": "tests.snippets",
+            "module": "FRsutils.sandbox.use_lazy_constructible_mixin",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use CUPY",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_cupy",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX gridsearch FRSMOTE",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.grid_search_snippets.grid_search_FRSMOTE",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX dreate data splits for gridsearch FRSMOTE",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.grid_search_snippets.create_data_folds_for_gridsearch",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX validate FRSMOTE gridsearch results",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.grid_search_snippets.experiment_1_frsmote_gridsearch_validation",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use Implicators",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_implicators",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use quantifiers",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_quantifiers",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use owa",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_owa",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use tnorms",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_tnorms",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use similarities",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_similarities",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use itfrs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_itfrs",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use owafrs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_owafrs",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use frsmote",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_frsmote",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "SNDBX use vqrs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_vqrs",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: sandbox test similarity factory",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.test_similarity",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -16,10 +170,10 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Python: gridsearch FRSMOTE",
+            "name": "Python: sandbox test Implicator factory",
             "type": "debugpy",
             "request": "launch",
-            "module": "FRsutils.sandbox.grid_search_FRSMOTE",
+            "module": "FRsutils.sandbox.test_implicators",
             "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -52,8 +206,10 @@
             "name": "Python: All plots",
             "type": "debugpy",
             "request": "launch",
-            "module": "FRsutils.sandbox.plots.plot_fuzzy_quantifiers.py",
-            "justMyCode": true,
+            // "module": "FRsutils.sandbox.plots.plot_tnorms",
+            // "module": "FRsutils.sandbox.plots.plot_implicators",
+            "module": "FRsutils.sandbox.plots.plot_fuzzy_quantifiers",
+            "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
@@ -121,15 +277,17 @@
             }
         },
         {
-            "name": "Dbg core methods",
+            "name": "Tst core methods",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
-            "args": ["tests/core_tests/test_tnorms.py",
-                     "tests/core_tests/test_similarities.py",
+            "args": [
+                    // "tests/core_tests/test_tnorms.py",
+                    //  "tests/core_tests/test_similarities.py",
                      "tests/core_tests/test_owa_weights.py",
-                     "tests/core_tests/test_implicators.py",
-                     "tests/core_tests/test_fuzzy_quantifiers.py"],
+                    //  "tests/core_tests/test_implicators.py",
+                    //  "tests/core_tests/test_fuzzy_quantifiers.py"
+                    ],
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
@@ -152,17 +310,80 @@
             }
         },
         {
-            "name": "Tst Dbg validation Utils",
+            "name": "Tst tnorms",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
-            "args": ["tests/utils_tests/validation_utils_tests/test_validation_utils.py"],
+            "args": ["tests/core_tests/test_tnorms.py"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Tst owa weights",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/core_tests/test_owa_weights.py"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Tst Dbg tnorm core functionality",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/core_tests/test_tnorms_core_functionality.py"],
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
             "env": {
               "PYTHONPATH": "${workspaceFolder}"
             }
+        },
+        {
+            "name": "Tst itfrs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/models_tests/test_itfrs.py"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Tst vqrs",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/models_tests/test_vqrs.py"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: generate data",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "tests.generate_data_matrix_based_on_scalar_values",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

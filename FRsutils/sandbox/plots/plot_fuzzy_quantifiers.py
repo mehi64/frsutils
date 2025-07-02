@@ -1,16 +1,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from FRsutils.core.fuzzy_quantifiers import fuzzy_quantifier_linear, fuzzy_quantifier_quadratic
+from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier as fq
 
 # Define parameters
 alpha = 0.2
-beta = 0.7
+beta = 0.8
+
+linear_q1 = fq.create("linear", alpha=alpha, beta=beta)
+quad_q1 = fq.create("quadratic", alpha=alpha, beta=beta) 
 
 # Input values from 0 to 1
 x_vals = np.linspace(0, 1, 200)
-y_vals_quadratic = fuzzy_quantifier_quadratic(x_vals, alpha, beta)
-y_vals_linear = fuzzy_quantifier_linear(x_vals, alpha, beta)
+
+y_vals_quadratic = quad_q1(x_vals)
+
+y_vals_linear = linear_q1(x_vals)
 
 # # Plot
 # plt.plot(x_vals, y_vals_linear, label=f'Q({alpha}, {beta})(x)', color='blue')

@@ -1,94 +1,94 @@
 import numpy as np
-
-import tests.syntetic_data_for_tests as sds
-
-
-import FRsutils.core.similarities as sim
-import FRsutils.core.tnorms as tn
-
-
-def test_compute_similarity_matrix_with_linear_similarity_product_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_linear_similarity_product_tnorm"]
-
-    tnrm = tn.ProductTNorm()
-    sim_f = sim.LinearSimilarity()
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected)
-    assert np.all(closeness), "outputs are not the expected values"
+import pytest
+from FRsutils.core.similarities import Similarity, calculate_similarity_matrix, build_similarity_matrix
+from FRsutils.core.tnorms import TNorm
+from tests import synthetic_data_store as ds
+from FRsutils.utils.logger.logger_util import get_logger
 
 
-def test_compute_similarity_matrix_with_linear_similarity_minimum_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_linear_similarity_minimum_tnorm"]
-
-    tnrm = tn.MinTNorm()
-    sim_f = sim.LinearSimilarity()
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected)
-    assert np.all(closeness), "outputs are not the expected values"
-
-def test_compute_similarity_matrix_with_linear_similarity_luk_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_linear_similarity_luk_tnorm"]
-
-    tnrm = tn.LukasiewiczTNorm()
-    sim_f = sim.LinearSimilarity()
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected)
-    assert np.all(closeness), "outputs are not the expected values"
-
-def test_compute_similarity_matrix_with_Gaussian_similarity_product_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_Gaussian_similarity_product_tnorm"]
-
-    tnrm = tn.ProductTNorm()
-    sim_f = sim.GaussianSimilarity(sigma=0.67)
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected, rtol=0, atol=1e-4)
-    assert np.all(closeness), "outputs are not the expected values"
+logger = get_logger(env="test",
+                    experiment_name="test_similarities1")
+similarity_testsets = ds.get_similarity_testing_testsets()
+registered_similarities = Similarity.list_available()
 
 
-def test_compute_similarity_matrix_with_Gaussian_similarity_minimum_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_Gaussian_similarity_minimum_tnorm"]
+@pytest.mark.parametrize("testset", similarity_testsets)
+def test_calculate_similarity_matrix(testset):
+    """
+    check the results with data provided
+    """
+    for key, expected in testset["expected"].items():
+        parts = key.split("_")
+        sim_type = parts[3]
+        tnorm_type = parts[5].replace("tnorm", "")
 
-    tnrm = tn.MinTNorm()
-    sim_f = sim.GaussianSimilarity(sigma=0.67)
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected, rtol=0, atol=1e-4)
-    assert np.all(closeness), "outputs are not the expected values"
+        sim_obj = Similarity.create(sim_type, **({"sigma": testset.get("sigma_for_gaussian_similarity", 0.67)} if sim_type == "gaussian" else {}))
+        tnorm_obj = TNorm.create(tnorm_type)
 
-def test_compute_similarity_matrix_with_Gaussian_similarity_luk_tnorm():
-    dsm = sds.syntetic_dataset_factory()
-    data_dict = dsm.similarity_testing_dataset()
-    X = data_dict["X"]
-    expected = data_dict["sim_matrix_with_Gaussian_similarity_luk_tnorm"]
+        result = calculate_similarity_matrix(testset["X"], sim_obj, tnorm_obj)
+        np.testing.assert_allclose(result, expected, atol=1e-3)
 
-    tnrm = tn.LukasiewiczTNorm()
-    sim_f = sim.GaussianSimilarity(sigma=0.67)
-    sim_matrix = sim.calculate_similarity_matrix(X, similarity_func=sim_f, tnorm=tnrm)
-    assert sim_matrix.shape == (5, 5), "dimension mismatch"
-    assert (0.0 <= sim_matrix).all() and (sim_matrix <= 1.0).all(), "similarity matrix values are not normalized"
-    closeness = np.isclose(sim_matrix, expected, rtol=0, atol=1e-3)
-    assert np.all(closeness), "outputs are not the expected values"
+
+@pytest.mark.parametrize("testset", similarity_testsets)
+def test_build_similarity_matrix_matches_expected(testset):
+    for key, expected in testset["expected"].items():
+        parts = key.split("_")
+        sim_type = parts[3]
+        tnorm_type = parts[5].replace("tnorm", "")
+        kwargs = {
+            "similarity": sim_type,
+            "similarity_tnorm": tnorm_type
+        }
+        if sim_type == "gaussian":
+            kwargs["sigma"] = testset.get("sigma_for_gaussian_similarity", 0.67)
+        result = build_similarity_matrix(testset["X"], **kwargs)
+        np.testing.assert_allclose(result, expected, atol=1e-3)
+
+
+@pytest.mark.parametrize("sim_name", list(registered_similarities.keys()))
+def test_to_dict_and_from_dict(sim_name):
+    params = {"sigma": 0.67} if sim_name == "gaussian" else {}
+    obj = Similarity.create(sim_name, **params)
+    d = obj.to_dict()
+    new_obj = Similarity.from_dict(d)
+    assert isinstance(new_obj, Similarity)
+    assert new_obj.name == obj.name
+
+
+@pytest.mark.parametrize("sim_name", list(registered_similarities.keys()))
+def test_describe_params_and_registered_name(sim_name):
+    params = {"sigma": 0.67} if sim_name == "gaussian" else {}
+    cls = Similarity.get_class(sim_name)
+    instance = cls(**params)
+
+    name = Similarity.get_registered_name(instance)
+    assert isinstance(name, str)
+    described = instance.describe_params_detailed()
+    for k in instance._get_params():
+        assert k in described
+    logger.info(sim_name + ', registered_name:' + str(name))
+
+
+@pytest.mark.parametrize("sim_name", list(registered_similarities.keys()))
+def test_full_range_combinations(sim_name):
+    obj = Similarity.create(sim_name, **({"sigma": 0.67} if sim_name == "gaussian" else {}))
+    values = np.round(np.arange(0.0, 1.01, 0.01), 2)
+    a, b = np.meshgrid(values, values)
+    diff = a - b
+    diff = diff.reshape(-1, 1)
+    try:
+        sim_vals = obj._compute(diff)
+        assert np.all(sim_vals >= 0.0) and np.all(sim_vals <= 1.0)
+    except Exception as e:
+        pytest.fail(f"Exception in {sim_name}: {str(e)}")
+
+
+def test_invalid_similarity_diff_dimension():
+    sim = Similarity.create("linear")
+    with pytest.raises(ValueError, match="Expected a 2D pairwise difference matrix"):
+        sim._compute(np.array([0.1, 0.2, 0.3]))
+
+
+def test_invalid_build_similarity_matrix_input():
+    with pytest.raises(ValueError, match="X must be a 2D NumPy array"):
+        build_similarity_matrix(np.array([1.0, 2.0]), similarity="linear", similarity_tnorm="minimum")

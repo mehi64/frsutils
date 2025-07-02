@@ -5,3 +5,14 @@
 - Think about creation and tests together (params checks at build time)
 - __all__ decide about all parts of the project
 - use logger
+- check docstrings and comments
+- Add Yager tnorm and tests
+- Dependency Injection
+- use keel to generate datasets for testing
+- check all def validate_params(cls, **kwargs): to be implemented and have cls not self.
+-update def name(self) -> str: with all classes that inherit mixin?no, automate this
+-make sure all classes inherited from mixin, have validate_params(cls, **kwargs), and _get_params(self)
+- update def get_logger(cls): for that import
+- def from_dict(cls, similarity_matrix, labels, data: dict) have different signatures with mixin and chain of inheritance
+- 
+	
