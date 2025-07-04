@@ -16,17 +16,6 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "SNDBX use CUPY",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "FRsutils.sandbox.use_cupy",
-            "justMyCode": false,
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            },
-            "cwd": "${workspaceFolder}"
-        },
-        {
             "name": "SNDBX gridsearch FRSMOTE",
             "type": "debugpy",
             "request": "launch",
