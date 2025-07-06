@@ -42,6 +42,13 @@ class LazyConstructibleMixin(ABC):
     - UNCONFIGURED:
         The object has been instantiated but no configuration has been provided.
 
+        NOTICE: This state is a dummy state and is not stored. When an object of a
+        class that inherits form LazyConstructibleMixin is instanciated with (),
+        thae object is just a shell and has not state property. Therefore,
+        self._state is cecked. if it is not present, then the state is UNCONFIGURED.
+        if some cases when an object is partially initalized, some have self._state 
+        and then the state is written inside that.
+
     - CONFIGURED:
         The object has received configuration (via `.configure(...)`) and is
         ready for initialization but not yet fully built.
@@ -116,12 +123,11 @@ class LazyConstructibleMixin(ABC):
         self._lazy_object = None # This is the object will be created later
         self._set_state(LifecycleState.CONFIGURED)
     
-    def build(self, *args, **kwargs):
+    def build(self, *args):
         """
         @brief Initializes the object. Builds internal component if needed.
 
         @param args: Passed to subcomponent's from_config()
-        @param kwargs: Any runtime values for initialization.
         """
         if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.CONFIGURED:
             raise RuntimeError("Object must be configured before build().")
@@ -132,47 +138,32 @@ class LazyConstructibleMixin(ABC):
         if self._model_registry and 'type' in config:
             cls = self._model_registry.get_class(config['type'])
             self._lazy_object = cls.from_config(*args, **config)
-
-        # ⚠️ Make sure _build_from_config doesn't overwrite _lazy_object = None!
-        # self._build_from_config(**config)
-
+        
+        self._finalize_object() 
         self._set_state(LifecycleState.BUILT)
 
 
     @abstractmethod
-    def _build_from_config(self, **config):
+    def _finalize_object(self):
         """
-        @brief Subclass-specific initialization logic from stored config.
-        NOTE: THIS FUNCTION SHOULD BE IMPLEMENTED BY SUBCLASSES AND IS NOT OPTIONAL.
+        @brief Hook for subclasses to finalize any internal setup (assign attributes etc.)
+        after .configure() and before .build() is marked complete.
 
-        This method should be implemented by subclasses to unpack and assign
-        values from the configuration dictionary stored during `.configure(...)`.
-
-        It is called internally by `.initialize()` after any lazy components
-        (e.g., registry-based models) have been instantiated.
-
-        Separating this logic allows:
-        - Clean separation of concerns (framework lifecycle vs. subclass logic)
-        - Easy subclass overrides without breaking initialization flow
-        - Support for plug-in architectures and registry-based components
-        - Easier unit testing of configuration unpacking in isolation
-
-        @param config: The same dictionary originally passed to `.configure(...)`.
-        It typically includes model hyperparameters, fuzzy settings, and other options.
+        Called automatically inside `build(...)`.
         """
         raise NotImplementedError("Subclasses must implement _initialize_from_config.")
 
-    def ensure_build(self, *args, **kwargs):
-        """
-        @brief Initializes object on demand if not yet initialized.
+    # def ensure_build(self, *args, **kwargs):
+    #     """
+    #     @brief Initializes object on demand if not yet initialized.
 
-        @param args: Forwarded to initialize()
-        @param kwargs: Forwarded to initialize()
-        """
-        # if the state is not initialized, initialize it
-        state = getattr(self, "_state", LifecycleState.UNCONFIGURED)
-        if state != LifecycleState.BUILT:
-            self.build(*args, **kwargs)
+    #     @param args: Forwarded to initialize()
+    #     @param kwargs: Forwarded to initialize()
+    #     """
+    #     # if the state is not initialized, initialize it
+    #     state = getattr(self, "_state", LifecycleState.UNCONFIGURED)
+    #     if state != LifecycleState.BUILT:
+    #         self.build(*args, **kwargs)
 
 
     @property

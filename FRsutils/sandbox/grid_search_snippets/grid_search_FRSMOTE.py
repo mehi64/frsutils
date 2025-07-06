@@ -86,6 +86,23 @@ data = np.load("datasets/temp_datasets/frsmote_ds/normalized_data_with_splits.np
 X, y = data["X"], data["y"]
 splits = joblib.load("datasets/temp_datasets/frsmote_ds/cv_splits.pkl")
 
+# frsmote_obj = FRSMOTE(sampling_strategy='auto',
+#                       instance_ranking_strategy = 'pos',
+#                       k_neighbors = 5,
+#                       bias_interpolation = True,
+#                       random_state = 42,
+#                       type = 'itfrs',
+#                       similarity = "gaussian",
+#                       similarity_tnorm = "minimum",
+#                       gaussian_similarity_sigma = 0.1,
+#                       ub_tnorm_name = "minimum",
+#                       lb_implicator_name="lukasiewicz",
+#                     #   ub_owa_method_name = "linear",
+#                     #   lb_owa_method_name="linear",
+#                       )
+
+# frsmote_obj = FRSMOTE()
+
 # ✅ Step 1: Create pipeline
 pipe = Pipeline([
     ("frsmote", FRSMOTE()),  # uses default init, params set via grid
@@ -95,7 +112,7 @@ pipe = Pipeline([
 # ✅ Step 2: Define hyperparameter grid
 param_grid = {
     # FRSMOTE / fuzzy config
-    "frsmote__type": ["itfrs", "owafrs"],
+    "frsmote__type": ["owafrs"],
     "frsmote__similarity": ["gaussian", "linear"],
     "frsmote__similarity_tnorm": ["minimum"],
     "frsmote__gaussian_similarity_sigma": [0.1],
@@ -106,6 +123,8 @@ param_grid = {
     "frsmote__k_neighbors": [5],
     "frsmote__bias_interpolation": [False],
     "frsmote__random_state": [42],
+    "frsmote__sampling_strategy": ["auto"],
+    "frsmote__instance_ranking_strategy": ["pos"],
 
     # SVC parameters
     "svc__C": [0.1],

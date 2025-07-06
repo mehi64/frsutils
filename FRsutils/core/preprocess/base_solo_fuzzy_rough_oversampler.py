@@ -18,11 +18,24 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         @brief Initializes solo fuzzy rough oversampler with fuzzy config and SMOTE-related settings.
         @param kwargs Dictionary of hyperparameters including k_neighbors, bias_interpolation, etc.
         """
-        self.k_neighbors = kwargs.get("k_neighbors", 5)
-        self.bias_interpolation = kwargs.get("bias_interpolation", False)
-        self.random_state = kwargs.get("random_state", None)
-        
         super().__init__(**kwargs)
+
+        # k_neighbors = kwargs.get("k_neighbors")
+        # bias_interpolation = kwargs.get("bias_interpolation", False)
+        # random_state = kwargs.get("random_state", None)
+
+        # if k_neighbors is None:
+        #     raise ValueError("`k_neighbors` must be provided when instantiation")
+        # if bias_interpolation is None:
+        #     raise ValueError("`bias_interpolation` must be provided when instantiation")
+        # if random_state is None:
+        #     raise ValueError("`random_state` must be provided when instantiation")
+        
+        # self.k_neighbors = k_neighbors
+        # self.bias_interpolation = bias_interpolation
+        # self.random_state = random_state
+
+        
 
     def fit(self, X, y):
         """
@@ -48,7 +61,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
                 self.configure(**config, model_registry=FuzzyRoughModel)
 
             similarity_matrix = build_similarity_matrix(X, **self._object_config)
-            self.ensure_build(similarity_matrix, y, **config)
+            self.build(similarity_matrix, y)
 
 
         return self
@@ -58,36 +71,33 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         return self._lazy_object.lower_approximation()
 
     def get_params(self, deep=True):
+
+        if self.state == 'UNCONFIGURED': return {}
+
         return {
-            "k_neighbors": self.k_neighbors,
-            "bias_interpolation": self.bias_interpolation,
-            "random_state": self.random_state,
-            "sampling_strategy": self.sampling_strategy,
-            "instance_ranking_strategy": self.instance_ranking_strategy,
             **(self._object_config if hasattr(self, "_object_config") else {})
         }
 
     
     def set_params(self, **params):
-        for key, val in params.items():
-            if hasattr(self, key):
-                setattr(self, key, val)
-            else:
-                self._object_config[key] = val
+        if self.state == 'UNCONFIGURED':
+            self.configure(model_registry=FuzzyRoughModel, **params)
         return self
 
-    def _build_from_config(self, **config):
-        for k, v in config.items():
-            setattr(self, k, v)
+
     
     @abstractmethod
-    def _check_params(self): pass
+    def _check_params(self, **kwargs): 
+        raise NotImplementedError("_check_params must be implemented")
 
     @abstractmethod
-    def _fit_resample(self, X, y): pass
+    def _fit_resample(self, X, y):
+        raise NotImplementedError("_fit_resample must be implemented")
 
     @abstractmethod
-    def _prepare_minority_samples(self, X, y, class_label): pass
+    def _prepare_minority_samples(self, X, y, class_label): 
+        raise NotImplementedError("_prepare_minority_samples must be implemented")
 
     @abstractmethod
-    def _generate_new_samples(self): pass
+    def _generate_new_samples(self): 
+        raise NotImplementedError("_generate_new_samples must be implemented")

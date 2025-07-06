@@ -10,11 +10,23 @@ from FRsutils.core.preprocess.base_solo_fuzzy_rough_oversampler import BaseSoloF
 import FRsutils.utils.math_utils.math_utils as math_utils
 
 class FRSMOTE(BaseSoloFuzzyRoughOversampler):
-    def _check_params(self):
-        if not isinstance(self.k_neighbors, int) or self.k_neighbors <= 0:
-            raise ValueError("k_neighbors must be a positive integer.")
-        if not isinstance(self.bias_interpolation, bool):
-            raise ValueError("bias_interpolation must be boolean.")
+    def __init__(self, **kwargs):
+        """
+        @brief 
+        @param kwargs Dictionary of hyperparameters
+        """
+        self._check_params(**kwargs)
+
+        super().__init__(**kwargs)
+
+
+
+    def _check_params(self, **kwargs):
+        pass
+        # if not isinstance(self.k_neighbors, int) or self.k_neighbors <= 0:
+        #     raise ValueError("k_neighbors must be a positive integer.")
+        # if not isinstance(self.bias_interpolation, bool):
+        #     raise ValueError("bias_interpolation must be boolean.")
 
     def _fit_resample(self, X, y):
         rng = check_random_state(self.random_state)
@@ -83,3 +95,16 @@ class FRSMOTE(BaseSoloFuzzyRoughOversampler):
         X_resampled, y_resampled = self._fit_resample(X, y)
 
         return X_resampled, y_resampled
+    
+    def _build_from_config(self, **config):
+        pass
+
+    def _finalize_object(self):
+        setattr(self, 'k_neighbors', self._object_config['k_neighbors'])
+        setattr(self, 'bias_interpolation', self._object_config['bias_interpolation'])
+        setattr(self, 'random_state', self._object_config['random_state'])
+        setattr(self, 'sampling_strategy', self._object_config['sampling_strategy'])
+        setattr(self, 'instance_ranking_strategy', self._object_config['instance_ranking_strategy'])
+        setattr(self, 'sampling_ratio', self._object_config['sampling_ratio'])
+
+       
