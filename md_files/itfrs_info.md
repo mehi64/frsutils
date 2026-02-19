@@ -31,7 +31,7 @@ Let:
 The lower approximation of $X$ at point $x ∈ U$ is defined by:
 
 $$
-\underline{R}(X)(x) = \inf_{y \in U} I(R(x, y), \mu_X(y))
+\underline{R}_X(x) = \inf_{y \in U} I(R(x, y), \mu_X(y))
 $$
 
   - $I(R(x, y), μ_X(y))$ represents the degree to which similarity implies membership.
