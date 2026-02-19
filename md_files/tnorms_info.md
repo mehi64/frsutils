@@ -2,7 +2,7 @@
 
 This document provides a comprehensive overview of common **T-norms** used in fuzzy logic, including their formulas, alias names, theoretical properties, and scholarly references.
 
-## 1. T-Norms Overview and Properties [wikipedia_1]
+## 1. T-Norms Overview and Properties [Wikipedia_ref_1]
 
 T-norms (Triangular norms) are binary operations used in fuzzy logic to model the intersection of fuzzy sets. They must satisfy the following properties:
 
@@ -18,8 +18,11 @@ Some T-norms also satisfy additional properties such as **nilpotency**, **strict
 ## 2. T-Norms Table
 
 | Name                  | Formula                                                 | Alias Names        | Reference Page                 |Tested and working in FRsutils|
+
 | --------------------- | ------------------------------------------------------- | ------------------ | ----------------------------- |
+
 | **Minimum**           | `T(a,b) = min(a,b)`                                     | Standard-intersection, Gödel    | IMEKO 2018, Eq. (4)           |yes|
+
 | **Product**           | `T(a,b) = a * b`                                        | Algebraic, Product              | IMEKO 2018, Eq. (5)           |yes|
 | **Lukasiewicz**       | `T(a,b) = max(0, a + b - 1)`                            | Bounded Difference              | IMEKO 2018, Eq. (6)           |yes|
 | **Yager**             | `1 - min(1, ((1-a)^p + (1-b)^p)^(1/p))`   where p>0     | Yager                           | IMEKO 2018 (Yager T-Norm)     |yes|
