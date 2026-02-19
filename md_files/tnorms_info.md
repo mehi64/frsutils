@@ -17,15 +17,13 @@ Some T-norms also satisfy additional properties such as **nilpotency**, **strict
 
 ## 2. T-Norms Table
 
-## 2. T-Norms Table
-
 | Name | Formula | Alias Names | Reference Page | Tested and working in FRsutils |
 | --- | --- | --- | --- | --- |
 | **Minimum** | `T(a,b) = min(a,b)` | Standard-intersection, Gödel | IMEKO 2018, Eq. (4) | yes |
 | **Product** | `T(a,b) = a * b` | Algebraic, Product | IMEKO 2018, Eq. (5) | yes |
 | **Lukasiewicz** | `T(a,b) = max(0, a + b - 1)` | Bounded Difference | IMEKO 2018, Eq. (6) | yes |
 | **Yager** | `1 - min(1, ((1-a)^p + (1-b)^p)^(1/p))` (p>0) | Yager | IMEKO 2018 (Yager T-Norm) | yes |
-| **Drastic Product** | `T(a,b) = a if b == 1; b if a == 1; 0 otherwise` | Drastic | wikipedia_1 | yes |
+| **Drastic Product** | `T(a,b) = a if b == 1; b if a == 1; 0 otherwise` | Drastic | Wikipedia_ref_1| yes |
 | **Einstein Product** | `T(a,b) = ab / (2 - (a + b - ab))` | Einstein T-Norm | I. Silambarasan, S. Sriram | yes |
 | **Nilpotent Minimum** | `T(a,b) = min(a,b) if (a + b > 1) else 0` | Nilpotent Min | Wikipedia_ref_1 | yes |
 | **Hamacher Product** | `T(a,b) = 0 if a = b = 0, else ab / (a + b - ab)` | Hamacher | Wikipedia_ref_1 | yes |
