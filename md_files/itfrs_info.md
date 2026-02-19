@@ -30,8 +30,9 @@ Let:
 
 The lower approximation of X at point x ∈ U is defined by:
 
+$$
 \underline{R}(X)(x) = \inf_{y \in U} I(R(x, y), \mu_X(y))
-
+$$
 
   - I(R(x, y), μ_X(y)) represents the degree to which similarity implies membership.
 
@@ -42,8 +43,9 @@ The lower approximation of X at point x ∈ U is defined by:
 
 The upper approximation of X at point x is:
 
+$$
 \overline{R}(X)(x) = \sup_{y \in U} T(R(x, y), \mu_X(y))
-
+$$
 
   - T(R(x, y), μ_X(y)) reflects the degree to which similarity and membership co-occur.
 
