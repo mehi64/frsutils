@@ -7,6 +7,7 @@ import numpy as np
 from collections import Counter
 from sklearn.utils import check_X_y
 from abc import abstractmethod
+from FRsutils.utils.constructor_utils.lazy_constructible_mixin import LifecycleState
 from FRsutils.core.preprocess.base_allpurpose_fuzzy_rough_oversampler import BaseAllPurposeFuzzyRoughOversampler
 from FRsutils.utils.fuzzy_rough_dataset_validation_utils import compatible_dataset_with_FuzzyRough
 from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
@@ -57,7 +58,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         config = self.get_params(deep=False)
 
         if not self.is_built:
-            if self.state == "UNCONFIGURED":
+            if self.state_enum == LifecycleState.UNCONFIGURED:
                 self.configure(**config, model_registry=FuzzyRoughModel)
 
             similarity_matrix = build_similarity_matrix(X, **self._object_config)
@@ -72,7 +73,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
 
     def get_params(self, deep=True):
 
-        if self.state == 'UNCONFIGURED': return {}
+        if self.state_enum == LifecycleState.UNCONFIGURED: return {}
 
         return {
             **(self._object_config if hasattr(self, "_object_config") else {})
@@ -80,7 +81,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
 
     
     def set_params(self, **params):
-        if self.state == 'UNCONFIGURED':
+        if self.state_enum == LifecycleState.UNCONFIGURED:
             self.configure(model_registry=FuzzyRoughModel, **params)
         return self
 

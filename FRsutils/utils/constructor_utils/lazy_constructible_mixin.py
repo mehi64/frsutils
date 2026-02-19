@@ -5,7 +5,7 @@
 This mixin enables:
 - Supplying full config via `.configure(...)`
 - Deferred execution of `.build()`
-- Safe, introspectable lifecycle state via `.is_ready`
+- Safe, introspectable lifecycle state via `.is_built`
 - Compatibility with scikit-learn and imbalanced-learn, when combined with compliant oversamplers
 
 ##############################################
@@ -113,6 +113,7 @@ class LazyConstructibleMixin(ABC):
             including a required "type" key to identify the component class.
 
         @raises RuntimeError: If the state transition is invalid.
+        @raises ValueError: If the config dictionary is empty.
         """
         
         if not config:
@@ -122,21 +123,74 @@ class LazyConstructibleMixin(ABC):
         self._model_registry = model_registry
         self._lazy_object = None # This is the object will be created later
         self._set_state(LifecycleState.CONFIGURED)
-    
+
+# TODO: update the use of args in all classes functions in the project in docstrings
     def build(self, *args):
         """
-        @brief Initializes the object. Builds internal component if needed.
+        @brief Finalizes the object and (optionally) constructs its lazy subcomponent.
 
-        @param args: Passed to subcomponent's from_config()
+        This method completes the lifecycle transition CONFIGURED → BUILT.
+
+        If a `model_registry` was provided in `configure(...)` and the stored configuration
+        contains a `'type'` key, the corresponding class will be resolved via:
+            `cls = model_registry.get_class(config["type"])`
+        and then instantiated using:
+            `cls.from_config(*args, **config)`
+
+        Why do we need `*args`?
+        `configure(**config)` is intentionally limited to lightweight, pipeline-friendly
+        hyperparameters (numbers/strings/strategies) that should be cloneable and tunable
+        by scikit-learn / imbalanced-learn.
+
+        Some inputs required to build the internal fuzzy-rough model are only available
+        at runtime (typically during `fit` / `fit_resample`) and are often large objects
+        (e.g., numpy arrays). These should NOT be stored inside `config` to keep the
+        object cloneable and grid-search friendly.
+
+        Therefore, `*args` is used to pass runtime-only objects positionally to
+        `from_config(*args, **config)`.
+
+        Typical `args` in this project (common convention):
+        - args[0]: similarity_matrix  (e.g., shape [n_samples, n_samples])
+        - args[1]: labels / target vector `y` (optional depending on the model)
+
+        What SHOULD be passed via `args`:
+        - Runtime data needed for construction of the internal model, usually:
+        `(similarity_matrix,)` or `(similarity_matrix, y)`.
+
+        What should NOT be passed via `args`:
+        - Hyperparameters such as t-norm / implicator choices, quantifier parameters,
+        OWA strategy, alpha/beta parameters, etc. These must be provided via
+        `configure(**config)`.
+        - The registry and the `'type'` selector (also provided via `configure(...)`).
+        - Generally, do not pass the raw feature matrix `X` here unless the concrete
+        `from_config` implementation explicitly expects it.
+
+        Example:
+        >>> obj.configure(
+        ...     model_registry=FuzzyRoughModel,
+        ...     type="itfrs",
+        ...     lb_tnorm="minimum",
+        ...     ub_implicator="goguen",
+        ... )
+        >>> obj.build(similarity_matrix, y)
+        # forwards to: ITFRS.from_config(similarity_matrix, y, type="itfrs", lb_tnorm=..., ub_implicator=...)
+
+        @param args: Runtime objects forwarded positionally to the resolved class'
+                    `from_config(*args, **config)` method. Commonly
+                    `(similarity_matrix,)` or `(similarity_matrix, y)`.
+        @raises RuntimeError: If the object is not in `LifecycleState.CONFIGURED`.
         """
         if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.CONFIGURED:
-            raise RuntimeError("Object must be configured before build().")
-
+            raise RuntimeError("Either Object is not configured or is already built.")
+        # TODO: Do we need dict here? isn't it already dict?
         config = dict(self._object_config)
 
-        # 🧠 Always build _lazy_object if model_registry and 'type' are present
+        # build _lazy_object if model_registry and 'type' are present
         if self._model_registry and 'type' in config:
             cls = self._model_registry.get_class(config['type'])
+            # We need args param again in addition to config, because args stores other data types than config.
+            # For more information see the docstring of this function
             self._lazy_object = cls.from_config(*args, **config)
         
         self._finalize_object() 
@@ -150,20 +204,10 @@ class LazyConstructibleMixin(ABC):
         after .configure() and before .build() is marked complete.
 
         Called automatically inside `build(...)`.
+
+        @raises RuntimeError: If the transition is not permitted from the current state.
         """
-        raise NotImplementedError("Subclasses must implement _initialize_from_config.")
-
-    # def ensure_build(self, *args, **kwargs):
-    #     """
-    #     @brief Initializes object on demand if not yet initialized.
-
-    #     @param args: Forwarded to initialize()
-    #     @param kwargs: Forwarded to initialize()
-    #     """
-    #     # if the state is not initialized, initialize it
-    #     state = getattr(self, "_state", LifecycleState.UNCONFIGURED)
-    #     if state != LifecycleState.BUILT:
-    #         self.build(*args, **kwargs)
+        raise NotImplementedError("Subclasses must implement _finalize_object().")
 
 
     @property
@@ -174,16 +218,24 @@ class LazyConstructibleMixin(ABC):
         return getattr(self, "_state", LifecycleState.UNCONFIGURED) == LifecycleState.BUILT
 
     @property
-    def state(self) -> str:
+    def state_str(self) -> str:
+        """@brief Lifecycle state as string name (e.g. 'UNCONFIGURED')."""
         return getattr(self, "_state", LifecycleState.UNCONFIGURED).name
+
+    @property
+    def state_enum(self) -> LifecycleState:
+        """@brief Lifecycle state as enum (preferred for logic checks)."""
+        return getattr(self, "_state", LifecycleState.UNCONFIGURED)
+
     
     @property
     def lazy_object(self):
         """
         @brief Accessor for the built/ready model.
-        @return: The model instance created by initialize
-        @raises RuntimeError: If self.state != LifecycleState.READY
+        @return The model instance created by build(...).
+        @raises RuntimeError If the object has not been built yet.
         """
-        if self.state != LifecycleState.BUILT:
-            raise RuntimeError("Object has not been built yet. Call ensure_ready() first.")
+        if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.BUILT:
+            raise RuntimeError("Object has not been built yet. Call build() first.")
         return self._lazy_object
+

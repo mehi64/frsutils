@@ -15,6 +15,8 @@ If you are a developer trying to extend FRsutils, please start here [Development
   - pandas (>= 1.5.3)
   - colorlog (>= 6.9.0)
   - pytest (>= 7.1.2) [if you want to run unit tests]
+  - openpyxl
+  - matplotlib (If you want to run some plot tests)
   - cupy (>=13.4.1) (if you have an Nvidia GPU) [under development, lowest priority]
 
 # Fuzzy-Rough set utilities [Under development]
