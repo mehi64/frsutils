@@ -18,30 +18,30 @@ interpretable, and mathematically grounded way to compute these approximations u
 
 Let:
 
-  - U be the universe of discourse.
-  - X be a fuzzy set in U.
-  - $R(x, y)$ be the fuzzy similarity (or tolerance) between elements x and y.
-  - $μ_X(y)$ be the membership degree of y in fuzzy set X.
-  - I be a fuzzy implicator.
-  - T be a t-norm.
+  - $U$ be the universe of discourse.
+  - $X$ be a fuzzy set in $U$.
+  - $R(x, y)$ be the fuzzy similarity (or tolerance) between elements $x$ and $y$.
+  - $μ_X(y)$ be the membership degree of $y$ in fuzzy set $X$.
+  - $I$ be a fuzzy implicator.
+  - $T$ be a t-norm.
 
 
 **Lower Approximation in ITFRS**
 
-The lower approximation of X at point x ∈ U is defined by:
+The lower approximation of $X$ at point $x ∈ U$ is defined by:
 
 $$
 \underline{R}(X)(x) = \inf_{y \in U} I(R(x, y), \mu_X(y))
 $$
 
-  - I(R(x, y), μ_X(y)) represents the degree to which similarity implies membership.
+  - $I(R(x, y), μ_X(y))$ represents the degree to which similarity implies membership.
 
-  - The inf operator aggregates the minimal certainty across all comparisons.
+  - The $inf$ operator aggregates the minimal certainty across all comparisons.
 
 
 **Upper Approximation in ITFRS**
 
-The upper approximation of X at point x is:
+The upper approximation of $X$ at point $x$ is:
 
 $$
 \overline{R}(X)(x) = \sup_{y \in U} T(R(x, y), \mu_X(y))
@@ -49,7 +49,7 @@ $$
 
   - $T(R(x, y), μ_X(y))$ reflects the degree to which similarity and membership co-occur.
 
-  - The sup operator captures maximal potential inclusion.
+  - The $sup$ operator captures maximal potential inclusion.
 
 
 ## 4. Interpretability and Use Cases
