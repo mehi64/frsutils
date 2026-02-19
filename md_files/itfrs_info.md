@@ -20,8 +20,8 @@ Let:
 
   - U be the universe of discourse.
   - X be a fuzzy set in U.
-  - R(x, y) be the fuzzy similarity (or tolerance) between elements x and y.
-  - μ_X(y) be the membership degree of y in fuzzy set X.
+  - $R(x, y)$ be the fuzzy similarity (or tolerance) between elements x and y.
+  - $μ_X(y)$ be the membership degree of y in fuzzy set X.
   - I be a fuzzy implicator.
   - T be a t-norm.
 
@@ -47,7 +47,7 @@ $$
 \overline{R}(X)(x) = \sup_{y \in U} T(R(x, y), \mu_X(y))
 $$
 
-  - T(R(x, y), μ_X(y)) reflects the degree to which similarity and membership co-occur.
+  - $T(R(x, y), μ_X(y))$ reflects the degree to which similarity and membership co-occur.
 
   - The sup operator captures maximal potential inclusion.
 
