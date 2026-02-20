@@ -124,6 +124,7 @@ param_grid = {
     "frsmote__bias_interpolation": [False],
     "frsmote__random_state": [42],
     "frsmote__sampling_strategy": ["auto"],
+    "frsmote__sampling_ratio": [1.0],
     "frsmote__instance_ranking_strategy": ["pos"],
 
     # SVC parameters
