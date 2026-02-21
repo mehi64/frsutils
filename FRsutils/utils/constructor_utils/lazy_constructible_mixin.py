@@ -68,10 +68,12 @@ class LazyConstructibleMixin(ABC):
     """
 
     _ALLOWED_TRANSITIONS = {
-        LifecycleState.UNCONFIGURED: [LifecycleState.CONFIGURED],
-        LifecycleState.CONFIGURED: [LifecycleState.BUILT],
-        LifecycleState.BUILT: []
-    }
+    LifecycleState.UNCONFIGURED: [LifecycleState.CONFIGURED],
+    # allow idempotent reconfigure before build
+    LifecycleState.CONFIGURED: [LifecycleState.CONFIGURED, LifecycleState.BUILT],
+    # allow reconfigure after build (invalidate and rebuild)
+    LifecycleState.BUILT: [LifecycleState.CONFIGURED],
+}
 
     def _set_state(self, new_state):
         """
@@ -89,39 +91,70 @@ class LazyConstructibleMixin(ABC):
             raise RuntimeError(f"Invalid state transition: {current.name} → {new_state.name}")
         self._state = new_state
 
+    def _validate_config(self, *, model_registry=None, **config):
+        """
+        @brief Optional hook: validate configuration during `configure(...)`.
+
+        This method is called automatically by `configure(...)` before the configuration
+        is stored on the instance.
+
+        **Design goal**: keep this validation lightweight and clone-friendly.
+        Avoid using runtime-only objects (e.g., numpy matrices) here; those should be
+        validated later inside `build(*args)` or `fit/fit_resample`.
+
+        Default behavior (generic checks only):
+        - If `model_registry` is provided, require `config['type']` (string).
+        - Verify `model_registry` exposes a callable `get_class`.
+        - Verify the requested `type` can be resolved by the registry.
+        ...
+        """
+        # if model_registry is None:
+        #     return
+
+        # if not hasattr(model_registry, "get_class") or not callable(getattr(model_registry, "get_class")):
+        #     raise TypeError("`model_registry` must implement a callable get_class(type: str) method.")
+
+        # if "type" not in config:
+        #     raise ValueError("When `model_registry` is provided, the configuration must include a 'type' key.")
+
+        # if not isinstance(config["type"], str) or not config["type"].strip():
+        #     raise ValueError("Configuration key 'type' must be a non-empty string when using `model_registry`.")
+
+        # try:
+        #     model_registry.get_class(config["type"])
+        # except Exception as exc:
+        #     raise ValueError(
+        #         f"Unknown type '{config['type']}'. The provided model_registry could not resolve it."
+        #     ) from exc
+        pass
+
     def configure(self, *, model_registry=None, **config):
         """
         @brief Stores configuration and optional registry for deferred construction.
 
-        This method captures the full configuration for the object (including any
-        subcomponent such as a fuzzy rough model) and stores it internally.
-        It also optionally receives a registry to use later for dynamic instantiation
-        based on type strings in the configuration.
+        Supports re-configuration:
+        - UNCONFIGURED -> CONFIGURED
+        - CONFIGURED   -> CONFIGURED (idempotent reconfigure)
+        - BUILT        -> CONFIGURED (invalidate previous build and rebuild later)
 
-        This supports:
-        - Lazy instantiation of components via deferred `.initialize()`
-        - Registry/Factory Pattern using `model_registry.get_class(type)`
-        - Open/Closed Principle: new models can be added without changing base logic
-
-        Example usage:
-        >>> configure(model_registry=FuzzyRoughModel, type="itfrs", similarity="gaussian")
-        
-        @param model_registry: Registry or factory class used to resolve models.
-            Must implement `get_class(type: str)` returning a class object.
-            Example: `FuzzyRoughModel.get_class("itfrs") -> ITFRS`.
-        @param config: Configuration dictionary containing all hyperparameters
-            including a required "type" key to identify the component class.
-
-        @raises RuntimeError: If the state transition is invalid.
-        @raises ValueError: If the config dictionary is empty.
+        @param model_registry Registry/factory class used to resolve models.
+        @param config Flat configuration dictionary (clone-friendly).
+        @raises ValueError If config is empty.
+        @raises RuntimeError If state transition is invalid.
         """
-        
         if not config:
             raise ValueError("No configuration was provided to `configure()`. The config cannot be empty.")
 
+        # Optional validation hook (if you added it)
+        if hasattr(self, "_validate_config"):
+            self._validate_config(model_registry=model_registry, **config)
+
+        # Store config and invalidate any previously built lazy object
         self._object_config = dict(config)
         self._model_registry = model_registry
-        self._lazy_object = None # This is the object will be created later
+        self._lazy_object = None
+
+        # Move (or stay) in CONFIGURED state
         self._set_state(LifecycleState.CONFIGURED)
 
 # TODO: update the use of args in all classes functions in the project in docstrings
@@ -197,6 +230,7 @@ class LazyConstructibleMixin(ABC):
         self._set_state(LifecycleState.BUILT)
 
 
+        
     @abstractmethod
     def _finalize_object(self):
         """

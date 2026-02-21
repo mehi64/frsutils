@@ -4,6 +4,8 @@ from FRsutils.core.preprocess.oversampling.FRSMOTE import FRSMOTE
 # from FRsutils.core.models.owafrs import OWAFRS
 from FRsutils.core.models import *
 from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -43,6 +45,9 @@ config = {
 
 smote1.configure(model_registry=FuzzyRoughModel, **config)
 X_res_smote, y_res_smote = smote1.fit_resample(X, y)
+
+smote2 = FRSMOTE(**config)
+X_res_smote, y_res_smote = smote2.fit_resample(X, y)
 
 print(X_res_smote)
 print(y_res_smote)

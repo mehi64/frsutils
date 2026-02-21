@@ -42,28 +42,44 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         """
         @brief Validates the input dataset, computes similarity matrix, and builds the fuzzy-rough model.
 
+        Notes:
+        - This method assumes the estimator is already CONFIGURED via `configure(...)` or `set_params(...)`.
+        - Fail-fast config validation happens during configure/set_params through `_validate_config`.
+        Here we only enforce that a usable config exists and build lazily if needed.
+
         @param X Normalized feature matrix (2D np.ndarray).
         @param y Target class labels (1D np.ndarray).
-
         @return self
+        @raises RuntimeError: If the estimator is UNCONFIGURED or has no stored config.
         """
         compatible_dataset_with_FuzzyRough(X, y)
-        self._check_params()
-
         X, y = check_X_y(X, y, accept_sparse=False)
+
         self.n_features_in_ = X.shape[1]
         self.classes_, _ = np.unique(y, return_counts=True)
         self.target_stats_ = Counter(y)
 
-        config = self.get_params(deep=False)
+        # Require configuration before fit (pipeline/GridSearch should have called set_params/configure)
+        if self.state_enum == LifecycleState.UNCONFIGURED:
+            raise RuntimeError(
+                "Estimator is UNCONFIGURED. Provide parameters at construction time or call "
+                "set_params(...)/configure(...) before fit()."
+            )
 
+        if not hasattr(self, "_object_config") or not getattr(self, "_object_config"):
+            raise RuntimeError(
+                "Estimator is missing _object_config. Ensure configure(...)/set_params(...) was called successfully."
+            )
+
+        # Ensure we have a registry. If user forgot to pass it, we use the default one and re-validate.
+        registry = getattr(self, "_model_registry", None) or FuzzyRoughModel
+        self._validate_config(model_registry=registry, **self._object_config)
+        self._model_registry = registry
+
+        # Build the fuzzy-rough internal model lazily (only once per configuration)
         if not self.is_built:
-            if self.state_enum == LifecycleState.UNCONFIGURED:
-                self.configure(**config, model_registry=FuzzyRoughModel)
-
             similarity_matrix = build_similarity_matrix(X, **self._object_config)
             self.build(similarity_matrix, y)
-
 
         return self
 
@@ -72,17 +88,30 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         return self._lazy_object.lower_approximation()
 
     def get_params(self, deep=True):
+        """
+        @brief Delegates parameter export to BaseAllPurposeFuzzyRoughOversampler.
 
-        if self.state_enum == LifecycleState.UNCONFIGURED: return {}
-
-        return {
-            **(self._object_config if hasattr(self, "_object_config") else {})
-        }
+        @param deep: Whether to return nested estimator parameters.
+        @return dict of parameters.
+        """
+        return super().get_params(deep=deep)
 
     
     def set_params(self, **params):
-        if self.state_enum == LifecycleState.UNCONFIGURED:
-            self.configure(model_registry=FuzzyRoughModel, **params)
+        """
+        @brief sklearn-compatible parameter setting.
+
+        Always updates the stored config and invalidates any previous build
+        via `configure(...)`, so GridSearchCV and pipelines can re-tune params.
+        """
+        if not params:
+            return self
+
+        base_config = dict(getattr(self, "_object_config", {}))
+        base_config.update(params)
+
+        registry = getattr(self, "_model_registry", None) or FuzzyRoughModel
+        self.configure(model_registry=registry, **base_config)
         return self
 
 

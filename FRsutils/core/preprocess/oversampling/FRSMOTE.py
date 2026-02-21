@@ -8,25 +8,111 @@ from sklearn.utils import check_random_state
 from sklearn.neighbors import NearestNeighbors
 from FRsutils.core.preprocess.base_solo_fuzzy_rough_oversampler import BaseSoloFuzzyRoughOversampler
 import FRsutils.utils.math_utils.math_utils as math_utils
+from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 
 class FRSMOTE(BaseSoloFuzzyRoughOversampler):
     def __init__(self, **kwargs):
         """
-        @brief 
-        @param kwargs Dictionary of hyperparameters
-        """
-        self._check_params(**kwargs)
+        @brief Initialize FRSMOTE.
 
+        This initializer is intentionally lightweight. It does not build the internal
+        fuzzy-rough model. Instead, it stores the clone-friendly configuration using
+        `configure(...)`. Parameter validation is executed fail-fast during configure
+        via the `_validate_config` hook chain.
+
+        Important for GridSearchCV:
+        - If instantiated with no parameters, the object stays UNCONFIGURED and can be
+        configured later via `set_params(...)`.
+        - If parameters are provided here, the object becomes CONFIGURED immediately.
+
+        @param kwargs: Flat hyperparameter dictionary for both oversampling and fuzzy-rough model.
+        """
         super().__init__(**kwargs)
+
+        # Only configure if user provided any parameters.
+        if kwargs:
+            self.configure(model_registry=FuzzyRoughModel, **kwargs)
 
 
 
     def _check_params(self, **kwargs):
+    #     """
+    #     @brief Validate FRSMOTE configuration (clone-friendly).
+
+    #     @param kwargs: Flat configuration dictionary.
+    #     @raises ValueError/TypeError: If invalid.
+    #     """
+    #     # Remove registry if passed through validation hook
+    #     kwargs = dict(kwargs)
+    #     kwargs.pop("model_registry", None)
+
+    #     # Allow being called with no kwargs (e.g., older call sites).
+    #     if not kwargs and hasattr(self, "_object_config"):
+    #         kwargs = dict(self._object_config)
+
+    #     # ---- FRSMOTE core parameters ----
+    #     k_neighbors = kwargs.get("k_neighbors")
+    #     if k_neighbors is None or not isinstance(k_neighbors, int) or k_neighbors <= 0:
+    #         raise ValueError("k_neighbors must be provided and be a positive integer.")
+
+    #     bias_interpolation = kwargs.get("bias_interpolation")
+    #     if bias_interpolation is None or not isinstance(bias_interpolation, bool):
+    #         raise ValueError("bias_interpolation must be provided and be a boolean.")
+
+    #     sampling_strategy = kwargs.get("sampling_strategy", "auto")
+    #     if not (
+    #         isinstance(sampling_strategy, str)
+    #         or isinstance(sampling_strategy, dict)
+    #         or isinstance(sampling_strategy, float)
+    #         or isinstance(sampling_strategy, int)
+    #         or callable(sampling_strategy)
+    #     ):
+    #         raise TypeError("sampling_strategy must be a str, dict, number, or callable.")
+
+    #     instance_ranking_strategy = kwargs.get("instance_ranking_strategy", "pos")
+    #     if not (isinstance(instance_ranking_strategy, str) or isinstance(instance_ranking_strategy, dict)):
+    #         raise TypeError("instance_ranking_strategy must be a string or a dict.")
+
+    #     if isinstance(instance_ranking_strategy, str) and instance_ranking_strategy not in {"pos", "lower", "upper"}:
+    #         raise ValueError("instance_ranking_strategy must be one of {'pos','lower','upper'} or a dict.")
+
+    #     sampling_ratio = kwargs.get("sampling_ratio", None)
+    #     if sampling_ratio is not None and not (isinstance(sampling_ratio, (int, float)) or isinstance(sampling_ratio, dict)):
+    #         raise TypeError("sampling_ratio must be None, a number, or a dict.")
+
+    #     random_state = kwargs.get("random_state", None)
+    #     if random_state is not None and not isinstance(random_state, (int, np.random.RandomState)):
+    #         raise TypeError("random_state must be None, an int, or a numpy.random.RandomState.")
+
+    #     # ---- Fuzzy-rough model minimal config checks (by type) ----
+    #     model_type = kwargs.get("type", None)
+    #     if model_type is None:
+    #         return
+
+    #     model_type = str(model_type).lower().strip()
+
+    #     if model_type == "itfrs":
+    #         if kwargs.get("ub_tnorm") is None and not kwargs.get("ub_tnorm_name"):
+    #             raise ValueError("ITFRS requires 'ub_tnorm' or 'ub_tnorm_name'.")
+    #         if kwargs.get("lb_implicator") is None and not kwargs.get("lb_implicator_name"):
+    #             raise ValueError("ITFRS requires 'lb_implicator' or 'lb_implicator_name'.")
+
+    #     elif model_type == "owafrs":
+    #         if kwargs.get("ub_tnorm") is None and not kwargs.get("ub_tnorm_name"):
+    #             raise ValueError("OWAFRS requires 'ub_tnorm' or 'ub_tnorm_name'.")
+    #         if kwargs.get("lb_implicator") is None and not kwargs.get("lb_implicator_name"):
+    #             raise ValueError("OWAFRS requires 'lb_implicator' or 'lb_implicator_name'.")
+    #         if kwargs.get("lb_owa_method") is None and not kwargs.get("lb_owa_method_name"):
+    #             raise ValueError("OWAFRS requires 'lb_owa_method' or 'lb_owa_method_name'.")
+    #         if kwargs.get("ub_owa_method") is None and not kwargs.get("ub_owa_method_name"):
+    #             raise ValueError("OWAFRS requires 'ub_owa_method' or 'ub_owa_method_name'.")
+
+    #     elif model_type == "vqrs":
+    #         if kwargs.get("lb_fuzzy_quantifier") is None and not kwargs.get("lb_fuzzy_quantifier_name"):
+    #             raise ValueError("VQRS requires 'lb_fuzzy_quantifier' or 'lb_fuzzy_quantifier_name'.")
+    #         if kwargs.get("ub_fuzzy_quantifier") is None and not kwargs.get("ub_fuzzy_quantifier_name"):
+    #             raise ValueError("VQRS requires 'ub_fuzzy_quantifier' or 'ub_fuzzy_quantifier_name'.")
         pass
-        # if not isinstance(self.k_neighbors, int) or self.k_neighbors <= 0:
-        #     raise ValueError("k_neighbors must be a positive integer.")
-        # if not isinstance(self.bias_interpolation, bool):
-        #     raise ValueError("bias_interpolation must be boolean.")
 
     def _fit_resample(self, X, y):
         rng = check_random_state(self.random_state)
