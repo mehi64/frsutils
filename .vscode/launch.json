@@ -364,6 +364,19 @@
             }
         },
         {
+            "name": "Tst GRDSRCH & PIPELINE compatibility",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/test_frsmote_gridsearch_pipeline_compat.py"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Python: generate data",
             "type": "debugpy",
             "request": "launch",
