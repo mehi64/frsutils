@@ -1,3 +1,30 @@
+"""
+@file math_utils.py
+@brief Small mathematical helper utilities used across FRsutils.
+
+This module contains helper functions for random sampling and selection that are
+kept separate from estimators/models for clarity.
+
+##############################################
+# ✅ Summary of Features
+# - _weighted_random_choice: roulette-wheel selection
+# - _weighted_sampling_without_replacement: A-Res algorithm for weighted sampling
+
+# ✅ Design Patterns & Clean Code Notes
+# - SRP: pure math helpers only
+# - Fail-fast: input checks and safe fallbacks
+# - Determinism: supports sklearn-style random_state objects
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# rng = np.random.RandomState(0)
+# items = [("a", 0.2), ("b", 0.8)]
+# item, idx = _weighted_random_choice(items, rng)
+
+"""
+
 import numpy as np
 import heapq
 

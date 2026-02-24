@@ -10,6 +10,7 @@ Extends fuzzy rough approximation using OWA weights for more flexible decision r
 # - Linear weighting strategy for aggregation
 # - Support for vectorized similarity and label matrices
 # - Pluggable architecture for T-norms and implicators
+# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
 
 # ✅ Design Patterns & Principles Used
 # - Strategy: Delegates to provided T-norm and Implicator strategies
@@ -208,36 +209,60 @@ class OWAFRS(FuzzyRoughModel):
         @param labels: Optional override for label vector
         @return: ITFRS instance
         """
+        nested = config.pop("_nested_config", None)
 
-        # Load operators from dict or registry
-        ub_tnorm = config.get("ub_tnorm")
-        if isinstance(ub_tnorm, dict):
-            ub_tnorm = tn.TNorm.from_dict(ub_tnorm)
-        elif ub_tnorm is None:
-            tn_name =config.get("ub_tnorm_name")
-            # tn_name =config["ub_tnorm_name"]
-            ub_tnorm = tn.TNorm.create(tn_name, **config)
+        ub_tnorm = None
+        lb_implicator = None
+        ub_owa_method = None
+        lb_owa_method = None
 
-        lb_implicator = config.get("lb_implicator")
-        if isinstance(lb_implicator, dict):
-            lb_implicator = imp.Implicator.from_dict(lb_implicator)
-        elif lb_implicator is None:
-            imp_name = config.get("lb_implicator_name")
-            lb_implicator = imp.Implicator.create(imp_name, **config)
+        if isinstance(nested, dict):
+            fr_cfg = nested.get("fr_model", {})
+            ub_tnorm = tn.TNorm.create_from_spec(fr_cfg.get("ub_tnorm"))
+            lb_implicator = imp.Implicator.create_from_spec(fr_cfg.get("lb_implicator"))
+            ub_owa_method = owa_weights.OWAWeights.create_from_spec(fr_cfg.get("ub_owa_method"))
+            lb_owa_method = owa_weights.OWAWeights.create_from_spec(fr_cfg.get("lb_owa_method"))
 
-        lb_owa_method = config.get("lb_owa_method")
-        if isinstance(lb_owa_method, dict):
-            lb_owa_method = owa_weights.OWAWeights.from_dict(lb_owa_method)
-        elif lb_owa_method is None:
-            lb_owa_name = config.get("lb_owa_method_name")
-            lb_owa_method = owa_weights.OWAWeights.create(lb_owa_name, **config)
+        # Backward-compatible: flat config keys with prefix-only params
+        if ub_tnorm is None:
+            ub_tnorm_obj = config.get("ub_tnorm")
+            if isinstance(ub_tnorm_obj, dict):
+                ub_tnorm = tn.TNorm.from_dict(ub_tnorm_obj)
+            elif ub_tnorm_obj is not None:
+                ub_tnorm = ub_tnorm_obj
+            else:
+                name = config.get("ub_tnorm_name")
+                ub_tnorm = tn.TNorm.create(name, **{k[len("ub_tnorm_"):]: v for k, v in config.items() if k.startswith("ub_tnorm_")})
 
-        ub_owa_method = config.get("ub_owa_method")
-        if isinstance(ub_owa_method, dict):
-            ub_owa_method = owa_weights.OWAWeights.from_dict(ub_owa_method)
-        elif ub_owa_method is None:
-            ub_owa_name = config.get("ub_owa_method_name")
-            ub_owa_method = owa_weights.OWAWeights.create(ub_owa_name, **config)
+        if lb_implicator is None:
+            lb_imp_obj = config.get("lb_implicator")
+            if isinstance(lb_imp_obj, dict):
+                lb_implicator = imp.Implicator.from_dict(lb_imp_obj)
+            elif lb_imp_obj is not None:
+                lb_implicator = lb_imp_obj
+            else:
+                name = config.get("lb_implicator_name")
+                lb_implicator = imp.Implicator.create(name, **{k[len("lb_implicator_"):]: v for k, v in config.items() if k.startswith("lb_implicator_")})
+
+        if lb_owa_method is None:
+            lb_owa_obj = config.get("lb_owa_method")
+            if isinstance(lb_owa_obj, dict):
+                lb_owa_method = owa_weights.OWAWeights.from_dict(lb_owa_obj)
+            elif lb_owa_obj is not None:
+                lb_owa_method = lb_owa_obj
+            else:
+                name = config.get("lb_owa_method_name")
+                lb_owa_method = owa_weights.OWAWeights.create(name, **{k[len("lb_owa_method_"):]: v for k, v in config.items() if k.startswith("lb_owa_method_")})
+
+        if ub_owa_method is None:
+            ub_owa_obj = config.get("ub_owa_method")
+            if isinstance(ub_owa_obj, dict):
+                ub_owa_method = owa_weights.OWAWeights.from_dict(ub_owa_obj)
+            elif ub_owa_obj is not None:
+                ub_owa_method = ub_owa_obj
+            else:
+                name = config.get("ub_owa_method_name")
+                ub_owa_method = owa_weights.OWAWeights.create(name, **{k[len("ub_owa_method_"):]: v for k, v in config.items() if k.startswith("ub_owa_method_")})
 
         # Handle matrix and labels
         sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)

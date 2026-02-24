@@ -14,10 +14,13 @@ If you are a developer trying to extend FRsutils, please start here [Development
   - scikit learn (>= 1.2.1)
   - pandas (>= 1.5.3)
   - colorlog (>= 6.9.0)
-  - pytest (>= 7.1.2) [if you want to run unit tests]
   - openpyxl
+  
+  Optional:
+  - pytest (>= 7.1.2) [if you want to run unit tests]
   - matplotlib (If you want to run some plot tests)
   - cupy (>=13.4.1) (if you have an Nvidia GPU) [under development, lowest priority]
+  - smote-variants (if you want to compare FR sampling methods with those in smote-variants)
 
 # Fuzzy-Rough set utilities [Under development]
 

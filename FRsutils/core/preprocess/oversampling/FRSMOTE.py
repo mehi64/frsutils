@@ -1,7 +1,40 @@
-""" 
+"""
 @file FRSMOTE.py
 @brief FRSMOTE: Fuzzy Rough Set SMOTE implementation.
-...
+
+FRSMOTE is implemented as an imbalanced-learn compatible oversampler.
+The estimator exposes a **flat parameter interface** (for sklearn / GridSearchCV),
+while internally converting the flat params to a **nested config** for clean
+component construction (similarity, similarity t-norm, fuzzy-rough model parts).
+
+##############################################
+# ✅ Quick Summary of Features
+# - sklearn/imbalanced-learn compatible (fit_resample)
+# - fuzzy-rough guided seed selection using positive region
+# - flat params for GridSearchCV
+# - internal nested config via normalize_flat_config_to_nested
+##############################################
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# from imblearn.pipeline import Pipeline
+# from sklearn.model_selection import GridSearchCV
+# from sklearn.svm import SVC
+#
+# pipe = Pipeline([
+#   ("frsmote", FRSMOTE()),
+#   ("svc", SVC())
+# ])
+#
+# param_grid = {
+#   "frsmote__similarity": ["gaussian"],
+#   "frsmote__similarity_sigma": [0.2, 0.5],
+#   "frsmote__k_neighbors": [3, 5],
+# }
+# gs = GridSearchCV(pipe, param_grid=param_grid, cv=3)
+# gs.fit(X, y)
 """
 from __future__ import annotations
 
@@ -18,13 +51,26 @@ class FRSMOTE(BaseSoloFuzzyRoughOversampler):
     DEFAULT_CONFIG: Dict[str, Any] = {
         "type": "itfrs",
         "ub_tnorm_name": "minimum",
+        # Optional parameter for ub_tnorm_name='yager'
+        "ub_tnorm_p": 2.0,
         "lb_implicator_name": "lukasiewicz",
 
         "ub_owa_method_name": "linear",
         "lb_owa_method_name": "linear",
+        # Optional parameter for *_owa_method_name='exponential'
+        "ub_owa_method_base": 2.0,
+        "lb_owa_method_base": 2.0,
 
         "lb_fuzzy_quantifier_name": "linear",
         "ub_fuzzy_quantifier_name": "linear",
+
+        # New naming standard (preferred): <prefix>_fuzzy_quantifier_<param>
+        "lb_fuzzy_quantifier_alpha": 0.1,
+        "lb_fuzzy_quantifier_beta": 0.6,
+        "ub_fuzzy_quantifier_alpha": 0.1,
+        "ub_fuzzy_quantifier_beta": 0.6,
+
+        # Legacy aliases (kept for backwards compatibility with old scripts)
         "lb_alpha": 0.1,
         "lb_beta": 0.6,
         "ub_alpha": 0.1,

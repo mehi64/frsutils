@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug benchmark_oversamplers_minmax (module)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "experiments.benchmark_oversamplers_minmax",
+            "cwd": "/ssd/research/FRsutils",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                // "--keel-cv-dir", "/ssd/research/Datasets/KEEL/imbalanced/IR_1.5_9/pima-5-fold",
+                "--keel-cv-dir", "/ssd/research/Datasets/KEEL/imbalanced/noisy_and_borderline_datasets/03subcl5-600-5-0-BI-5-fold",
+                "--out-dir", "/ssd/temp"
+            ]
+            },
+        {
             "name": "SNDBX use lazyConstructibleMixin",
             "type": "debugpy",
             "request": "launch",

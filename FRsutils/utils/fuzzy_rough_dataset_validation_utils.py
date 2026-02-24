@@ -1,3 +1,28 @@
+"""
+@file fuzzy_rough_dataset_validation_utils.py
+@brief Dataset validation helpers for fuzzy-rough computations.
+
+Ensures that X and y satisfy the assumptions used across FRsutils:
+- tabular numeric features
+- X normalized to [0, 1]
+- y is a 1D label vector compatible with sklearn
+
+##############################################
+# ✅ Summary of Features
+# - compatible_dataset_with_FuzzyRough: validates (X, y)
+
+# ✅ Design Patterns & Clean Code Notes
+# - SRP: dataset validation only
+# - Fail-fast: raise early with actionable errors
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# compatible_dataset_with_FuzzyRough(X, y)
+
+"""
+
 import numpy as np
 
 

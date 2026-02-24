@@ -1,7 +1,39 @@
-""" 
+"""
 @file base_allpurpose_fuzzy_rough_oversampler.py
-@brief Abstract base class for oversampling using Fuzzy Rough Sets.
-...
+@brief Base oversampler abstraction used by FRsutils fuzzy-rough oversamplers.
+
+This base class provides:
+- A **flat** scikit-learn compatible parameter interface (`get_params` / `set_params`)
+- A **nested internal config** (`_nested_config`) derived from the flat config
+  via `normalize_flat_config_to_nested`
+- Common handling for:
+  - sampling strategy
+  - instance ranking strategy
+  - per-class sampling ratio
+  - fuzzy-rough model type selection
+
+##############################################
+# ✅ Quick Summary of Features
+# Feature                              Description
+# ----------------------------------------------------------------------------------
+# configure(**flat_config)             Stores flat config + regenerates nested config
+# set_params(**flat_params)            sklearn-friendly param updates (GridSearchCV)
+# get_params()                         Always returns flat tunable parameters
+# _get_target_classes()                Determines which classes to oversample
+# _get_num_samples()                   Computes target number of synthetic samples
+
+# ✅ Design Patterns
+# - Template Method: subclasses implement _check_params / fit_resample
+# - Adapter: flat params -> nested config
+# - Clean Code: SRP, fail-fast validation, predictable sklearn interface
+##############################################
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# sampler = FRSMOTE(type="itfrs", similarity="gaussian", similarity_sigma=0.2)
+# X_res, y_res = sampler.fit_resample(X, y)
 """
 from __future__ import annotations
 
@@ -9,6 +41,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict
 import warnings
 from imblearn.over_sampling.base import BaseOverSampler
+
+from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 import FRsutils.utils.validation_utils.validation_utils as valutil
 from FRsutils.utils.constructor_utils.lazy_constructible_mixin import LazyConstructibleMixin
@@ -52,6 +86,10 @@ class BaseAllPurposeFuzzyRoughOversampler(LazyConstructibleMixin, ABC, BaseOverS
             raise TypeError("type must be a non-empty string.")
         self.type = model_type
 
+        # Internal (nested) config is derived from the flat config.
+        # This should NEVER be exposed as an sklearn parameter.
+        self._nested_config = normalize_flat_config_to_nested(cfg, explicit_keys=set(kwargs.keys()))
+
     def _get_target_classes(self):
         if self.instance_ranking_strategy == "pos":
             majority_class = max(self.target_stats_, key=self.target_stats_.get)
@@ -93,8 +131,16 @@ class BaseAllPurposeFuzzyRoughOversampler(LazyConstructibleMixin, ABC, BaseOverS
         self._check_params(model_registry=model_registry, **config)
 
     def configure(self, *, model_registry=None, **config):
+        # Private argument used to keep alias-precedence correct.
+        explicit_keys = config.pop("_explicit_keys", None)
+        if explicit_keys is None:
+            explicit_keys = set(config.keys())
+
         merged = self._collect_default_config()
         merged.update(config)
+
+        # Always keep an internal nested representation.
+        self._nested_config = normalize_flat_config_to_nested(merged, explicit_keys=set(explicit_keys))
 
         self.sampling_strategy = merged.get("sampling_strategy", self.sampling_strategy)
         self.sampling_ratio = merged.get("sampling_ratio", self.sampling_ratio)
@@ -113,6 +159,29 @@ class BaseAllPurposeFuzzyRoughOversampler(LazyConstructibleMixin, ABC, BaseOverS
             self.type = merged["type"]
 
         return super().configure(model_registry=model_registry, **merged)
+
+    def set_params(self, **params):
+        """ 
+        @brief scikit-learn compatible set_params.
+
+        This method keeps the *external* interface flat, then regenerates the
+        internal nested config via `normalize_flat_config_to_nested`.
+
+        @param params: Flat parameters (e.g., provided by GridSearchCV)
+        @return: self
+        """
+        if not params:
+            return self
+
+        base_config = dict(getattr(self, "_object_config", {}))
+        if not base_config:
+            base_config = self._collect_default_config()
+        base_config.update(params)
+
+        registry = getattr(self, "_model_registry", None)
+        # configure() will rebuild _nested_config
+        self.configure(model_registry=registry, _explicit_keys=set(params.keys()), **base_config)
+        return self
 
     def get_params(self, deep: bool = True):
         params: Dict[str, Any] = self._collect_default_config()

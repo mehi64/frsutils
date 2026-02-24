@@ -1,7 +1,29 @@
-""" 
+"""
 @file base_solo_fuzzy_rough_oversampler.py
-@brief Base class for fuzzy rough oversamplers that don’t rely on external generators.
-...
+@brief Base class for fuzzy-rough oversamplers that do not rely on external generators.
+
+This class extends `BaseAllPurposeFuzzyRoughOversampler` and provides:
+- A `fit()` implementation that
+  - validates dataset compatibility
+  - builds a similarity matrix using `build_similarity_matrix`
+  - lazily builds the fuzzy-rough model via `LazyConstructibleMixin.build`
+
+It keeps estimator parameters **flat** for scikit-learn, while using an internal
+`_nested_config` (derived from flat params) when constructing sub-components.
+
+##############################################
+# ✅ Quick Summary of Features
+# - fit(X, y) builds similarity matrix + fuzzy-rough model lazily
+# - set_params(...) calls configure(...) to keep sklearn GridSearch compatible
+# - positive_region convenience property
+##############################################
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# sampler = FRSMOTE(similarity="gaussian", similarity_sigma=0.5, k_neighbors=5)
+# X_res, y_res = sampler.fit_resample(X, y)
 """
 from __future__ import annotations
 
@@ -20,7 +42,18 @@ from FRsutils.utils.fuzzy_rough_dataset_validation_utils import compatible_datas
 class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
     DEFAULT_CONFIG: Dict[str, Any] = {
         "similarity": "linear",
+        # Legacy alias (optional): kept to avoid breaking older GridSearch scripts.
+        "similarity_name": None,
+        # Common similarity parameter for GaussianSimilarity
+        # (kept flat for sklearn; internally mapped to similarity.params.sigma)
+        "similarity_sigma": 0.1,
+        # Legacy alias (optional)
+        "gaussian_similarity_sigma": None,
         "similarity_tnorm": "minimum",
+        # Legacy alias (optional)
+        "similarity_tnorm_name": None,
+        # Optional parameter for similarity_tnorm='yager'
+        "similarity_tnorm_p": 2.0,
         "k_neighbors": 5,
         "bias_interpolation": False,
         "random_state": None,
@@ -50,7 +83,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         self._validate_config(model_registry=registry, **self._object_config)
 
         if not self.is_built:
-            similarity_matrix = build_similarity_matrix(X, **self._object_config)
+            similarity_matrix = build_similarity_matrix(X, config=getattr(self, "_nested_config", None), **self._object_config)
             self.build(similarity_matrix, y)
 
         return self
@@ -65,7 +98,7 @@ class BaseSoloFuzzyRoughOversampler(BaseAllPurposeFuzzyRoughOversampler):
         base_config = dict(getattr(self, "_object_config", {}))
         base_config.update(params)
         registry = getattr(self, "_model_registry", None) or FuzzyRoughModel
-        self.configure(model_registry=registry, **base_config)
+        self.configure(model_registry=registry, _explicit_keys=set(params.keys()), **base_config)
         return self
 
     @abstractmethod

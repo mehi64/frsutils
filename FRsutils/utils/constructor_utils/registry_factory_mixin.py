@@ -128,6 +128,53 @@ class RegistryFactoryMixin(ABC):
 
         return target_cls(**ctor_args)
 
+    @classmethod
+    def create_from_spec(cls, spec_or_obj: Any, *, strict: bool = False) -> Any:
+        """ 
+        @brief Instantiate a registered component from a nested spec or an existing instance.
+
+        This helper enables the project-wide convention for **internal nested configs**:
+            {"name": <alias>, "params": {...}}
+
+        It also accepts several backward-compatible forms:
+        - direct instances of the registry base class
+        - {"__instance__": <obj>} (internal marker produced by the normalizer)
+        - objects serialized by `to_dict()` ("name" + "params")
+        - legacy compact dicts such as {"type": <alias>, ...} (no "params" key)
+
+        @param spec_or_obj: Nested spec dict or instance.
+        @param strict: If True, errors on unused parameters when calling `create()`.
+        @return: Instantiated component or the input instance.
+        """
+        if spec_or_obj is None:
+            return None
+
+        # Internal marker: pass-through instance.
+        if isinstance(spec_or_obj, dict) and '__instance__' in spec_or_obj:
+            return spec_or_obj['__instance__']
+
+        # Already an instance of this registry.
+        if isinstance(spec_or_obj, cls):
+            return spec_or_obj
+
+        if isinstance(spec_or_obj, dict):
+            # Preferred internal spec format
+            if 'name' in spec_or_obj:
+                name = spec_or_obj.get('name')
+                params = spec_or_obj.get('params') or {}
+                if not isinstance(params, dict):
+                    raise TypeError("spec['params'] must be a dict")
+                return cls.create(name, strict=strict, **params)
+
+            # Legacy compact format: {type: <alias>, ...}
+            if 'type' in spec_or_obj and 'params' not in spec_or_obj:
+                name = spec_or_obj.get('type')
+                params = {k: v for k, v in spec_or_obj.items() if k not in {'type'}}
+                return cls.create(name, strict=strict, **params)
+
+        raise TypeError(f'Unsupported component spec/object: {type(spec_or_obj)}')
+
+
 
     @classmethod
     def list_available(cls) -> Dict[str, List[str]]:

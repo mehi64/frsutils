@@ -1,3 +1,5 @@
+Low level ideas with no priorities
+
 - check TODO s inside code
 - unit tests for all
 - change parameters' correctness checks to where something is getting built
@@ -6,7 +8,7 @@
 - __all__ decide about all parts of the project
 - use logger
 - check docstrings and comments
-- Add Yager tnorm and tests
+
 - Dependency Injection
 - use keel to generate datasets for testing
 - check all def validate_params(cls, **kwargs): to be implemented and have cls not self.
@@ -15,4 +17,33 @@
 - update def get_logger(cls): for that import
 - def from_dict(cls, similarity_matrix, labels, data: dict) have different signatures with mixin and chain of inheritance
 - 
-	
+------------------------------------------------------------------------------------------------------------------------------------
+High level ideas unsorted
+
+
+	* Add resumeability feature to experiments
+	* Use Nearest Neighbors instead of full similarity matrix
+	* Add approximate similarity with KDtree and BallTree, etc. (HNSW is probably better because fuzzy-rough-learn uses that one)
+	* Add CuPY
+	* Separate FRsutils core from sampling package
+	* Add UI
+	* Add ability to get multiclass datastes to FRsutils
+	* Add loader for different datasets
+	* Add multiple ways of calculation (if similarity matrix exist, use it otherwise calculate it. for pos, knn, etc.)
+
+
+	* Add more tnorm and tests
+	* Add more similarities and tests
+	* Add more implicators and tests
+	* Add more quantifiers and tests
+	* Add VPRS and other counterparts of ITFRS, OWAFRS, and VQRS
+	* etc.
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+

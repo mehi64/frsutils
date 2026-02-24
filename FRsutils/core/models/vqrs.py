@@ -11,6 +11,7 @@ Supports both direct construction and lazy instantiation via config or dictionar
 # - Template Method: Inherits from FuzzyRoughModel abstract interface
 # - Logger Injection: Supports injected or default logger
 # - Fail-Fast Validation: Ensures correct quantifier types
+# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
 ##############################################
 
 ##############################################
@@ -185,20 +186,44 @@ class VQRS(FuzzyRoughModel):
         @param labels: Optional override for label vector
         @return: VQRS instance
         """
-        # Load operators from dict or registry
-        ub_fuzzy_quantifier = config.get("ub_fuzzy_quantifier")
-        if isinstance(ub_fuzzy_quantifier, dict):
-            ub_fuzzy_quantifier = FuzzyQuantifier.from_dict(ub_fuzzy_quantifier)
-        elif ub_fuzzy_quantifier is None:
-            ub_fuzzy_quantifier_name = config.get("ub_fuzzy_quantifier_name")
-            ub_fuzzy_quantifier = FuzzyQuantifier.create(ub_fuzzy_quantifier_name, namespace="ub", **config)
+        nested = config.pop("_nested_config", None)
 
-        lb_fuzzy_quantifier = config.get("lb_fuzzy_quantifier")
-        if isinstance(lb_fuzzy_quantifier, dict):
-            lb_fuzzy_quantifier = FuzzyQuantifier.from_dict(lb_fuzzy_quantifier)
-        elif lb_fuzzy_quantifier is None:
-            lb_fuzzy_quantifier_name = config.get("lb_fuzzy_quantifier_name")
-            lb_fuzzy_quantifier = FuzzyQuantifier.create(lb_fuzzy_quantifier_name, namespace="lb", **config)
+        lb_fuzzy_quantifier = None
+        ub_fuzzy_quantifier = None
+
+        if isinstance(nested, dict):
+            fr_cfg = nested.get("fr_model", {})
+            lb_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("lb_fuzzy_quantifier"))
+            ub_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("ub_fuzzy_quantifier"))
+
+        # Backward-compatible: flat config keys
+        if ub_fuzzy_quantifier is None:
+            ub_fq = config.get("ub_fuzzy_quantifier")
+            if isinstance(ub_fq, dict):
+                ub_fuzzy_quantifier = FuzzyQuantifier.from_dict(ub_fq)
+            elif ub_fq is not None:
+                ub_fuzzy_quantifier = ub_fq
+            else:
+                name = config.get("ub_fuzzy_quantifier_name")
+                # Prefer new flat naming: ub_fuzzy_quantifier_alpha/beta
+                params = {k[len("ub_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("ub_fuzzy_quantifier_")}
+                if not params:
+                    # legacy: ub_alpha/ub_beta (handled by normalizer but keep safety)
+                    params = {k[len("ub_"):]: v for k, v in config.items() if k.startswith("ub_") and k in {"ub_alpha", "ub_beta"}}
+                ub_fuzzy_quantifier = FuzzyQuantifier.create(name, **params)
+
+        if lb_fuzzy_quantifier is None:
+            lb_fq = config.get("lb_fuzzy_quantifier")
+            if isinstance(lb_fq, dict):
+                lb_fuzzy_quantifier = FuzzyQuantifier.from_dict(lb_fq)
+            elif lb_fq is not None:
+                lb_fuzzy_quantifier = lb_fq
+            else:
+                name = config.get("lb_fuzzy_quantifier_name")
+                params = {k[len("lb_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("lb_fuzzy_quantifier_")}
+                if not params:
+                    params = {k[len("lb_"):]: v for k, v in config.items() if k.startswith("lb_") and k in {"lb_alpha", "lb_beta"}}
+                lb_fuzzy_quantifier = FuzzyQuantifier.create(name, **params)
 
         # Handle matrix and labels
         sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)

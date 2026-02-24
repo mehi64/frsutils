@@ -1,0 +1,8 @@
+
+conda activate frsutil_env_2
+cd /ssd/research/FRsutils
+python -m experiments.benchmark_oversamplers_minmax --keel-cv-dir /ssd/research/FRsutils/datasets/KEEL/imbalanced/ecoli3-5-fold --out-dir /ssd/temp
+
+
+
+

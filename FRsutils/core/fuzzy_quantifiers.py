@@ -80,11 +80,42 @@ class FuzzyQuantifier(RegistryFactoryMixin):
         """
         @brief Instantiates a quantifier from dictionary config.
 
-        @param data: Dictionary with 'type', 'alpha', and 'beta'
-        @return: Constructed FuzzyQuantifier object
+        Supports both the new standardized serialization:
+            {"type": "LinearFuzzyQuantifier", "name": "linear", "params": {"alpha": ..., "beta": ...}}
+        and the legacy compact format:
+            {"type": "linear", "alpha": ..., "beta": ...}
+
+        @param data: Serialized dictionary.
+        @return: Constructed FuzzyQuantifier object.
         """
-        q_type = data["type"]
-        return cls.create(q_type, alpha=data["alpha"], beta=data["beta"])
+        if not isinstance(data, dict):
+            raise TypeError("data must be a dict")
+
+        # New format (preferred)
+        if "name" in data and "params" in data:
+            params = data.get("params") or {}
+            if not isinstance(params, dict):
+                raise TypeError("data['params'] must be a dict")
+            return cls.create(data["name"], **params)
+
+        # Alternate mixin-like format
+        if "type" in data and "params" in data:
+            params = data.get("params") or {}
+            if not isinstance(params, dict):
+                raise TypeError("data['params'] must be a dict")
+            name = data.get("name") or data.get("type")
+            return cls.create(name, **params)
+
+        # Legacy compact format
+        if "type" in data and "alpha" in data and "beta" in data:
+            return cls.create(
+                data["type"],
+                alpha=data["alpha"],
+                beta=data["beta"],
+                validate_inputs=data.get("validate_inputs", True),
+            )
+
+        raise ValueError("Unsupported quantifier dictionary format. Expected keys like (name, params) or (type, alpha, beta).")
 
 
 @FuzzyQuantifier.register("linear")
@@ -133,13 +164,11 @@ class LinearFuzzyQuantifier(FuzzyQuantifier):
 
     def to_dict(self) -> dict:
         """
-        @brief Serialize instance to dict
+        @brief Serialize instance to a standardized dict.
 
-        @return: Dict with type, alpha, and beta
+        @return: Dict with (type, name, params).
         """
-        return {"type": 'linear',
-                "alpha": self.alpha,
-                "beta": self.beta}
+        return {"type": self.name, "name": self.name, "params": self._get_params(), "alpha": self.alpha, "beta": self.beta}
 
 
 @FuzzyQuantifier.register("quadratic", "quad")

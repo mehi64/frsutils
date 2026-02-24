@@ -1,7 +1,29 @@
 """
 @file lazy_constructible_mixin.py
-@brief Unified mixin for managing lazy construction and initialization of objects.
-...
+@brief Lifecycle mixin for lazily-constructed, config-driven components.
+
+This mixin implements a small, explicit lifecycle:
+`UNCONFIGURED -> CONFIGURED -> BUILT`, enabling:
+- scikit-learn friendly cloning (store configuration; delay heavy build)
+- reproducible reconstruction via `from_config`
+
+In FRsutils, estimators keep their **flat** config in `_object_config` for
+Pipeline/GridSearch compatibility, while an optional internal `_nested_config`
+may be attached to avoid parameter-name collisions during subcomponent builds.
+
+##############################################
+# ✅ Quick Summary of Features
+# - configure(**config) stores configuration and validates
+# - build(*args) constructs the internal object (via model_registry)
+# - lifecycle enforcement via LifecycleState
+##############################################
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# mixin_user.configure(model_registry=FuzzyRoughModel, **flat_config)
+# mixin_user.build(similarity_matrix, y)
 """
 from enum import Enum, auto
 from abc import ABC, abstractmethod
@@ -64,7 +86,16 @@ class LazyConstructibleMixin(ABC):
         if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.CONFIGURED:
             raise RuntimeError("Either Object is not configured or is already built.")
 
+        # NOTE:
+        # - `_object_config` is intentionally *flat* (scikit-learn friendly).
+        # - `_nested_config` (if present) is an internal representation used to build
+        #   sub-components without name collisions.
         config = dict(self._object_config)
+
+        nested = getattr(self, "_nested_config", None)
+        if isinstance(nested, dict):
+            # Keep this key private/internal. Model builders may prefer it.
+            config["_nested_config"] = nested
 
         if self._model_registry and 'type' in config:
             cls = self._model_registry.get_class(config['type'])

@@ -12,6 +12,7 @@ using a fuzzy implicator and a T-norm operator over a similarity matrix.
 # - Lower and upper approximation computation
 # - Class introspection and serialization support
 # - Logger injection via BaseComponentWithLogger
+# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
 
 # ✅ Summary Table of Design Principles
 # - Strategy Pattern: Uses user-defined T-norm and Implicator strategies
@@ -176,22 +177,36 @@ class ITFRS(FuzzyRoughModel):
         @param labels: Optional override for label vector
         @return: ITFRS instance
         """
+        nested = config.pop("_nested_config", None)
 
-        # Load operators from dict or registry
-        ub_tnorm = config.get("ub_tnorm")
-        if isinstance(ub_tnorm, dict):
-            ub_tnorm = tn.TNorm.from_dict(ub_tnorm)
-        elif ub_tnorm is None:
-            tn_name =config.get("ub_tnorm_name")
-            # tn_name =config["ub_tnorm_name"]
-            ub_tnorm = tn.TNorm.create(tn_name, **config)
+        # Preferred: internal nested config
+        ub_tnorm = None
+        lb_implicator = None
+        if isinstance(nested, dict):
+            fr_cfg = nested.get("fr_model", {})
+            ub_tnorm = tn.TNorm.create_from_spec(fr_cfg.get("ub_tnorm"))
+            lb_implicator = imp.Implicator.create_from_spec(fr_cfg.get("lb_implicator"))
 
-        lb_implicator = config.get("lb_implicator")
-        if isinstance(lb_implicator, dict):
-            lb_implicator = imp.Implicator.from_dict(lb_implicator)
-        elif lb_implicator is None:
-            imp_name = config.get("lb_implicator_name")
-            lb_implicator = imp.Implicator.create(imp_name, **config)
+        # Backward-compatible: flat config keys
+        if ub_tnorm is None:
+            ub_tnorm_obj = config.get("ub_tnorm")
+            if isinstance(ub_tnorm_obj, dict):
+                ub_tnorm = tn.TNorm.from_dict(ub_tnorm_obj)
+            elif ub_tnorm_obj is not None:
+                ub_tnorm = ub_tnorm_obj
+            else:
+                tn_name = config.get("ub_tnorm_name")
+                ub_tnorm = tn.TNorm.create(tn_name, **{k[len("ub_tnorm_"):]: v for k, v in config.items() if k.startswith("ub_tnorm_")})
+
+        if lb_implicator is None:
+            lb_imp_obj = config.get("lb_implicator")
+            if isinstance(lb_imp_obj, dict):
+                lb_implicator = imp.Implicator.from_dict(lb_imp_obj)
+            elif lb_imp_obj is not None:
+                lb_implicator = lb_imp_obj
+            else:
+                imp_name = config.get("lb_implicator_name")
+                lb_implicator = imp.Implicator.create(imp_name, **{k[len("lb_implicator_"):]: v for k, v in config.items() if k.startswith("lb_implicator_")})
 
         # Handle matrix and labels
         sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)

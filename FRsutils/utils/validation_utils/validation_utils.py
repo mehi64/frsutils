@@ -1,3 +1,31 @@
+"""
+@file validation_utils.py
+@brief Lightweight validation utilities used across FRsutils.
+
+This module contains small, reusable validators that are intentionally
+framework-agnostic and safe to use in scikit-learn/imbalanced-learn pipelines.
+
+##############################################
+# ✅ Summary of Features
+# - validate_ranking_strategy_choice
+# - validate_range_0_1
+# - validate_similarity_matrix
+# - validate_y_array
+
+# ✅ Design Patterns & Clean Code Notes
+# - SRP: validation helpers only
+# - Fail-fast: consistent error messages
+# - No side effects: all functions are pure
+
+##############################################
+# ✅ How to Use - Examples
+##############################################
+
+# validate_range_0_1(np.array([0.0, 0.5, 1.0]), name="X")
+# validate_ranking_strategy_choice("pos")
+
+"""
+
 import numpy as np
 
 ALLOWED_RANKING_STRATEGIES = {'pos', 'lower', 'upper'}

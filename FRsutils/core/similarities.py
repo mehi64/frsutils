@@ -19,10 +19,11 @@ serialization, and matrix computation based on selected T-norms.
 ##############################################
 """
 
-from typing import Callable
+from typing import Callable, Optional, Dict, Any
 import numpy as np
 from abc import abstractmethod
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 from FRsutils.core.tnorms import TNorm
 
 class Similarity(RegistryFactoryMixin):
@@ -159,27 +160,39 @@ def calculate_similarity_matrix(
     np.fill_diagonal(sim_matrix, 1.0)
     return sim_matrix
 
-def build_similarity_matrix(X: np.ndarray, **kwargs) -> np.ndarray:
+def build_similarity_matrix(X: np.ndarray, config: Optional[Dict[str, Any]] = None, **kwargs) -> np.ndarray:
     """
     @brief Build a pairwise similarity matrix from input features and a config dictionary.
 
     @param X: Normalized input matrix of shape (n_samples, n_features)
-    @param kwargs: Flattened config including:
-        - similarity: name of similarity function (e.g., 'gaussian')
-        - similarity_tnorm: name of T-norm to use across features (e.g., 'minimum')
-        - parameters for similarity function (e.g., sigma=0.2)
-        - parameters for tnorm (e.g., p=2.0 for Yager)
+    This function supports two call modes:
+
+    1) **Preferred (internal)**: provide a nested config created by
+       `normalize_flat_config_to_nested`:
+       - config["similarity"] = {"name": ..., "params": {...}}
+       - config["similarity_tnorm"] = {"name": ..., "params": {...}}
+
+    2) **Backward-compatible (external/flat)**: provide flat kwargs according to the
+       naming standard:
+       - similarity="gaussian"
+       - similarity_sigma=0.2
+       - similarity_tnorm="minimum"
+       - similarity_tnorm_p=2.0
+
+    @param config: Optional nested config. If omitted, kwargs are normalized.
+    @param kwargs: Flat config according to the naming standard.
     @return: Pairwise similarity matrix (n x n)
     """
-    similarity_type = kwargs.get("similarity", "gaussian")
-    similarity_params = {
-        k: v for k, v in kwargs.items() if k not in {"similarity", "similarity_tnorm"}
-    }
+    nested = config if isinstance(config, dict) else normalize_flat_config_to_nested(kwargs)
 
-    tnorm_type = kwargs.get("similarity_tnorm", "minimum")
-    tnorm_params = {
-        k: v for k, v in kwargs.items() if k not in {"similarity", "similarity_tnorm"}
-    }
+    sim_cfg = nested.get("similarity", {}) if isinstance(nested, dict) else {}
+    tnorm_cfg = nested.get("similarity_tnorm", {}) if isinstance(nested, dict) else {}
+
+    similarity_type = sim_cfg.get("name") or kwargs.get("similarity") or "gaussian"
+    similarity_params = sim_cfg.get("params") if isinstance(sim_cfg.get("params"), dict) else {}
+
+    tnorm_type = tnorm_cfg.get("name") or kwargs.get("similarity_tnorm") or "minimum"
+    tnorm_params = tnorm_cfg.get("params") if isinstance(tnorm_cfg.get("params"), dict) else {}
 
     similarity_func = Similarity.create(similarity_type, **similarity_params)
     tnorm_func = TNorm.create(tnorm_type, **tnorm_params)
