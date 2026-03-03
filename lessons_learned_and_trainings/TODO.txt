@@ -38,6 +38,7 @@ High level ideas unsorted
 	* Add more quantifiers and tests
 	* Add VPRS and other counterparts of ITFRS, OWAFRS, and VQRS
 	* etc.
+	* Add seed for recreation of the same results in frsmote
 
 ------------------------------------------------------------------------------------------------------------------------------------------------
 
