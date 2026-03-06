@@ -400,6 +400,17 @@
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: use keel audit",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "FRsutils.sandbox.use_keel_audit",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

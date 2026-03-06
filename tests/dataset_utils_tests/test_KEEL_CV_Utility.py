@@ -5,7 +5,7 @@ import pandas as pd
 from unittest.mock import patch
 from typing import Literal
 
-from FRsutils.utils.dataset_utils.KEEL_CV_Utility import discover_keel_cv_folds, KeelCVLoader
+from FRsutils.utils.dataset_utils.KEEL.KEEL_CV_Utility import discover_keel_cv_folds, KeelCVLoader
 
 
 # ─────────────────────────────────────────────────────────────

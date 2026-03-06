@@ -16,7 +16,7 @@ import numpy as np
 from sklearn.model_selection import BaseCrossValidator
 import warnings
 
-from FRsutils.utils.dataset_utils.KEEL_DS_loader_utility import parse_keel_file
+from FRsutils.utils.dataset_utils.KEEL.KEEL_DS_loader_utility import parse_keel_file
 
 
 # ------------------------------

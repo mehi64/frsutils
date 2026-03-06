@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 import math
-from FRsutils.utils.dataset_utils.KEEL_DS_loader_utility import parse_keel_file, create_X_y
+from FRsutils.utils.dataset_utils.KEEL.KEEL_DS_loader_utility import parse_keel_file, create_X_y
 
 # TODO: NOTE: file _apply_one_hot_encoding is not tested
 
