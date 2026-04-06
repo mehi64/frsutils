@@ -1,44 +1,25 @@
 """
 @file KEEL_Audit_Utility.py
-@brief Single-file KEEL dataset auditor with class-based logical grouping.
+@brief KEEL Dataset Auditor Utility with logically grouped class-based helpers.
 
-This module intentionally keeps the current KEEL audit system in one file, but its
-internal structure is organized as if it were already split into multiple layers.
-The main goal is to make the file understandable, navigable, and ready for a future
-migration into separate repositories or modules.
+This module keeps the current KEEL audit workflow in one file, but reorganizes the
+implementation so that almost all previously free helper functions now live inside
+coherent helper classes. The goal is to make the file easier to understand,
+maintain, and later split into multiple repositories if needed.
 
-Internal architectural layers in this file:
-1. Infrastructure helpers
-   - optional project-bridge imports
-   - JSON artifact persistence
-   - path and layout utilities
-
-2. Parsing helpers
-   - KEEL header parsing
-   - KEEL data loading
-   - fold-name and split parsing
-
-3. Analyzer/helper groups
-   - numeric/distribution helpers
-   - oversampling diagnostics
-   - feature-quality checks
-   - label and record integrity checks
-   - split/shift/leakage checks
-   - decision-support helpers
-
-4. Workflow and summary builders
-   - file-level audit workflow
-   - folder-level audit workflow
-   - root-level audit workflow
-   - executive summary builders
-   - error payload builders
-
-5. Conceptual architecture metadata
-   - categories
-   - profiles
-   - families
-   - registry
-   - facade
+Current logical grouping of helper classes:
+- ProjectHelperImportBridge
+- JsonArtifactIO
+- PathLayoutHelper
+- KEELParsingHelper
+- NumericStatisticsHelper
+- OversamplingAnalysisHelper
+- FeatureQualityHelper
+- SplitAuditHelper
+- DecisionSupportHelper
+- DatasetExecutiveSummaryBuilder
+- ErrorAuditPayloadBuilder
+- FileAuditWorkflow / FolderAuditWorkflow / RootAuditWorkflow
 
 Public API remains intentionally small:
 - audit_keel_file(...)
@@ -46,14 +27,11 @@ Public API remains intentionally small:
 - audit_keel_root(...)
 - list_supported_audit_families()
 - describe_active_audit_categories(...)
-
-Important design note:
-This file does not preserve backward compatibility with older monolithic utilities.
-Instead, it prioritizes logical grouping, readability, and future migration safety.
 """
 
 from __future__ import annotations
 
+from __future__ import annotations
 import json
 import os
 import re
@@ -66,14 +44,8 @@ from sklearn.neighbors import NearestNeighbors
 
 _MISSING_TOKENS = {"?", "<null>"}
 _SUSPICIOUS_NULL_LIKE = {"null", "nil", "none", "nan", "na"}
-_FOLD_PAT = re.compile(r"^(?P<base>.+?)-(?P<k>\d+)-(?P<i>\d+)(?P<split>tra|tst)\.dat$", re.IGNORECASE)
 
-@dataclass(frozen=True)
 class _FoldNameInfo:
-    """
-    @brief Parsed KEEL fold-name metadata extracted from one filename.
-    """
-
     dataset_key: str
     k_folds: Optional[int]
     fold_index: Optional[int]
@@ -877,12 +849,7 @@ class OversamplingAnalysisHelper:
 
 class FeatureQualityHelper:
     """
-    @brief Feature-quality helper computations.
-
-    This helper is intentionally limited to feature-space quality concerns such as
-    missingness summaries, constant/near-constant detection, and nominal-cardinality
-    checks. Record-level and label-level integrity checks are handled separately by
-    LabelIntegrityHelper so that category boundaries remain easier to understand.
+    @brief Feature-quality and label-integrity helper computations.
     """
 
     @staticmethod
@@ -921,6 +888,17 @@ class FeatureQualityHelper:
         return {"constant_features": sorted(list(set(constant))), "near_constant_features": near_constant}
 
     @staticmethod
+    def _duplicate_rows(df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        @brief Duplicate row count and ratio.
+        """
+        n = int(len(df))
+        if n == 0:
+            return {"n_rows": 0, "n_duplicate_rows": 0, "duplicate_ratio": float("nan")}
+        dup = int(df.duplicated(keep="first").sum())
+        return {"n_rows": n, "n_duplicate_rows": dup, "duplicate_ratio": float(dup / n)}
+
+    @staticmethod
     def _high_cardinality_nominal(
         attributes: Dict[str, Any],
         nominal_inputs: List[str],
@@ -942,28 +920,6 @@ class FeatureQualityHelper:
                     {"feature": c, "cardinality_effective": int(card), "header_cardinality": header_card, "observed_cardinality": int(obs_card)}
                 )
         return {"high_cardinality_threshold": int(high_cardinality_threshold), "high_cardinality_nominal": flagged}
-
-
-
-class LabelIntegrityHelper:
-    """
-    @brief Record-level and label-level integrity helper computations.
-
-    This helper owns checks that are about row duplication, contradictory labels,
-    and similar integrity issues. Keeping them separate from FeatureQualityHelper
-    makes the logical grouping closer to the intended audit categories.
-    """
-
-    @staticmethod
-    def _duplicate_rows(df: pd.DataFrame) -> Dict[str, Any]:
-        """
-        @brief Duplicate row count and ratio.
-        """
-        n = int(len(df))
-        if n == 0:
-            return {"n_rows": 0, "n_duplicate_rows": 0, "duplicate_ratio": float("nan")}
-        dup = int(df.duplicated(keep="first").sum())
-        return {"n_rows": n, "n_duplicate_rows": dup, "duplicate_ratio": float(dup / n)}
 
     @staticmethod
     def _label_conflicts(df: pd.DataFrame, inputs: List[str], outputs: List[str], *, max_rows: int = 200_000) -> Dict[str, Any]:
@@ -2585,11 +2541,7 @@ _DISCOVER_KEEL_CV_FOLDS, _PARSE_KEEL_FILE = ProjectHelperImportBridge._import_ke
 
 
 # -----------------------------
-# Internal wiring aliases
-# -----------------------------
-# These aliases keep the workflow code readable inside this single-file version.
-# They are intentionally not part of the public API and exist only to avoid
-# repeating long class-qualified references everywhere.
+# Backing aliases for grouped helper methods
 # -----------------------------
 _jsonify = JsonArtifactIO._jsonify
 _save_json = JsonArtifactIO._save_json
@@ -2626,10 +2578,9 @@ _oversampling_knn_diagnostics = OversamplingAnalysisHelper._oversampling_knn_dia
 
 _feature_missingness = FeatureQualityHelper._feature_missingness
 _constant_and_near_constant = FeatureQualityHelper._constant_and_near_constant
+_duplicate_rows = FeatureQualityHelper._duplicate_rows
 _high_cardinality_nominal = FeatureQualityHelper._high_cardinality_nominal
-
-_duplicate_rows = LabelIntegrityHelper._duplicate_rows
-_label_conflicts = LabelIntegrityHelper._label_conflicts
+_label_conflicts = FeatureQualityHelper._label_conflicts
 
 _compute_leakage_metrics_from_hashes = SplitAuditHelper._compute_leakage_metrics_from_hashes
 _class_presence_in_split = SplitAuditHelper._class_presence_in_split
@@ -2741,10 +2692,10 @@ class FeatureQualityAuditCategory(BaseAuditCategory):
     )
 
 
-class LabelIntegrityAuditCategory(BaseAuditCategory):
+class DuplicateLabelAuditCategory(BaseAuditCategory):
     descriptor = AuditCategoryDescriptor(
-        key="label_integrity",
-        title="سلامت رکورد و برچسب",
+        key="duplicate_and_label_integrity",
+        title="تکراری‌ها و سلامت برچسب",
         description="duplicate rows، label conflict و موارد مشابه مربوط به integrity رکوردها.",
         supported_levels=(1, 2, 3),
         owned_top_level_keys=("data_quality",),
@@ -2753,10 +2704,10 @@ class LabelIntegrityAuditCategory(BaseAuditCategory):
     )
 
 
-class ClassProfileAuditCategory(BaseAuditCategory):
+class ClassImbalanceAuditCategory(BaseAuditCategory):
     descriptor = AuditCategoryDescriptor(
-        key="class_profile",
-        title="پروفایل target و عدم‌توازن",
+        key="class_imbalance",
+        title="تحلیل target و عدم‌توازن",
         description="نوع مسئله، شمارش کلاس‌ها، IR، minority class و tiny class.",
         supported_levels=(1, 2, 3),
         owned_top_level_keys=("class_info",),
@@ -2789,79 +2740,16 @@ class SplitShiftLeakageAuditCategory(BaseAuditCategory):
     )
 
 
-class DecisionAuditCategory(BaseAuditCategory):
+class SeverityRecommendationAuditCategory(BaseAuditCategory):
     descriptor = AuditCategoryDescriptor(
-        key="decision",
-        title="تصمیم‌یاری: severity، readiness و recommendation",
+        key="severity_recommendation",
+        title="severity، readiness و recommendation",
         description="severity score، drivers، run readiness و خلاصه‌های اجرایی برای تصمیم‌گیری.",
         supported_levels=(2, 3),
         owned_top_level_keys=(),
         folder_summary_keys=("executive_dataset_summaries", "high_level_flags", "high_level_lists"),
         root_summary_keys=("global_summary", "executive_summary"),
     )
-
-
-
-
-@dataclass(frozen=True)
-class AuditProfileDescriptor:
-    """
-    @brief Lightweight descriptor for one audit profile.
-    """
-    key: str
-    title: str
-    description: str
-
-
-class BaseAuditProfile:
-    """
-    @brief Profile defines which logical categories are active for one audit perspective.
-    """
-    descriptor: AuditProfileDescriptor
-
-    def build_categories(self) -> List[BaseAuditCategory]:
-        raise NotImplementedError
-
-    def build_metadata(self) -> Dict[str, Any]:
-        d = self.descriptor
-        return {
-            "key": d.key,
-            "title": d.title,
-            "description": d.description,
-            "categories": [cat.build_metadata() for cat in self.build_categories()],
-        }
-
-
-class ImbalancedOversamplingAuditProfile(BaseAuditProfile):
-    """
-    @brief Active profile for oversampling-oriented KEEL auditing.
-    """
-    descriptor = AuditProfileDescriptor(
-        key="oversampling_benchmark_profile",
-        title="Oversampling Benchmark Audit Profile",
-        description=(
-            "Profile focused on data-quality, split integrity, and oversampling suitability "
-            "for imbalanced KEEL classification datasets."
-        ),
-    )
-
-    def build_categories(self) -> List[BaseAuditCategory]:
-        return [
-            StructureFormatAuditCategory(),
-            MissingTokenAuditCategory(),
-            DomainConsistencyAuditCategory(),
-            NumericDistributionAuditCategory(),
-            FeatureQualityAuditCategory(),
-            LabelIntegrityAuditCategory(),
-            ClassProfileAuditCategory(),
-            OversamplingSuitabilityAuditCategory(),
-            SplitShiftLeakageAuditCategory(),
-            DecisionAuditCategory(),
-        ]
-
-
-ClassImbalanceAuditCategory = ClassProfileAuditCategory
-SeverityRecommendationAuditCategory = DecisionAuditCategory
 
 
 class BaseKEELAuditFamily:
@@ -2872,20 +2760,16 @@ class BaseKEELAuditFamily:
     display_name: str = "Base KEEL Audit Family"
     description: str = "Base family. Override in subclasses."
 
-    def build_profile(self) -> BaseAuditProfile:
+    def build_categories(self) -> List[BaseAuditCategory]:
         raise NotImplementedError
 
-    def build_categories(self) -> List[BaseAuditCategory]:
-        return self.build_profile().build_categories()
-
     def _build_architecture_block(self) -> Dict[str, Any]:
-        profile = self.build_profile()
+        categories = [cat.build_metadata() for cat in self.build_categories()]
         return {
             "family_key": self.family_key,
             "display_name": self.display_name,
             "description": self.description,
-            "profile": profile.build_metadata(),
-            "categories": [cat.build_metadata() for cat in profile.build_categories()],
+            "categories": categories,
         }
 
     def _attach_architecture_metadata(self, result: Dict[str, Any], level: int) -> Dict[str, Any]:
@@ -2912,8 +2796,8 @@ class _PlaceholderFutureFamily(BaseKEELAuditFamily):
     """
     @brief Placeholder family for future KEEL dataset categories.
     """
-    def build_profile(self) -> BaseAuditProfile:
-        raise NotImplementedError(f"Audit family '{self.family_key}' is planned but not implemented yet.")
+    def build_categories(self) -> List[BaseAuditCategory]:
+        return []
 
     def audit_file(self, file_path: str, **kwargs: Any) -> Dict[str, Any]:
         raise NotImplementedError(f"Audit family '{self.family_key}' is planned but not implemented yet.")
@@ -2936,8 +2820,19 @@ class ImbalancedOversamplingAuditFamily(BaseKEELAuditFamily):
         "for oversampling benchmarks and data-quality auditing before modeling."
     )
 
-    def build_profile(self) -> BaseAuditProfile:
-        return ImbalancedOversamplingAuditProfile()
+    def build_categories(self) -> List[BaseAuditCategory]:
+        return [
+            StructureFormatAuditCategory(),
+            MissingTokenAuditCategory(),
+            DomainConsistencyAuditCategory(),
+            NumericDistributionAuditCategory(),
+            FeatureQualityAuditCategory(),
+            DuplicateLabelAuditCategory(),
+            ClassImbalanceAuditCategory(),
+            OversamplingSuitabilityAuditCategory(),
+            SplitShiftLeakageAuditCategory(),
+            SeverityRecommendationAuditCategory(),
+        ]
 
     def audit_file(self, file_path: str, **kwargs: Any) -> Dict[str, Any]:
         result = _procedural_audit_keel_file(file_path, **kwargs)

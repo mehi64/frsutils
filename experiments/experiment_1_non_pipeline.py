@@ -19,7 +19,7 @@ from FRsutils.core.models.itfrs import ITFRS
 import FRsutils.core.tnorms as tnorms
 import FRsutils.core.implicators as implicators
 from FRsutils.core.similarities import GaussianSimilarity, calculate_similarity_matrix
-from FRsutils.utils.dataset_utils.KEEL_CV_Utility import discover_keel_cv_folds, KeelCVLoader
+from FRsutils.utils.dataset_utils.KEEL.KEEL_CV_Utility import discover_keel_cv_folds, KeelCVLoader
 
 # ------------------------------
 # Configurable Parameters
