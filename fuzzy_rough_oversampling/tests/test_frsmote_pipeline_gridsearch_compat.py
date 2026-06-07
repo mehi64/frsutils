@@ -1,30 +1,38 @@
-import numpy as np
+"""
+@file test_frsmote_pipeline_gridsearch_compat.py
+@brief Pipeline/GridSearchCV compatibility tests for the standalone FRSMOTE.
 
+These tests were moved out of the FRsutils root test suite because FRSMOTE now
+belongs to the standalone `fuzzy_rough_oversampling` package. They verify that
+FRSMOTE still exposes flat sklearn-compatible parameters and can be used inside
+an imbalanced-learn Pipeline with GridSearchCV.
+"""
+
+import numpy as np
 from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.svm import SVC
 
-from FRsutils.core.preprocess.FRSMOTE import FRSMOTE
+from fuzzy_rough_oversampling import FRSMOTE
 
 
 def test_frsmote_exposes_flat_params_for_pipeline():
+    """@brief Verify that FRSMOTE exposes flat params for sklearn pipelines."""
     est = FRSMOTE()
     params = est.get_params(deep=True)
 
-    # core knobs
     assert "k_neighbors" in params
     assert "similarity" in params
     assert "similarity_sigma" in params
-
-    # model knobs
     assert "type" in params
     assert "ub_tnorm_name" in params
     assert "lb_implicator_name" in params
 
 
 def test_frsmote_gridsearch_runs_small_dataset():
+    """@brief Verify a small GridSearchCV run with FRSMOTE inside a pipeline."""
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 5).astype(float)  # normalized to [0,1]
+    X = rng.rand(40, 5).astype(float)
     y = np.array([0] * 30 + [1] * 10)
 
     pipe = ImbPipeline([

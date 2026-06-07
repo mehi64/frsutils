@@ -113,11 +113,8 @@ def import_frsmote_class() -> type:
     """
     import_errors: List[str] = []
     candidates = [
-        ("FRsutils.core.preprocess.oversampling.FRSMOTE", "FRSMOTE"),
-        ("FRsutils.core.preprocess.oversampling.frsmote", "FRSMOTE"),
-        ("FRsutils.core.oversamplers.oversampling.FRSMOTE", "FRSMOTE"),
-        ("FRsutils.core.oversamplers.oversampling.frsmote", "FRSMOTE"),
-        ("FRSMOTE", "FRSMOTE"),  # fallback if running from repo root with FRSMOTE.py on PYTHONPATH
+        ("fuzzy_rough_oversampling", "FRSMOTE"),
+        ("FRSMOTE", "FRSMOTE"),  # legacy fallback if running with a standalone FRSMOTE.py on PYTHONPATH
     ]
 
     for mod_name, cls_name in candidates:
@@ -128,7 +125,7 @@ def import_frsmote_class() -> type:
             import_errors.append(f"{mod_name}.{cls_name}: {e}")
 
     raise ImportError(
-        "Could not import FRSMOTE from expected locations. Tried:\n  - "
+        "Could not import FRSMOTE from expected locations. Install fuzzy_rough_oversampling or check the import path. Tried:\n  - "
         + "\n  - ".join(import_errors)
     )
 

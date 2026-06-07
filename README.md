@@ -69,8 +69,19 @@ A basic Python library needed for fuzzy rough set calculations that are used in 
   - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](md_files/vqrs_info.md))
 
 ## Fuzzy-rough oversampling
-### FRSMOTE
-- Compatible with scikit learn and its pipeline
+
+Fuzzy-rough oversampling algorithms are no longer part of FRsutils core. They
+live in the standalone `fuzzy_rough_oversampling` package, which depends on
+FRsutils through the public `FRsutils.api` facade.
+
+```python
+from fuzzy_rough_oversampling import FRSMOTE
+```
+
+FRsutils should be cited/used as the fuzzy-rough core engine: similarities,
+t-norms, implicators, fuzzy quantifiers, approximation models, lower/upper
+approximation, and positive region. Oversampling algorithms such as FRSMOTE and
+future FRADASYN belong to the downstream oversampling package.
 
 ## Notes (considerations on using FRsutils)
 - All functions expect to get normalized scalar of normalized numpy arrays.
@@ -119,4 +130,4 @@ If you use this library in your research, please cite it as follows:
   year = {2025}
 }```
 
-
+aaa

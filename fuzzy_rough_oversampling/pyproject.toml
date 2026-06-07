@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fuzzy-rough-oversampling"
+version = "0.0.1"
+description = "Fuzzy-rough oversampling algorithms built on top of FRsutils."
+authors = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0" }
+keywords = [
+    "fuzzy-rough sets",
+    "oversampling",
+    "imbalanced learning",
+    "SMOTE",
+    "ADASYN",
+    "FRSMOTE",
+    "FRADASYN",
+]
+dependencies = [
+    "numpy>=1.21.0",
+    "scikit-learn",
+    "imbalanced-learn",
+    "FRsutils>=0.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.urls]
+"Source" = "https://github.com/mehi64/FRsutils"
+"FRsutils" = "https://github.com/mehi64/FRsutils"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

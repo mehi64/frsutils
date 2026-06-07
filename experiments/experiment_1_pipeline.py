@@ -19,7 +19,7 @@
 # from imblearn.pipeline import Pipeline as ImbPipeline
 # from imblearn.over_sampling import SMOTE, ADASYN
 # # from smote_variants import distance_SMOTE
-# from FRsutils.core.preprocess.oversampling.FRSMOTE import FRSMOTE
+# from fuzzy_rough_oversampling import FRSMOTE
 # from FRsutils.core.models.itfrs import ITFRS
 # import FRsutils.core.tnorms as tnorms
 # import FRsutils.core.implicators as implicators
@@ -223,7 +223,7 @@
 # from imblearn.over_sampling import SMOTE, ADASYN
 
 # # ✅ Your project oversampler
-# from FRsutils.core.preprocess.oversampling.FRSMOTE import FRSMOTE
+# from fuzzy_rough_oversampling import FRSMOTE
 
 
 # @dataclass(frozen=True)
@@ -476,7 +476,7 @@ from imblearn.pipeline import Pipeline as ImbPipeline
 from imblearn.over_sampling import SMOTE, ADASYN
 
 # ✅ Your project oversampler
-from FRsutils.core.preprocess.oversampling.FRSMOTE import FRSMOTE
+from fuzzy_rough_oversampling import FRSMOTE
 
 
 # =========================================================
