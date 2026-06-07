@@ -1,5 +1,5 @@
 <img src="images/logo/logo4.png" alt="FRsutils Logo" width="250"/>
-
+=====
 # FRsutils
 
 FRsutils is a Python library for reusable fuzzy-rough set utilities. The package
