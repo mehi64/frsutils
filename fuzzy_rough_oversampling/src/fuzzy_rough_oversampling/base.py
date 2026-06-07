@@ -299,22 +299,20 @@ class BaseAllPurposeFuzzyRoughOversampler(
         if isinstance(getattr(self, "_object_config", None), dict):
             params.update(self._object_config)
 
-        params["sampling_strategy"] = getattr(
-            self,
-            "sampling_strategy",
-            params.get("sampling_strategy", "auto"),
-        )
-        params["instance_ranking_strategy"] = getattr(
-            self,
-            "instance_ranking_strategy",
-            params.get("instance_ranking_strategy", "pos"),
-        )
-        params["sampling_ratio"] = getattr(
-            self,
-            "sampling_ratio",
-            params.get("sampling_ratio", None),
-        )
-        params["type"] = getattr(self, "type", params.get("type", "itfrs"))
+        # Do not overwrite constructor parameters with normalized runtime
+        # attributes here. scikit-learn clone checks object identity for params
+        # returned by get_params(deep=False); returning normalized copies can make
+        # otherwise valid estimators fail inside Pipeline/GridSearchCV. Runtime
+        # attributes remain available on the estimator, while get_params returns
+        # the flat constructor-compatible configuration.
+        if "sampling_strategy" not in params:
+            params["sampling_strategy"] = getattr(self, "sampling_strategy", "auto")
+        if "instance_ranking_strategy" not in params:
+            params["instance_ranking_strategy"] = getattr(self, "instance_ranking_strategy", "pos")
+        if "sampling_ratio" not in params:
+            params["sampling_ratio"] = getattr(self, "sampling_ratio", None)
+        if "type" not in params:
+            params["type"] = getattr(self, "type", "itfrs")
 
         if not deep:
             return dict(params)

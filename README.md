@@ -1,37 +1,85 @@
 <img src="images/logo/logo4.png" alt="FRsutils Logo" width="250"/>
 
+# FRsutils
+
+FRsutils is a Python library for reusable fuzzy-rough set utilities. The package
+focuses on fuzzy-rough core building blocks such as similarity matrices,
+t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
+approximations, and positive-region computation.
+
+Fuzzy-rough oversampling algorithms such as FRSMOTE now live in the standalone
+`fuzzy_rough_oversampling` package. That package depends on FRsutils through the
+public `FRsutils.api` facade.
+
 # For Developers
-If you are a developer trying to extend FRsutils, please start here [Development Guidelines](lessons_learned_and_trainings/For_Developers.md)
+
+If you are a developer trying to extend FRsutils, please start here:
+[Development Guidelines](lessons_learned_and_trainings/For_Developers.md).
 
 # Installation
 
-``` $pip install frsutils```
+Install the fuzzy-rough core package:
 
-- Requirements
-  - python (>= 3.10)
-  - numpy (>= 1.23.5)
-  - imbalanced learn (>= 0.10.1)
-  - scikit learn (>= 1.2.1)
-  - pandas (>= 1.5.3)
-  - colorlog (>= 6.9.0)
-  - openpyxl
-  
-  Optional:
-  - pytest (>= 7.1.2) [if you want to run unit tests]
-  - matplotlib (If you want to run some plot tests)
-  - cupy (>=13.4.1) (if you have an Nvidia GPU) [under development, lowest priority]
-  - smote-variants (if you want to compare FR sampling methods with those in smote-variants)
+```bash
+pip install frsutils
+```
+
+For local development from this repository:
+
+```bash
+pip install -e .
+```
+
+## Core requirements
+
+FRsutils core intentionally keeps a small mandatory dependency set:
+
+- Python >= 3.10
+- NumPy >= 1.21.0
+
+## Optional development / dataset dependencies
+
+Install these only when you need the related workflows:
+
+- `pytest` for tests
+- `pandas`, `openpyxl` for some dataset utilities
+- `colorlog` for colored logging; FRsutils falls back to standard logging if it
+  is not installed
+- `matplotlib` for plotting examples/tests
+- `cupy` for future/experimental GPU work
+
+## Oversampling package
+
+Install the standalone oversampling package when you need FRSMOTE or future
+fuzzy-rough oversamplers such as FRADASYN:
+
+```bash
+cd fuzzy_rough_oversampling
+pip install -e .
+```
+
+Use the new import path:
+
+```python
+from fuzzy_rough_oversampling import FRSMOTE
+```
+
+No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import paths. Existing scripts must be migrated explicitly.
+
+Migration guide:
+[FRSMOTE migration from FRsutils](docs/frsmote_migration.md).
 
 # Fuzzy-Rough set utilities [Under development]
 
-A basic Python library needed for fuzzy rough set calculations that are used in research, e.g.:
+A basic Python library needed for fuzzy rough set calculations that are used in
+research, e.g.:
 
 - lower approximation
 - upper approximation
 - positive region
-- boundry region
+- boundary region
 
-## Algorithgms and containings
+## Algorithms and contents
 
 - Similarities (See [fuzzy similarities](md_files/similarities_info.md))
   - Linear
@@ -55,27 +103,29 @@ A basic Python library needed for fuzzy rough set calculations that are used in 
   - EinsteinProduct tnorm
   - HamacherProduct tnorm
   - NilpotentMinimum tnorm
-- OWA weights (Ordered Weighted Average)(See [OWA](md_files/owa_weights_info.md))
+- OWA weights (Ordered Weighted Average) (See [OWA](md_files/owa_weights_info.md))
   - Linear
   - Exponential
   - Harmonic
   - Logarithmic
-- Fyzzy Quantifiers
+- Fuzzy quantifiers
   - Linear
   - Quadratic
 - FR Models
   - ITFRS (See [Implicator/T-norm Fuzzy-Rough Sets](md_files/itfrs_info.md))
-  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](md_files/owafrs_info.md)) 
+  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](md_files/owafrs_info.md))
   - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](md_files/vqrs_info.md))
 
-## Fuzzy-rough oversampling
+## Fuzzy-rough oversampling boundary
 
 Fuzzy-rough oversampling algorithms are no longer part of FRsutils core. They
 live in the standalone `fuzzy_rough_oversampling` package, which depends on
-FRsutils through the public `FRsutils.api` facade.
+FRsutils through the public `FRsutils.api` facade. FRsutils intentionally does
+not provide old FRSMOTE compatibility wrappers after Phase 7.
 
-```python
-from fuzzy_rough_oversampling import FRSMOTE
+```text
+fuzzy_rough_oversampling  --->  FRsutils.api
+FRsutils                  -X->  fuzzy_rough_oversampling
 ```
 
 FRsutils should be cited/used as the fuzzy-rough core engine: similarities,
@@ -83,51 +133,74 @@ t-norms, implicators, fuzzy quantifiers, approximation models, lower/upper
 approximation, and positive region. Oversampling algorithms such as FRSMOTE and
 future FRADASYN belong to the downstream oversampling package.
 
-## Notes (considerations on using FRsutils)
-- All functions expect to get normalized scalar of normalized numpy arrays.
-- Make sure the input dataset is normalized. This library expects all inputs to all functions are in range [0,1]
-- This library will use all features of data instances to calculate the fuzzzy-rough measures.
-- All datasets have 2 classes.
-- Positive region, lower approximation, upper approximation,etc are calculated based on the class of each instance. Therefore, maximum calculations in POS is ignored and POS is equal to lower approximation value.
+## Notes and assumptions
+
+- All functions expect normalized scalar values or normalized NumPy arrays.
+- Make sure the input dataset is normalized. This library expects numeric inputs
+  used by fuzzy-rough computations to be in the range [0, 1].
+- This library uses all features of data instances to calculate fuzzy-rough
+  measures.
+- Positive region, lower approximation, upper approximation, etc. are calculated
+  based on the class of each instance.
 
 ## Docs
-- We use Doxygen-style (Javadoc-like) Python Docstrings and documents are generated by Doxygen
-- To see online documentations, please visit [online documentations](https://mehi64.github.io/FRsutils/)
+
+- We use Doxygen-style Python docstrings and documents are generated by Doxygen.
+- To see online documentation, please visit
+  [online documentation](https://mehi64.github.io/FRsutils/).
 
 ## How to run tests
-These are two ways:
-- use pytest and it finds and runs all tests
-- If you want to run tests in debug mode, find and run the file experimental_tests.py (Make sure all functions in test files are called in this file. Maybe some are forgotten)
-- For more information on test procedures, please refer to [test procedures](tests/test_procedures.md)
+
+From the repository root:
+
+```bash
+python -m pytest tests -q
+```
+
+For the standalone oversampling package:
+
+```bash
+PYTHONPATH="$PWD:$PWD/fuzzy_rough_oversampling/src" \
+python -m pytest fuzzy_rough_oversampling/tests -q
+```
+
+For more information on test procedures, please refer to
+[test procedures](tests/test_procedures.md).
 
 ## Technical decisions justification
-- Since data checking slows down the running of experiments, we don't check if data is in the correct range in each function.
 
-## TODO:
-- Add tests for tnorms with non-binary masks
-- Implemene and debug VQRS (Vaguely Quantified Rough Sets)
-- Change the code to get a class to calculate lower and upper approximations + POS regarding a single class of Y.
+- Since data checking can slow down experiments, heavy numeric functions do not
+  perform repeated input-range checks. Validation is preferred at construction or
+  workflow boundaries.
+
+## TODO
+
+- Add tests for t-norms with non-binary masks.
+- Implement and debug VQRS (Vaguely Quantified Rough Sets).
+- Change the code to get a class to calculate lower and upper approximations and
+  positive region regarding a single class of `y`.
 
 ## License
 
-This project is licensed under the AGPL-3.0 License. See the [LICENSE](./LICENSE) file for details.
+This project is licensed under the AGPL-3.0 License. See the [LICENSE](./LICENSE)
+file for details.
 
-
-## How to Cite us in your research papers
+## How to cite us in your research papers
 
 If you use this library in your research, please cite it as follows:
 
-**APA** :  
-> Mehran Amiri. (*2025*). *FRsutils* (Version 0.0.1) [Computer software]. https://github.com/mehi64/FRsutils
+**APA**:
 
-**BibTeX** (for LaTeX users):
+> Mehran Amiri. (*2025*). *FRsutils* (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
+
+**BibTeX**:
+
 ```bibtex
 @software{Mehran_Amiri_FRsutils_2025,
   author = {Amiri, Mehran},
   title = {FRsutils},
   url = {https://github.com/mehi64/FRsutils},
-  version = {0.0.1},
+  version = {0.0.3},
   year = {2025}
-}```
-
-aaa
+}
+```

@@ -50,8 +50,8 @@ from functools import wraps
 
 try:
     import colorlog
-except ImportError:
-    raise ImportError("Please install colorlog: pip install colorlog")
+except ImportError:  # pragma: no cover - exercised only when optional colorlog is absent
+    colorlog = None
 
 
 class _TinyLogger:
@@ -122,14 +122,21 @@ class _TinyLogger:
       
         # Avoid duplicate handlers
         if not self.logger.handlers:
-            # colored output settings added to console formatter
-            console_formatter = colorlog.ColoredFormatter(
-                "%(log_color)s%(asctime)s [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-                log_colors={
-                    'DEBUG': 'cyan', 'INFO': 'green', 'WARNING': 'yellow', 'ERROR': 'red', 'CRITICAL': 'bold_red'
-                }
-            )
+            # Prefer colorized console output when colorlog is installed, but keep
+            # FRsutils importable in minimal environments used by downstream packages.
+            if colorlog is not None:
+                console_formatter = colorlog.ColoredFormatter(
+                    "%(log_color)s%(asctime)s [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                    log_colors={
+                        'DEBUG': 'cyan', 'INFO': 'green', 'WARNING': 'yellow', 'ERROR': 'red', 'CRITICAL': 'bold_red'
+                    }
+                )
+            else:
+                console_formatter = logging.Formatter(
+                    "%(asctime)s [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
 
             if log_to_console:
                 console_handler = logging.StreamHandler()
