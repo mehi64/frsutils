@@ -2,7 +2,7 @@
 # # from sklearn.pipeline import Pipeline
 # from imblearn.pipeline import Pipeline
 # from sklearn.model_selection import GridSearchCV
-# from fuzzy_rough_oversampling import FRSMOTE
+# from frsampling import FRSMOTE
 # from FRsutils.core.models import * #needed for filling _class_registery. Because if not there cannot instantiate OWAFRS, VQRS, etc.
 # import numpy as np
 # import pandas as pd
@@ -74,7 +74,7 @@
 from sklearn.svm import SVC
 from imblearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from fuzzy_rough_oversampling import FRSMOTE
+from frsampling import FRSMOTE
 from FRsutils.core.models import *  # Required to populate model registry
 import numpy as np
 import pandas as pd

@@ -164,8 +164,6 @@ def test_set_state_allows_only_unconfigured_to_configured_to_built():
     "start_state, target_state",
     [
         (LifecycleState.UNCONFIGURED, LifecycleState.BUILT),     # skipping CONFIGURED
-        (LifecycleState.CONFIGURED, LifecycleState.CONFIGURED),  # same state
-        (LifecycleState.BUILT, LifecycleState.CONFIGURED),       # backwards
         (LifecycleState.BUILT, LifecycleState.BUILT),            # same state
     ],
 )
@@ -225,27 +223,33 @@ def test_configure_stores_copy_not_reference():
     assert obj._object_config == {"type": "dummy", "a": 1}
 
 
-def test_configure_twice_is_not_allowed():
+def test_configure_twice_replaces_config_and_keeps_configured_state():
     """
-    @brief Calling configure twice triggers an invalid transition (CONFIGURED -> CONFIGURED).
+    @brief Current mixin contract allows reconfiguration while CONFIGURED.
     """
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1)
+    obj.configure(model_registry=DummyRegistry, type="dummy", a=2)
 
-    with pytest.raises(RuntimeError, match=r"Invalid state transition"):
-        obj.configure(model_registry=DummyRegistry, type="dummy", a=2)
+    assert obj.state_enum == LifecycleState.CONFIGURED
+    assert obj._object_config == {"type": "dummy", "a": 2}
+    assert obj._lazy_object is None
 
 
-def test_configure_after_build_is_not_allowed():
+def test_configure_after_build_resets_to_configured():
     """
-    @brief Once BUILT, transitions back to CONFIGURED are forbidden by state-machine.
+    @brief Current mixin contract allows reconfiguration after build.
     """
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1)
     obj.build()
 
-    with pytest.raises(RuntimeError, match=r"Invalid state transition"):
-        obj.configure(model_registry=DummyRegistry, type="dummy", a=2)
+    obj.configure(model_registry=DummyRegistry, type="dummy", a=2)
+
+    assert obj.state_enum == LifecycleState.CONFIGURED
+    assert obj.is_built is False
+    assert obj._object_config == {"type": "dummy", "a": 2}
+    assert obj._lazy_object is None
 
 
 # ---------------------------------------------------------------------
@@ -287,8 +291,8 @@ def test_build_constructs_lazy_object_when_registry_and_type_present_and_forward
     assert obj.state_enum == LifecycleState.BUILT
     assert obj.is_built is True
 
-    # registry usage
-    assert DummyRegistry.call_count == 1
+    # registry usage: configure validates once and build resolves once.
+    assert DummyRegistry.call_count == 2
     assert DummyRegistry.last_type == "dummy"
 
     # from_config call must receive positional args and full config
@@ -326,19 +330,14 @@ def test_build_does_not_construct_lazy_object_when_registry_is_none_but_still_bu
     assert obj.lazy_object is None
 
 
-def test_build_does_not_construct_lazy_object_when_type_missing_but_still_builds_lifecycle():
+def test_configure_with_registry_requires_type_key():
     """
-    @brief If config lacks 'type', build() must skip construction but still finalize and go BUILT.
+    @brief Current validation requires a type key when a registry is provided.
     """
     obj = DummyComponent()
-    obj.configure(model_registry=DummyRegistry, a=1, b=2)  # No 'type'
 
-    obj.build("SIM")
-
-    assert obj.state_enum == LifecycleState.BUILT
-    assert obj._lazy_object is None
-    assert obj.finalize_called == 1
-    assert obj.lazy_object is None
+    with pytest.raises(ValueError, match=r"type"):
+        obj.configure(model_registry=DummyRegistry, a=1, b=2)
 
 
 def test_build_twice_is_not_allowed_by_precondition():

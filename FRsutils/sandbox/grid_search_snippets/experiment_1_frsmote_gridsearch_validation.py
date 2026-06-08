@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.svm import SVC
-from fuzzy_rough_oversampling import FRSMOTE
+from frsampling import FRSMOTE
 from FRsutils.core.models import *  # Needed for registry population
 import joblib
 import json

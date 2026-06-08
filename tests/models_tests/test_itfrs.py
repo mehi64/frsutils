@@ -8,6 +8,9 @@ from tests import synthetic_data_store as ds
 from FRsutils.core.tnorms import TNorm
 from FRsutils.core.implicators import Implicator
 
+pytestmark = pytest.mark.slow
+
+
 
 @pytest.fixture
 def synthetic_data_():

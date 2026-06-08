@@ -14,7 +14,7 @@ from sklearn.metrics import (roc_auc_score, accuracy_score, precision_score,
 
 from imblearn.over_sampling import SMOTE, ADASYN
 # from smote_variants import distance_SMOTE
-from fuzzy_rough_oversampling import FRSMOTE
+from frsampling import FRSMOTE
 from FRsutils.core.models.itfrs import ITFRS
 import FRsutils.core.tnorms as tnorms
 import FRsutils.core.implicators as implicators

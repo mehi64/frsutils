@@ -104,23 +104,22 @@ current codebase:
 |---|---|
 | Phase 1: similarity-engine abstraction | Complete |
 | Phase 2: exact ITFRS blockwise approximation | Complete |
-| Phase 3: public positive-region scorer/API boundary | Complete, but scorer does not yet expose engine/backend params directly |
+| Phase 3: public positive-region scorer/API boundary | Complete; scorer exposes engine/backend/block-size params through the public API. |
 | Phase 4: exact VQRS blockwise approximation | Complete |
 | Phase 5: exact OWAFRS blockwise approximation and frsampling compatibility | Complete |
 | Phase 6: optional CuPy similarity-block backend | Complete as experimental similarity-block support |
 
-## Next implementation phase
+## Current cleanup status
 
-After Phase 6, only release/paper hardening remains for the current backend
-cycle:
+Phase 7 release/paper hardening is complete. The current backend cycle should now
+be treated as feature-frozen for release/paper cleanup. Remaining work is
+operational rather than feature work:
 
-1. Release/paper hardening.
-   - Run the benchmark suite on a controlled target machine.
-   - Convert benchmark JSON/CSV output into paper/release tables and plots.
-   - Finalize README examples, public API examples, optional-CuPy CI skip
-     behavior, and paper-safe claims.
-   - Keep the public claim conservative: CuPy similarity blocks plus experimental
-     GPU-resident ITFRS/VQRS accumulators, not full GPU-native execution.
+1. Run the benchmark suite on a controlled target machine.
+2. Convert benchmark JSON/CSV output into paper/release tables and plots.
+3. Keep README, public examples, benchmark docs, and paper-safe claims aligned.
+4. Keep the public claim conservative: CuPy similarity blocks plus experimental
+   GPU-resident ITFRS/VQRS accumulators, not full GPU-native execution.
 
 OWAFRS GPU-resident execution is not a remaining implementation phase for the
 current cycle. It is explicitly out of scope after the Phase 5 decision.
@@ -236,3 +235,12 @@ Current status to use in release material:
 Use `docs/paper_claims.md` as the source of truth for accepted and forbidden
 claims. Use `docs/release_checklist.md` before tagging or submitting.
 
+
+
+## Phase 8 cleanup update
+
+Phase 8 performs release-cleanup only; it adds no new fuzzy-rough feature. The
+cleanup pass fixes stale README links, removes stale VQRS TODO wording, clarifies
+test commands, marks exhaustive model-combination tests as `slow`, archives KEEL
+Audit WIP copies outside the importable package, and removes local cache files
+from generated project artifacts.

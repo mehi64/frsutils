@@ -2490,12 +2490,17 @@ class RootAuditWorkflow:
 
         profile_vectors = []
         for r in executive_rows:
-            flags = r.get("flags", {})
-            overlap = r.get("oversampling_summary", {}).get("representative_file_overlap_hardness", {}).get("minority_majority_neighbor_ratio_mean")
-            hardness = r.get("oversampling_summary", {}).get("representative_file_overlap_hardness", {}).get("instance_hardness_minority_mean")
-            risk = r.get("oversampling_summary", {}).get("representative_file_synthetic_interpolation_risk", {}).get("score_0_100")
-            ir = r.get("class_summary", {}).get("imbalance_rate_ir_train_aggregate")
-            min_count = r.get("class_summary", {}).get("min_class_count_train_aggregate")
+            flags = r.get("flags") or {}
+            oversampling_summary = r.get("oversampling_summary") or {}
+            overlap_summary = oversampling_summary.get("representative_file_overlap_hardness") or {}
+            interpolation_summary = oversampling_summary.get("representative_file_synthetic_interpolation_risk") or {}
+            class_summary = r.get("class_summary") or {}
+
+            overlap = overlap_summary.get("minority_majority_neighbor_ratio_mean")
+            hardness = overlap_summary.get("instance_hardness_minority_mean")
+            risk = interpolation_summary.get("score_0_100")
+            ir = class_summary.get("imbalance_rate_ir_train_aggregate")
+            min_count = class_summary.get("min_class_count_train_aggregate")
             vec = [
                 float(overlap) if isinstance(overlap, (int, float)) and np.isfinite(overlap) else 0.0,
                 float(hardness) if isinstance(hardness, (int, float)) and np.isfinite(hardness) else 0.0,

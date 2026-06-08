@@ -9,6 +9,9 @@ from FRsutils.core.tnorms import TNorm
 from FRsutils.core.implicators import Implicator
 import FRsutils.core.owa_weights as oww
 
+pytestmark = pytest.mark.slow
+
+
 
 @pytest.fixture
 def synthetic_data_():

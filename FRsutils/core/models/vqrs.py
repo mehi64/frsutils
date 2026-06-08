@@ -206,7 +206,7 @@ class VQRS(FuzzyRoughModel):
             else:
                 name = config.get("ub_fuzzy_quantifier_name")
                 # Prefer new flat naming: ub_fuzzy_quantifier_alpha/beta
-                params = {k[len("ub_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("ub_fuzzy_quantifier_")}
+                params = {k[len("ub_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("ub_fuzzy_quantifier_") and k != "ub_fuzzy_quantifier_name"}
                 if not params:
                     # legacy: ub_alpha/ub_beta (handled by normalizer but keep safety)
                     params = {k[len("ub_"):]: v for k, v in config.items() if k.startswith("ub_") and k in {"ub_alpha", "ub_beta"}}
@@ -220,7 +220,7 @@ class VQRS(FuzzyRoughModel):
                 lb_fuzzy_quantifier = lb_fq
             else:
                 name = config.get("lb_fuzzy_quantifier_name")
-                params = {k[len("lb_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("lb_fuzzy_quantifier_")}
+                params = {k[len("lb_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("lb_fuzzy_quantifier_") and k != "lb_fuzzy_quantifier_name"}
                 if not params:
                     params = {k[len("lb_"):]: v for k, v in config.items() if k.startswith("lb_") and k in {"lb_alpha", "lb_beta"}}
                 lb_fuzzy_quantifier = FuzzyQuantifier.create(name, **params)

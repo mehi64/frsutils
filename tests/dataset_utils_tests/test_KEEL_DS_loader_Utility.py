@@ -94,6 +94,7 @@ def ecoli_dataset_file():
     return "./datasets/KEEL/imbalanced/ecoli3-5-fold/ecoli3-5-1tra.dat"
 
 
+@pytest.mark.slow
 def test_ecoli_parse_metadata(ecoli_dataset_file):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file, one_hot_encode=False, normalize=False)
     # the name inside file
@@ -151,6 +152,7 @@ def test_ecoli_parse_metadata(ecoli_dataset_file):
     (5, np.array([0.2, 0.46, 0.48, 0.5, 0.57, 0.78, 0.81]), 'negative'),
     (267, np.array([0.74, 0.49, 0.48, 0.5, 0.42, 0.54, 0.36]), 'negative')
 ])
+@pytest.mark.slow
 def test_ecoli_parse_data_correctness(ecoli_dataset_file, row_idx, expected_non_decision_vector, expected_class):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file, one_hot_encode=False, normalize=False)
     
@@ -175,6 +177,7 @@ def test_ecoli_parse_data_correctness(ecoli_dataset_file, row_idx, expected_non_
     (3, np.array([0.9775280899, 0.3928571429, 0.0, 0.0, 0.6931818182, 0.7525773196, 0.797979798]), 'positive')
     # ,(267, np.array([0.8314606742, 0.49, 0.48, 0.5, 0.42, 0.54, 0.36]), 'negative')
 ])
+@pytest.mark.slow
 def test_ecoli_normalized_data_correctness(ecoli_dataset_file, row_idx, expected_normalized_vector, expected_class):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file, one_hot_encode=False, normalize=True)
     
@@ -193,6 +196,7 @@ def test_ecoli_normalized_data_correctness(ecoli_dataset_file, row_idx, expected
     
     assert True 
     
+@pytest.mark.slow
 def test_ecoli_data_integrity(ecoli_dataset_file):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file)
     assert df.shape[0] == metadata['num_instances']
@@ -202,6 +206,7 @@ def test_ecoli_data_integrity(ecoli_dataset_file):
     assert df.isnull().sum().sum() == 0  # Should have handled missing values
 
 
+@pytest.mark.slow
 def test_ecoli_normalization_bounds(ecoli_dataset_file):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file, one_hot_encode=False, normalize=True)
     for col in input_features:
@@ -214,6 +219,7 @@ def test_ecoli_normalization_bounds(ecoli_dataset_file):
             assert metadata['attributes'][col]['range_source'] == 'normalized'
 
 
+@pytest.mark.slow
 def test_ecoli_create_X_y_shape(ecoli_dataset_file):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file)
     X, y = create_X_y(df, input_features, output_features)
@@ -243,6 +249,7 @@ def test_ecoli_create_X_y_shape(ecoli_dataset_file):
     (18, np.array([0.63, 0.75, 0.48, 0.5, 0.64, 0.73, 0.66]), 'negative'),
     (19, np.array([0.69, 0.66, 0.48, 0.5, 0.41, 0.5, 0.25]), 'negative')
 ])
+@pytest.mark.slow
 def test_ecoli_create_X_y_data_correctness(ecoli_dataset_file, row_idx, expected_instance, expected_class):
     metadata, df, input_features, output_features = parse_keel_file(ecoli_dataset_file, one_hot_encode=False, normalize=False)
     

@@ -1,5 +1,5 @@
 import numpy as np
-from fuzzy_rough_oversampling import FRSMOTE
+from frsampling import FRSMOTE
 # from FRsutils.core.models.itfrs import ITFRS
 # from FRsutils.core.models.owafrs import OWAFRS
 from FRsutils.core.models import *

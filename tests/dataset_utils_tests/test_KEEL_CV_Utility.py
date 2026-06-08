@@ -55,7 +55,7 @@ def test_discover_keel_cv_folds_pairs_files_correctly_for_Non_Matched_train_test
 
     assert True
 
-@patch("FRsutils.utils.dataset_utils.KEEL_CV_Utility.parse_keel_file")
+@patch("FRsutils.utils.dataset_utils.KEEL.KEEL_CV_Utility.parse_keel_file")
 def test_keelcvloader_load_fold(mock_parse_keel_file):
     # Fake DataFrames returned by mock
     df_train = pd.DataFrame({
@@ -102,7 +102,10 @@ def test_keelcvloader_n_splits_and_split():
 
 @pytest.fixture
 def real_keel_cv_dir():
-    return "./datasets/KEEL/imbalanced/ecoli3-5-fold"  # Folder with ecoli3-5-1tra.dat ... ecoli3-5-5tst.dat
+    path = "./datasets/KEEL/imbalanced/ecoli3-5-fold"  # Folder with ecoli3-5-1tra.dat ... ecoli3-5-5tst.dat
+    if not os.path.isdir(path):
+        pytest.skip("Optional KEEL integration dataset is not present in this checkout.")
+    return path
 
 
 def test_real_keel_folds_discovery(real_keel_cv_dir: Literal['./datasets/KEEL/imbalanced/ecoli3-5-fold']):

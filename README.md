@@ -285,10 +285,10 @@ Before tagging or submitting, use
 
 ## Algorithms and contents
 
-- Similarities (See [fuzzy similarities](md_files/similarities_info.md))
+- Similarities (See [fuzzy similarities](docs/similarities_info.md))
   - Linear
   - Gaussian
-- Implicators (See [fuzzy implicators](md_files/implicators_info.md))
+- Implicators (See [fuzzy implicators](docs/implicators_info.md))
   - Lukasiewicz
   - Goedel
   - Reichenbach
@@ -298,7 +298,7 @@ Before tagging or submitting, use
   - Rescher
   - Weber
   - Fodor
-- T-norms (See [fuzzy tnorms](md_files/tnorms_info.md))
+- T-norms (See [fuzzy tnorms](docs/tnorms_info.md))
   - Min tnorm
   - Product tnorm
   - Lukasiewicz tnorm
@@ -307,7 +307,7 @@ Before tagging or submitting, use
   - EinsteinProduct tnorm
   - HamacherProduct tnorm
   - NilpotentMinimum tnorm
-- OWA weights (Ordered Weighted Average) (See [OWA](md_files/owa_weights_info.md))
+- OWA weights (Ordered Weighted Average) (See [OWA](docs/owa_weights_info.md))
   - Linear
   - Exponential
   - Harmonic
@@ -316,9 +316,9 @@ Before tagging or submitting, use
   - Linear
   - Quadratic
 - FR Models
-  - ITFRS (See [Implicator/T-norm Fuzzy-Rough Sets](md_files/itfrs_info.md))
-  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](md_files/owafrs_info.md))
-  - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](md_files/vqrs_info.md))
+  - ITFRS (See [Implicator/T-norm Fuzzy-Rough Sets](docs/itfrs_info.md))
+  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](docs/owafrs_info.md))
+  - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](docs/vqrs_info.md))
 
 ## Fuzzy-rough oversampling boundary
 
@@ -355,17 +355,30 @@ future FRADASYN belong to the downstream oversampling package.
 
 ## How to run tests
 
-From the repository root:
+From the repository root, the default test command excludes tests marked as
+`slow` via `pyproject.toml`:
 
 ```bash
 python -m pytest tests -q
 ```
 
-For the standalone oversampling package:
+Run the release/backend smoke set explicitly with:
 
 ```bash
-PYTHONPATH="$PWD:$PWD/frsampling/src" \
-python -m pytest frsampling/tests -q
+python -m pytest tests/api tests/benchmarks tests/examples -q
+```
+
+Run exhaustive slow model-combination tests separately when needed:
+
+```bash
+python -m pytest tests/models_tests -m slow -q
+```
+
+For the standalone oversampling package, run from the `frsampling` repository
+root after making FRsutils importable:
+
+```bash
+PYTHONPATH="$PWD/src:../FRsutils" python -m pytest tests -q
 ```
 
 For more information on test procedures, please refer to
@@ -377,12 +390,13 @@ For more information on test procedures, please refer to
   perform repeated input-range checks. Validation is preferred at construction or
   workflow boundaries.
 
-## TODO
+## Maintenance notes
 
-- Add tests for t-norms with non-binary masks.
-- Implement and debug VQRS (Vaguely Quantified Rough Sets).
-- Change the code to get a class to calculate lower and upper approximations and
-  positive region regarding a single class of `y`.
+- Exhaustive model-combination tests are marked as `slow`; run them explicitly
+  with `python -m pytest tests/models_tests -m slow -q`.
+- VQRS is implemented and covered by the public API/blockwise/backend tests.
+- New feature work should be deferred until the release/paper cleanup checklist is
+  complete.
 
 ## License
 

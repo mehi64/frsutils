@@ -5,7 +5,7 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.pipeline import Pipeline
 
-from fuzzy_rough_oversampling import FRSMOTE  # <-- update path
+from frsampling import FRSMOTE  # <-- update path
 from sklearn.model_selection import GridSearchCV
 
 # -----------------------------
@@ -69,7 +69,7 @@ print("Mean F1:", np.mean(scores))
 # from imblearn.over_sampling import SMOTE
 # from sklearn.ensemble import RandomForestClassifier
 # from sklearn.model_selection import GridSearchCV
-# from fuzzy_rough_oversampling import FRSMOTE
+# from frsampling import FRSMOTE
 # from sklearn.datasets import make_classification
 # from sklearn.preprocessing import MinMaxScaler
 
