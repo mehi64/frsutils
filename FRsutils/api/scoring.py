@@ -27,9 +27,16 @@ libraries and for end users who want a reusable fitted object.
 
 # from FRsutils.api import FuzzyRoughPositiveRegionScorer
 #
-# scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
+# scorer = FuzzyRoughPositiveRegionScorer(
+#     model="itfrs",
+#     similarity="linear",
+#     engine="blockwise",
+#     backend="numpy",
+#     block_size=512,
+# )
 # scores = scorer.fit_score(X, y)
 # result = scorer.as_result()
+# result.engine
 """
 
 from __future__ import annotations
@@ -72,6 +79,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     @param similarity_matrix: Optional precomputed similarity matrix.
     @param config: Optional flat or nested FRsutils config mapping.
     @param return_similarity_matrix: If True, store the similarity matrix in result_.
+    @param engine: Approximation execution engine forwarded to compute_approximations.
+    @param block_size: Block size forwarded when engine="blockwise".
+    @param backend: Backend alias forwarded for blockwise similarity-block execution.
     @param extra_params: Optional mapping for advanced flat parameters not yet exposed.
     """
 
@@ -96,6 +106,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         similarity_matrix: Optional[np.ndarray] = None,
         config: Optional[Mapping[str, Any]] = None,
         return_similarity_matrix: bool = False,
+        engine: str = "dense",
+        block_size: int = 1024,
+        backend: str = "numpy",
         extra_params: Optional[Mapping[str, Any]] = None,
     ) -> None:
         self.model = model
@@ -117,6 +130,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.similarity_matrix = similarity_matrix
         self.config = config
         self.return_similarity_matrix = return_similarity_matrix
+        self.engine = engine
+        self.block_size = block_size
+        self.backend = backend
         self.extra_params = extra_params
 
     def _flat_config(self) -> Dict[str, Any]:
@@ -163,6 +179,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
             similarity_matrix=self.similarity_matrix,
             config=self.config,
             return_similarity_matrix=self.return_similarity_matrix,
+            engine=self.engine,
+            block_size=self.block_size,
+            backend=self.backend,
             **self._flat_config(),
         )
 

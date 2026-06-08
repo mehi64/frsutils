@@ -16,8 +16,9 @@ consume block by block.
 # DenseSimilarityEngine                Compatibility wrapper around dense matrix building
 # BlockwiseSimilarityEngine            Exact block iterator for future streaming models
 # calculate_similarity_block           Compute one pairwise block from two feature matrices
+# iter_backend_blocks                  Yield backend-resident blocks for GPU-aware accumulators
 # build_similarity_engine              Factory for dense/blockwise engine construction
-# backend='cupy'                       Optional GPU acceleration for block similarity calculation
+# backend='cupy'                       Optional GPU acceleration for block similarity/ITFRS block execution
 
 # ✅ Design Patterns & Clean Code Notes
 # - Strategy Pattern: dense and blockwise engines share a common public contract
@@ -25,7 +26,8 @@ consume block by block.
 # - Adapter Pattern: converts flat/nested config into concrete similarity components
 # - Conservative Refactor: current dense API remains untouched and regression-tested
 # - Optional Dependency Boundary: CuPy is imported only when backend='cupy' is requested
-# - DRY: block and dense computation use the same Similarity/TNorm components
+# - DRY: block computation delegates backend formulas to Similarity/TNorm components
+# - GPU Residency Boundary: public iter_blocks() returns NumPy, while iter_backend_blocks() may keep CuPy values resident
 ##############################################
 
 ##############################################
@@ -62,11 +64,15 @@ class SimilarityBlock:
     @param row_slice: Row sample slice represented by this block.
     @param col_slice: Column sample slice represented by this block.
     @param values: Similarity values with shape `(len(row_slice), len(col_slice))`.
+    @param values_backend: Name of the array backend that owns `values`.
+    @param values_are_backend_resident: True when `values` may be a non-NumPy backend array.
     """
 
     row_slice: slice
     col_slice: slice
-    values: np.ndarray
+    values: Any
+    values_backend: str = "numpy"
+    values_are_backend_resident: bool = False
 
 
 
@@ -164,7 +170,10 @@ def build_similarity_components(
     tnorm_cfg = nested.get("similarity_tnorm", {}) if isinstance(nested, Mapping) else {}
 
     similarity_type = sim_cfg.get("name") or effective_config.get("similarity") or "gaussian"
-    similarity_params = sim_cfg.get("params") if isinstance(sim_cfg.get("params"), dict) else {}
+    similarity_params = dict(sim_cfg.get("params") if isinstance(sim_cfg.get("params"), dict) else {})
+    if str(similarity_type).lower() in {"gaussian", "gauss"} and "sigma" in effective_config and "sigma" not in similarity_params:
+        # Backward-compatible legacy flat alias used by older tests/examples.
+        similarity_params["sigma"] = effective_config["sigma"]
 
     tnorm_type = tnorm_cfg.get("name") or effective_config.get("similarity_tnorm") or "minimum"
     tnorm_params = tnorm_cfg.get("params") if isinstance(tnorm_cfg.get("params"), dict) else {}
@@ -193,9 +202,8 @@ def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backen
     """
     @brief Compute feature-level similarity on a backend array.
 
-    The current core Similarity classes validate NumPy arrays internally. This
-    helper mirrors their formulas for backend arrays so CuPy blocks can be
-    computed on GPU without rewriting the public Similarity registry.
+    Phase 1 moved backend-specific formulas into the Similarity components, so
+    this helper now acts only as a small engine-to-component adapter.
 
     @param diff: Pairwise backend-array difference matrix.
     @param similarity_func: Built similarity component.
@@ -203,24 +211,22 @@ def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backen
     @return: Backend-array similarity matrix.
     @raises NotImplementedError: If a similarity has no backend formula yet.
     """
-    xp = backend.xp
-    similarity_name = _registered_component_name(Similarity, similarity_func)
-
-    if similarity_name == "linear":
-        return xp.maximum(0.0, 1.0 - xp.abs(diff))
-    if similarity_name == "gaussian":
-        sigma = float(getattr(similarity_func, "sigma"))
-        return xp.exp(-((diff ** 2) / (2.0 * sigma ** 2)))
-
-    raise NotImplementedError(
-        f"backend='{backend.name}' does not yet support similarity='{similarity_name}'. "
-        "Use backend='numpy' or add a backend formula for this similarity."
-    )
+    try:
+        return similarity_func.compute_backend(diff, xp=backend.xp)
+    except NotImplementedError as exc:
+        similarity_name = _registered_component_name(Similarity, similarity_func)
+        raise NotImplementedError(
+            f"backend='{backend.name}' does not yet support similarity='{similarity_name}'. "
+            "Use backend='numpy' or add compute_backend(...) to this similarity."
+        ) from exc
 
 
 def _apply_tnorm_backend(a: Any, b: Any, tnorm: TNorm, backend: ArrayBackend):
     """
-    @brief Apply a T-norm formula on backend arrays.
+    @brief Apply a T-norm component on backend arrays.
+
+    Phase 1 moved backend-specific T-norm formulas into the TNorm components, so
+    this helper now acts only as a small engine-to-component adapter.
 
     @param a: First backend array.
     @param b: Second backend array.
@@ -229,33 +235,14 @@ def _apply_tnorm_backend(a: Any, b: Any, tnorm: TNorm, backend: ArrayBackend):
     @return: Backend-array T-norm result.
     @raises NotImplementedError: If a T-norm has no backend formula yet.
     """
-    xp = backend.xp
-    tnorm_name = _registered_component_name(TNorm, tnorm)
-
-    if tnorm_name in {"minimum", "min", "goedel"}:
-        return xp.minimum(a, b)
-    if tnorm_name in {"product", "prod", "algebraic"}:
-        return a * b
-    if tnorm_name in {"lukasiewicz", "luk", "bounded", "boundeddifference"}:
-        return xp.maximum(0.0, a + b - 1.0)
-    if tnorm_name in {"drastic", "drasticproduct"}:
-        return xp.where(b == 1.0, a, xp.where(a == 1.0, b, 0.0))
-    if tnorm_name in {"einstein", "einsteinproduct"}:
-        denom = 2.0 - (a + b - a * b)
-        return xp.where(denom != 0.0, (a * b) / denom, 0.0)
-    if tnorm_name in {"hamacher", "hamacherproduct"}:
-        denom = a + b - a * b
-        return xp.where(denom != 0.0, (a * b) / denom, 0.0)
-    if tnorm_name in {"nilpotent", "nilpotentminimum"}:
-        return xp.where((a + b) > 1.0, xp.minimum(a, b), 0.0)
-    if tnorm_name in {"yager", "yg"}:
-        p = float(getattr(tnorm, "p"))
-        return 1.0 - xp.minimum(1.0, ((1.0 - a) ** p + (1.0 - b) ** p) ** (1.0 / p))
-
-    raise NotImplementedError(
-        f"backend='{backend.name}' does not yet support similarity_tnorm='{tnorm_name}'. "
-        "Use backend='numpy' or add a backend formula for this T-norm."
-    )
+    try:
+        return tnorm.compute_backend(a, b, xp=backend.xp)
+    except NotImplementedError as exc:
+        tnorm_name = _registered_component_name(TNorm, tnorm)
+        raise NotImplementedError(
+            f"backend='{backend.name}' does not yet support similarity_tnorm='{tnorm_name}'. "
+            "Use backend='numpy' or add compute_backend(...) to this T-norm."
+        ) from exc
 
 
 def calculate_similarity_block(
@@ -265,7 +252,8 @@ def calculate_similarity_block(
     tnorm,
     *,
     backend: Optional[ArrayBackend] = None,
-) -> np.ndarray:
+    return_backend_array: bool = False,
+) -> Any:
     """
     @brief Compute an exact pairwise similarity block between two feature matrices.
 
@@ -274,7 +262,8 @@ def calculate_similarity_block(
     @param similarity_func: Built similarity component.
     @param tnorm: Built binary T-norm component/callable.
     @param backend: Optional ArrayBackend. NumPy is used when omitted.
-    @return: Similarity block with shape `(n_rows, n_cols)` as a NumPy array.
+    @param return_backend_array: If True, keep CuPy values on GPU instead of converting to NumPy.
+    @return: Similarity block with shape `(n_rows, n_cols)` as NumPy or backend array.
     @raises ValueError: If feature dimensions do not match.
     """
     X_rows_array = _as_2d_feature_matrix(X_rows)
@@ -309,6 +298,8 @@ def calculate_similarity_block(
         feature_sim = _compute_similarity_from_diff(row_col - col_row, similarity_func, effective_backend)
         sim_block_backend = _apply_tnorm_backend(sim_block_backend, feature_sim, tnorm, effective_backend)
 
+    if return_backend_array:
+        return sim_block_backend
     return effective_backend.to_numpy(sim_block_backend)
 
 
@@ -356,11 +347,24 @@ class BaseSimilarityEngine:
 
     def iter_blocks(self) -> Iterator[SimilarityBlock]:
         """
-        @brief Yield exact similarity blocks.
+        @brief Yield exact similarity blocks as NumPy arrays.
+
+        @return: Iterator over NumPy-backed SimilarityBlock values.
+        """
+        raise NotImplementedError("Concrete similarity engines must implement iter_blocks().")
+
+    def iter_backend_blocks(self) -> Iterator[SimilarityBlock]:
+        """
+        @brief Yield exact similarity blocks in the engine backend when supported.
+
+        The default implementation preserves compatibility by delegating to
+        iter_blocks(), which yields NumPy-backed values. Blockwise engines can
+        override this to keep CuPy block values resident for GPU-aware
+        approximation accumulators.
 
         @return: Iterator over SimilarityBlock values.
         """
-        raise NotImplementedError("Concrete similarity engines must implement iter_blocks().")
+        yield from self.iter_blocks()
 
     def to_dense(self) -> np.ndarray:
         """
@@ -407,6 +411,8 @@ class DenseSimilarityEngine(BaseSimilarityEngine):
             row_slice=slice(0, self.n_samples),
             col_slice=slice(0, self.n_samples),
             values=self.to_dense(),
+            values_backend="numpy",
+            values_are_backend_resident=False,
         )
 
 
@@ -439,10 +445,11 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
         super().__init__(X, config=config, backend=backend, **flat_config)
         self.block_size = _validate_block_size(block_size)
 
-    def iter_blocks(self) -> Iterator[SimilarityBlock]:
+    def _iter_blocks_impl(self, *, return_backend_array: bool) -> Iterator[SimilarityBlock]:
         """
-        @brief Yield exact pairwise similarity blocks in row-major block order.
+        @brief Shared row-major block iterator for NumPy and backend-resident values.
 
+        @param return_backend_array: If True, keep CuPy values resident when backend='cupy'.
         @return: Iterator over SimilarityBlock values.
         """
         n = self.n_samples
@@ -462,13 +469,55 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
                     self.similarity_func,
                     self.tnorm_func,
                     backend=self.backend,
+                    return_backend_array=return_backend_array,
                 )
 
-                if row_start == col_start and row_stop == col_stop and values.size:
-                    np.fill_diagonal(values, 1.0)
+                if row_start == col_start and row_stop == col_stop and getattr(values, "size", 0):
+                    self.backend.xp.fill_diagonal(values, 1.0)
 
-                yield SimilarityBlock(row_slice=row_slice, col_slice=col_slice, values=values)
+                values_are_backend_resident = bool(return_backend_array and is_cupy_backend(self.backend))
+                if not return_backend_array and is_cupy_backend(self.backend):
+                    values_backend = "numpy"
+                else:
+                    values_backend = self.backend.name
 
+                yield SimilarityBlock(
+                    row_slice=row_slice,
+                    col_slice=col_slice,
+                    values=values,
+                    values_backend=values_backend,
+                    values_are_backend_resident=values_are_backend_resident,
+                )
+
+    def iter_blocks(self) -> Iterator[SimilarityBlock]:
+        """
+        @brief Yield exact pairwise similarity blocks as NumPy arrays.
+
+        @return: Iterator over NumPy-backed SimilarityBlock values.
+        """
+        for block in self._iter_blocks_impl(return_backend_array=False):
+            if block.values_are_backend_resident:
+                yield SimilarityBlock(
+                    row_slice=block.row_slice,
+                    col_slice=block.col_slice,
+                    values=self.backend.to_numpy(block.values),
+                    values_backend="numpy",
+                    values_are_backend_resident=False,
+                )
+            else:
+                yield block
+
+    def iter_backend_blocks(self) -> Iterator[SimilarityBlock]:
+        """
+        @brief Yield exact pairwise blocks using the resolved backend when possible.
+
+        For backend='cupy', block values remain on GPU so GPU-aware approximation
+        engines can apply implicator/T-norm reductions without an immediate
+        CPU round-trip. For NumPy, this is equivalent to iter_blocks().
+
+        @return: Iterator over SimilarityBlock values.
+        """
+        yield from self._iter_blocks_impl(return_backend_array=True)
 
 
 def build_similarity_engine(

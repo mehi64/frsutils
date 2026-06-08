@@ -6,8 +6,11 @@ This module contains execution helpers that consume SimilarityEngine blocks
 without requiring callers to materialize a full pairwise similarity matrix.
 Phase 2 introduced an exact ITFRS blockwise accumulator. Phase 4 extends the
 same exact blockwise execution contract to VQRS. Phase 5 adds exact OWAFRS
-row-buffer execution for the sort/OWA case while keeping dense model behavior
-available through the existing model classes and public APIs.
+row-buffer execution for the sort/OWA case. Phase 3 of the backend roadmap keeps
+ITFRS similarity blocks, implicator/T-norm application, and min/max reductions
+resident on CuPy when backend='cupy'. Phase 4 applies the same GPU-resident
+accumulator boundary to VQRS sum/reduction execution, while public outputs
+remain NumPy arrays.
 
 ##############################################
 # ✅ Quick Summary of Features
@@ -17,6 +20,8 @@ available through the existing model classes and public APIs.
 # VQRSBlockwiseApproximation           Value object for exact VQRS blockwise outputs
 # OWAFRSBlockwiseApproximation         Value object for exact OWAFRS blockwise outputs
 # compute_itfrs_blockwise              Exact ITFRS lower/upper/boundary/positive-region computation
+# GPU-resident ITFRS path              Keeps CuPy blocks/reductions on GPU until final output conversion
+# GPU-resident VQRS path               Keeps CuPy sum accumulators/quantifiers on GPU until final conversion
 # compute_vqrs_blockwise               Exact VQRS lower/upper/boundary/positive-region computation
 # compute_owafrs_blockwise             Exact OWAFRS row-buffer lower/upper computation
 # build_itfrs_components_from_config   Resolve ITFRS T-norm/implicator components
@@ -27,6 +32,7 @@ available through the existing model classes and public APIs.
 # - Strategy Pattern: separates blockwise model execution from dense model classes
 # - Adapter Pattern: accepts flat or nested FRsutils configs
 # - Streaming Accumulator: keeps only row-level accumulators, not an n x n matrix
+# - GPU Residency Boundary: ITFRS/VQRS can consume backend-resident blocks and return NumPy outputs
 # - Row-Buffer Execution: OWAFRS stores one row block at a time for exact sorting
 # - Conservative Extension: blockwise support is added without changing dense behavior
 ##############################################
@@ -52,6 +58,7 @@ from typing import Any, Mapping, Optional, Tuple
 
 import numpy as np
 
+from FRsutils.core.backends import is_cupy_backend
 from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from FRsutils.core.implicators import Implicator
 from FRsutils.core.owa_weights import OWAWeights
@@ -69,12 +76,16 @@ class ITFRSBlockwiseApproximation:
     @param upper: Upper approximation values.
     @param boundary: Boundary values computed as upper - lower.
     @param positive_region: Positive-region values, identical to lower for ITFRS.
+    @param execution_backend: Backend that owned the ITFRS accumulators.
+    @param used_gpu_approximation_accumulators: True when CuPy held ITFRS accumulators/reductions.
     """
 
     lower: np.ndarray
     upper: np.ndarray
     boundary: np.ndarray
     positive_region: np.ndarray
+    execution_backend: str = "numpy"
+    used_gpu_approximation_accumulators: bool = False
 
 
 @dataclass(frozen=True)
@@ -87,6 +98,8 @@ class VQRSBlockwiseApproximation:
     @param boundary: Boundary values computed as upper - lower.
     @param positive_region: Positive-region values, identical to lower by the base model contract.
     @param interim: Raw VQRS ratio values before fuzzy quantifier application.
+    @param execution_backend: Backend that owned the VQRS accumulators.
+    @param used_gpu_approximation_accumulators: True when CuPy held VQRS accumulators/reductions.
     """
 
     lower: np.ndarray
@@ -94,6 +107,8 @@ class VQRSBlockwiseApproximation:
     boundary: np.ndarray
     positive_region: np.ndarray
     interim: np.ndarray
+    execution_backend: str = "numpy"
+    used_gpu_approximation_accumulators: bool = False
 
 
 @dataclass(frozen=True)
@@ -260,6 +275,36 @@ def build_owafrs_components_from_config(
     return ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method
 
 
+def _backend_index_array(indices: np.ndarray, *, xp: Any):
+    """
+    @brief Convert NumPy integer indices to a backend-compatible index array.
+
+    @param indices: One-dimensional NumPy integer index array.
+    @param xp: Array namespace used by the active backend.
+    @return: Backend-compatible index array.
+    """
+    return indices if xp is np else xp.asarray(indices, dtype=int)
+
+
+def _set_block_diagonal_values(values: Any, row_indices: np.ndarray, col_indices: np.ndarray, *, xp: Any, lower_value: float, upper_value: Optional[float] = None):
+    """
+    @brief Set local diagonal entries for one or two backend arrays.
+
+    @param values: First backend array to mutate.
+    @param row_indices: Local row positions as NumPy integers.
+    @param col_indices: Local column positions as NumPy integers.
+    @param xp: Array namespace used by the active backend.
+    @param lower_value: Value assigned to `values`.
+    @param upper_value: Reserved for readability at call sites; ignored here.
+    @return: None.
+    """
+    if row_indices.size == 0:
+        return
+    row_idx = _backend_index_array(row_indices, xp=xp)
+    col_idx = _backend_index_array(col_indices, xp=xp)
+    values[row_idx, col_idx] = lower_value
+
+
 def _diagonal_positions_for_block(row_slice: slice, col_slice: slice) -> Tuple[np.ndarray, np.ndarray]:
     """
     @brief Return local diagonal positions for overlapping row/column slices.
@@ -317,8 +362,10 @@ def compute_itfrs_blockwise(
     @brief Compute exact ITFRS approximations from similarity blocks.
 
     This function is mathematically equivalent to the dense ITFRS implementation
-    but keeps only row-level lower/upper accumulators in memory. It is therefore
-    the first exact blockwise approximation path introduced in Phase 2.
+    but keeps only row-level lower/upper accumulators in memory. When the
+    similarity engine resolves backend='cupy' and exposes iter_backend_blocks(),
+    this Phase 3 path keeps similarity blocks, implicator/T-norm values, and
+    min/max accumulators on GPU until the final public NumPy conversion.
 
     @param similarity_engine: Dense or blockwise SimilarityEngine instance.
     @param labels: Label vector aligned with the engine samples.
@@ -332,36 +379,64 @@ def compute_itfrs_blockwise(
     labels_array = _as_labels(labels, expected_length=similarity_engine.n_samples)
     ub_tnorm, lb_implicator = build_itfrs_components_from_config(config)
 
-    n_samples = similarity_engine.n_samples
-    lower_acc = np.ones(n_samples, dtype=np.float64)
-    upper_acc = np.zeros(n_samples, dtype=np.float64)
+    backend = getattr(similarity_engine, "backend", None)
+    xp = getattr(backend, "xp", np)
+    backend_name = getattr(backend, "name", "numpy")
+    use_gpu_accumulators = bool(backend is not None and is_cupy_backend(backend))
 
-    for block in similarity_engine.iter_blocks():
+    n_samples = similarity_engine.n_samples
+    lower_acc = xp.ones(n_samples, dtype=np.float64)
+    upper_acc = xp.zeros(n_samples, dtype=np.float64)
+
+    block_iterator = (
+        similarity_engine.iter_backend_blocks()
+        if use_gpu_accumulators and hasattr(similarity_engine, "iter_backend_blocks")
+        else similarity_engine.iter_blocks()
+    )
+
+    for block in block_iterator:
         row_labels = labels_array[block.row_slice]
         col_labels = labels_array[block.col_slice]
-        label_mask = (row_labels[:, None] == col_labels[None, :]).astype(float)
-        values = np.asarray(block.values, dtype=np.float64)
+        label_mask_np = (row_labels[:, None] == col_labels[None, :]).astype(np.float64)
+        values = xp.asarray(block.values, dtype=np.float64)
+        label_mask = xp.asarray(label_mask_np, dtype=np.float64)
 
-        implication_vals = lb_implicator(values, label_mask)
-        tnorm_vals = ub_tnorm(values, label_mask)
+        implication_vals = lb_implicator.compute_backend(values, label_mask, xp=xp, validate_inputs=False)
+        tnorm_vals = ub_tnorm.compute_backend(values, label_mask, xp=xp)
 
         diagonal_rows, diagonal_cols = _diagonal_positions_for_block(block.row_slice, block.col_slice)
         if diagonal_rows.size:
-            implication_vals[diagonal_rows, diagonal_cols] = 1.0
-            tnorm_vals[diagonal_rows, diagonal_cols] = 0.0
+            row_idx = _backend_index_array(diagonal_rows, xp=xp)
+            col_idx = _backend_index_array(diagonal_cols, xp=xp)
+            implication_vals[row_idx, col_idx] = 1.0
+            tnorm_vals[row_idx, col_idx] = 0.0
 
         if implication_vals.shape[1] > 0:
-            lower_acc[block.row_slice] = np.minimum(lower_acc[block.row_slice], np.min(implication_vals, axis=1))
+            lower_acc[block.row_slice] = xp.minimum(lower_acc[block.row_slice], xp.min(implication_vals, axis=1))
         if tnorm_vals.shape[1] > 0:
-            upper_acc[block.row_slice] = np.maximum(upper_acc[block.row_slice], np.max(tnorm_vals, axis=1))
+            upper_acc[block.row_slice] = xp.maximum(upper_acc[block.row_slice], xp.max(tnorm_vals, axis=1))
 
-    boundary = upper_acc - lower_acc
-    positive_region = lower_acc.copy()
+    boundary_acc = upper_acc - lower_acc
+    positive_region_acc = lower_acc.copy()
+
+    if backend is not None:
+        lower_out = backend.to_numpy(lower_acc)
+        upper_out = backend.to_numpy(upper_acc)
+        boundary_out = backend.to_numpy(boundary_acc)
+        positive_region_out = backend.to_numpy(positive_region_acc)
+    else:
+        lower_out = np.asarray(lower_acc)
+        upper_out = np.asarray(upper_acc)
+        boundary_out = np.asarray(boundary_acc)
+        positive_region_out = np.asarray(positive_region_acc)
+
     return ITFRSBlockwiseApproximation(
-        lower=lower_acc,
-        upper=upper_acc,
-        boundary=boundary,
-        positive_region=positive_region,
+        lower=lower_out,
+        upper=upper_out,
+        boundary=boundary_out,
+        positive_region=positive_region_out,
+        execution_backend=backend_name,
+        used_gpu_approximation_accumulators=use_gpu_accumulators,
     )
 
 
@@ -377,7 +452,12 @@ def compute_vqrs_blockwise(
     This function is mathematically equivalent to the dense VQRS implementation:
     it accumulates the same numerator `sum(min(S_ij, same_label_ij))` and
     denominator `sum(S_ij) - 1` row by row, then applies the configured lower
-    and upper fuzzy quantifiers. It avoids storing the full n x n matrix.
+    and upper fuzzy quantifiers. When the similarity engine resolves
+    backend='cupy' and exposes iter_backend_blocks(), this Phase 4 path keeps
+    similarity blocks, minimum T-norm values, numerator/denominator sums, and
+    fuzzy-quantifier application backend-resident until the final public NumPy
+    conversion. It avoids storing the full n x n matrix in either CPU or GPU
+    memory.
 
     @param similarity_engine: Dense or blockwise SimilarityEngine instance.
     @param labels: Label vector aligned with the engine samples.
@@ -391,43 +471,74 @@ def compute_vqrs_blockwise(
     labels_array = _as_labels(labels, expected_length=similarity_engine.n_samples)
     lb_fuzzy_quantifier, ub_fuzzy_quantifier, tnorm = build_vqrs_components_from_config(config)
 
-    n_samples = similarity_engine.n_samples
-    numerator_acc = np.zeros(n_samples, dtype=np.float64)
-    denominator_acc = np.zeros(n_samples, dtype=np.float64)
+    backend = getattr(similarity_engine, "backend", None)
+    xp = getattr(backend, "xp", np)
+    backend_name = getattr(backend, "name", "numpy")
+    use_gpu_accumulators = bool(backend is not None and is_cupy_backend(backend))
 
-    for block in similarity_engine.iter_blocks():
+    n_samples = similarity_engine.n_samples
+    numerator_acc = xp.zeros(n_samples, dtype=np.float64)
+    denominator_acc = xp.zeros(n_samples, dtype=np.float64)
+
+    block_iterator = (
+        similarity_engine.iter_backend_blocks()
+        if use_gpu_accumulators and hasattr(similarity_engine, "iter_backend_blocks")
+        else similarity_engine.iter_blocks()
+    )
+
+    for block in block_iterator:
         row_labels = labels_array[block.row_slice]
         col_labels = labels_array[block.col_slice]
-        label_mask = (row_labels[:, None] == col_labels[None, :]).astype(float)
-        values = np.asarray(block.values, dtype=np.float64)
+        label_mask_np = (row_labels[:, None] == col_labels[None, :]).astype(np.float64)
+        values = xp.asarray(block.values, dtype=np.float64)
+        label_mask = xp.asarray(label_mask_np, dtype=np.float64)
 
-        tnorm_vals = tnorm(values, label_mask)
+        tnorm_vals = tnorm.compute_backend(values, label_mask, xp=xp)
 
         diagonal_rows, diagonal_cols = _diagonal_positions_for_block(block.row_slice, block.col_slice)
         if diagonal_rows.size:
             # Dense VQRS excludes self-comparisons from the numerator by forcing
-            # the t-norm diagonal to zero, while denominator exclusion is handled
+            # the T-norm diagonal to zero, while denominator exclusion is handled
             # once at the end through `sum(S_i*) - 1`.
-            tnorm_vals[diagonal_rows, diagonal_cols] = 0.0
+            row_idx = _backend_index_array(diagonal_rows, xp=xp)
+            col_idx = _backend_index_array(diagonal_cols, xp=xp)
+            tnorm_vals[row_idx, col_idx] = 0.0
 
         if values.shape[1] > 0:
-            numerator_acc[block.row_slice] += np.sum(tnorm_vals, axis=1)
-            denominator_acc[block.row_slice] += np.sum(values, axis=1)
+            numerator_acc[block.row_slice] = numerator_acc[block.row_slice] + xp.sum(tnorm_vals, axis=1)
+            denominator_acc[block.row_slice] = denominator_acc[block.row_slice] + xp.sum(values, axis=1)
 
     denominator = denominator_acc - 1.0
-    with np.errstate(divide="ignore", invalid="ignore"):
-        interim = numerator_acc / denominator
+    errstate = getattr(xp, "errstate", np.errstate)
+    with errstate(divide="ignore", invalid="ignore"):
+        interim_acc = numerator_acc / denominator
 
-    lower = np.asarray(lb_fuzzy_quantifier(interim))
-    upper = np.asarray(ub_fuzzy_quantifier(interim))
-    boundary = upper - lower
-    positive_region = lower.copy()
+    lower_acc = lb_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=lb_fuzzy_quantifier.validate_inputs)
+    upper_acc = ub_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=ub_fuzzy_quantifier.validate_inputs)
+    boundary_acc = upper_acc - lower_acc
+    positive_region_acc = lower_acc.copy()
+
+    if backend is not None:
+        lower_out = backend.to_numpy(lower_acc)
+        upper_out = backend.to_numpy(upper_acc)
+        boundary_out = backend.to_numpy(boundary_acc)
+        positive_region_out = backend.to_numpy(positive_region_acc)
+        interim_out = backend.to_numpy(interim_acc)
+    else:
+        lower_out = np.asarray(lower_acc)
+        upper_out = np.asarray(upper_acc)
+        boundary_out = np.asarray(boundary_acc)
+        positive_region_out = np.asarray(positive_region_acc)
+        interim_out = np.asarray(interim_acc)
+
     return VQRSBlockwiseApproximation(
-        lower=lower,
-        upper=upper,
-        boundary=boundary,
-        positive_region=positive_region,
-        interim=interim,
+        lower=lower_out,
+        upper=upper_out,
+        boundary=boundary_out,
+        positive_region=positive_region_out,
+        interim=interim_out,
+        execution_backend=backend_name,
+        used_gpu_approximation_accumulators=use_gpu_accumulators,
     )
 
 

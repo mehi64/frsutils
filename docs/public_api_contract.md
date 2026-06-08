@@ -80,8 +80,9 @@ result = compute_approximations(
 
 Supported engine aliases are `"dense"` and `"blockwise"`. Supported backend
 aliases are `"numpy"`, `"auto"`, and explicit optional `"cupy"`. The CuPy path
-currently accelerates similarity-block calculation only; public outputs remain
-NumPy arrays.
+accelerates similarity-block calculation and, for blockwise ITFRS, can keep the
+ITFRS approximation accumulator on CuPy until final NumPy output conversion.
+Public outputs remain NumPy arrays.
 
 ### `compute_positive_region`
 
@@ -146,9 +147,34 @@ scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
 
-Current limitation: the scorer wraps the dense/default approximation path and
-does not yet expose explicit `engine`, `backend`, or `block_size` constructor
-parameters. Those are tracked as the next public API metadata/scorer phase.
+The scorer exposes `engine`, `backend`, and `block_size` constructor parameters
+and forwards them to `compute_approximations(...)`. The fitted result object
+contains execution metadata including `used_gpu_similarity_blocks` and
+`used_gpu_approximation_accumulators`. The latter is true for the experimental
+CuPy-resident blockwise ITFRS and VQRS accumulator paths. It remains false for
+OWAFRS by design after the Phase 5 non-scope decision, even when OWAFRS uses
+CuPy similarity-block computation.
+
+## Benchmark and execution-reporting contract
+
+Phase 6 adds a public-API benchmark harness at:
+
+```text
+benchmarks/benchmark_fuzzy_rough_execution.py
+```
+
+The benchmark script intentionally depends on `FRsutils.api` rather than private
+core modules. This keeps benchmark results aligned with the same compatibility
+boundary used by downstream packages such as `frsampling`.
+
+The benchmark outputs JSON and CSV rows containing execution metadata from
+`FuzzyRoughApproximationResult`, including `engine`, `backend`, `block_size`,
+`used_blockwise`, `used_gpu_similarity_blocks`, and
+`used_gpu_approximation_accumulators`. Downstream benchmark consumers should use
+these fields instead of inferring execution paths from command-line arguments.
+
+See [`phase_6_benchmark_suite.md`](phase_6_benchmark_suite.md) for the benchmark
+matrix and interpretation rules.
 
 ## Advanced public API
 
@@ -198,6 +224,17 @@ inspection, backwards compatibility, or advanced experimentation:
 These should not be the first choice for tutorials, README examples, or
 external package integration. Prefer the task-level API unless there is a clear
 advanced use case.
+
+## OWAFRS backend boundary
+
+OWAFRS is supported by the dense and exact blockwise public approximation APIs.
+However, OWAFRS approximation accumulators are not GPU-resident in the current
+cycle. With `model="owafrs"`, `engine="blockwise"`, and `backend="cupy"`, only
+the similarity-block calculation may use CuPy. The OWA row-buffer, row-wise
+sorting, and weighted aggregation remain NumPy.
+
+This keeps the public execution claim conservative and avoids implying full
+GPU-native OWAFRS support before sorting and memory benchmarks exist.
 
 ## Downstream-package rule
 
@@ -268,3 +305,43 @@ The repository should keep tests that verify:
 3. `compute_positive_region` matches `compute_approximations(...).positive_region`,
 4. a precomputed similarity matrix can feed approximation helpers,
 5. downstream-style code can use only `FRsutils.api` without importing internals.
+
+## Phase 2 execution metadata
+
+`FuzzyRoughApproximationResult` records public execution provenance in addition
+to approximation arrays:
+
+- `engine`: canonical execution engine, usually `"dense"` or `"blockwise"`.
+- `backend`: canonical resolved backend. Dense execution reports `"numpy"`.
+- `block_size`: block size used by blockwise execution, or `None` for dense.
+- `used_blockwise`: whether blockwise approximation execution was used.
+- `used_gpu_similarity_blocks`: whether similarity blocks were computed through
+  the optional CuPy backend.
+
+`FuzzyRoughPositiveRegionScorer` accepts `engine`, `backend`, and `block_size`
+and forwards them to `compute_approximations(...)` while preserving sklearn-style
+parameter compatibility.
+
+## Release and paper claim boundary
+
+Phase 7 freezes the wording that should be used in releases and software-paper
+material. Public examples and downstream packages should continue to depend on
+`FRsutils.api`; private `FRsutils.core` modules are not part of the stable
+compatibility boundary.
+
+Safe release claim:
+
+```text
+FRsutils provides dense and exact blockwise fuzzy-rough approximation APIs with
+optional CuPy-accelerated similarity blocks and experimental CuPy-resident
+ITFRS/VQRS blockwise approximation accumulators. Public outputs remain NumPy
+arrays, and OWAFRS remains on the conservative exact blockwise NumPy row-buffer
+path in the current release.
+```
+
+See also:
+
+- `docs/paper_claims.md`
+- `docs/release_checklist.md`
+- `docs/phase_7_release_paper_hardening.md`
+

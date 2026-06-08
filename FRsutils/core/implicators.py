@@ -1,59 +1,53 @@
 """
 @file implicators.py
-@brief Fuzzy Implicators Framework
+@brief Fuzzy implicators framework with backend-aware vectorized formulas.
 
 Provides an extensible, class-based system for computing fuzzy logic implicators.
-Supports registration, creation, serialization, and parameter validation.
+Supports registration, creation, serialization, parameter validation, NumPy public
+calls, and formula-level backend hooks for future NumPy/CuPy approximation paths.
 
 ##############################################
 # ✅ Quick Summary of Features
-# Feature				        Description
+# Feature                              Description
 # ----------------------------------------------------------------------------------
-# register(*names)		        Register implicator with aliases
-# create(name, **kwargs)	    Instantiate implicator from registry
-# list_available()		        Returns registered implicators
-# to_dict() / from_dict()	    Serialization / deserialization
-# help()			        Returns class-level documentation
-# validate_params()		        Validates constructor parameters
-# describe_params_detailed()	Returns parameter types and values
-# __call__()			    Smart dispatcher for scalar, vector, or matrix
+# register(*names)                     Register implicator with aliases
+# create(name, **kwargs)               Instantiate implicator from registry
+# list_available()                     Returns registered implicators
+# to_dict() / from_dict()              Serialization / deserialization
+# validate_params()                    Validates constructor parameters
+# __call__()                           NumPy-compatible scalar/vector/matrix call
+# compute_backend(a, b, xp=...)        Backend-aware element-wise formula
 
 # ✅ Summary Table of Design Patterns
-# Category			Name		    Usage & Where Applied
+# Category              Name                Usage & Where Applied
 # ----------------------------------------------------------------------------------
-# Design Pattern	Factory Method		Implicator.create(name, **kwargs)
-# Design Pattern	Registry Pattern	Implicator._registry and register()
-# Design Pattern	Template Method		Defines abstract methods in base class
-# Design Pattern	Decorator	    @Implicator.register('name', ...)
-# Design Pattern	Strategy Pattern	Each subclass defines its own logic
-# Design Pattern	Adapter		    type-based to_dict/from_dict handling
-# Architecture	    Pluggable		No modification needed for extension
-# Clean Code		SRP, DRY, LSP, Fail-Fast, Docstring Documentation
+# Design Pattern        Factory Method      Implicator.create(name, **kwargs)
+# Design Pattern        Registry Pattern    Implicator._registry and register()
+# Design Pattern        Template Method     Base class defines call/validation flow
+# Design Pattern        Strategy Pattern    Each subclass defines its own formula
+# Design Pattern        Decorator           @Implicator.register('name', ...)
+# Backend Boundary      NumPy/CuPy formulas are owned by components, not engines
 ##############################################
 """
 
+from typing import Any, Union
 import numpy as np
 from abc import abstractmethod
-from typing import Union
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+
 
 class Implicator(RegistryFactoryMixin):
     """
     @brief Abstract base class for fuzzy implicators.
 
-    Provides registration, creation, validation, and serialization logic.
-    All concrete implicators must implement `_compute_elementwise`.
+    Dense public calls remain NumPy-compatible. `compute_backend` exposes the
+    same formulas as vectorized backend operations so approximation engines do
+    not need to mirror implicator logic.
     """
 
     def __call__(self, a: Union[float, np.ndarray], b: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """
         @brief Apply the implicator to scalar or NumPy array inputs.
-
-        Automatically handles scalar, vector, or matrix inputs.
-
-        @param a: Scalar or NumPy array.
-        @param b: Scalar or NumPy array with same shape.
-        @return: Scalar or array of implicator results.
         """
         a_arr = np.asarray(a)
         b_arr = np.asarray(b)
@@ -64,404 +58,246 @@ class Implicator(RegistryFactoryMixin):
         if np.isscalar(a) and np.isscalar(b):
             return self._compute_scalar(float(a), float(b))
 
-        vec_func = np.vectorize(self._compute_scalar)
-        return vec_func(a_arr, b_arr)
+        return self.compute_backend(a_arr, b_arr, xp=np, validate_inputs=True)
+
+    def _validate_backend_pair(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True) -> None:
+        """
+        @brief Validate backend array pair shape and optionally value range.
+        """
+        if getattr(a, "shape", None) != getattr(b, "shape", None):
+            raise ValueError(f"Incompatible shapes: {getattr(a, 'shape', None)} and {getattr(b, 'shape', None)}")
+        if not validate_inputs:
+            return
+
+        out_of_range = xp.any((a < 0.0) | (a > 1.0) | (b < 0.0) | (b > 1.0))
+        if xp is np:
+            has_out_of_range = bool(out_of_range)
+        else:
+            has_out_of_range = bool(xp.asnumpy(out_of_range))
+        if has_out_of_range:
+            raise ValueError("Implicator inputs must be in range [0.0, 1.0].")
+
+    @abstractmethod
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """
+        @brief Apply the implicator to two backend arrays element-wise.
+        """
+        raise NotImplementedError("all subclasses must implement compute_backend")
 
     @abstractmethod
     def _compute_scalar(self, a: float, b: float) -> float:
         """
         @brief Perform implicator operation on a pair of scalars.
-
-        Subclasses implement this with their specific logic.
-
-        @param a: Scalar float input.
-        @param b: Scalar float input.
-        @return: Implicator value.
         """
         raise NotImplementedError("all subclasses must implement _compute_scalar")
-    
 
     @classmethod
     @abstractmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief Optional parameter validation hook for subclasses.
-        
-        @param kwargs: Parameters to validate.
-        """
+        """@brief Optional parameter validation hook for subclasses."""
         raise NotImplementedError("all subclasses must implement validate_params")
-    
+
     @abstractmethod
-    def _get_params(self)-> dict:
-        """
-        @brief Returns a dictionary of the implicator's parameters.
-        @return: Parameter dictionary.
-        """
-        raise NotImplementedError("all derived calsses need to implemet _get_params")
+    def _get_params(self) -> dict:
+        """@brief Returns a dictionary of the implicator's parameters."""
+        raise NotImplementedError("all derived classes need to implement _get_params")
 
 
-
-#region <Non-parameterized implicators>
-
-@Implicator.register("lukasiewicz","luk")
+@Implicator.register("lukasiewicz", "luk")
 class LukasiewiczImplicator(Implicator):
-    """
-    @brief Lukasiewicz implicator: I(a, b) = min(1, 1 - a + b)
-    """
+    """@brief Lukasiewicz implicator: I(a, b) = min(1, 1 - a + b)."""
+
     def __init__(self):
         self.validate_params()
-        
+
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.minimum(1.0, 1.0 - a + b)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Implicator inputs must be in range [0.0, 1.0].")
-        return min(1.0, 1.0 - a + b)
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("goedel")
 class GoedelImplicator(Implicator):
-    """
-    @brief Gödel implicator: I(a, b) = 1 if a <= b; else b
-    """
+    """@brief Gödel implicator: I(a, b) = 1 if a <= b; else b."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.where(a <= b, 1.0, b)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Implicator inputs must be in range [0.0, 1.0].")
-        return 1.0 if a <= b else b
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("kleenedienes", "kleene", "kd")
 class KleeneDienesImplicator(Implicator):
-    """
-    @brief Kleene-Dienes implicator: I(a, b) = max(1 - a, b)
-    """
+    """@brief Kleene-Dienes implicator: I(a, b) = max(1 - a, b)."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.maximum(1.0 - a, b)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        return max(1.0 - a, b)
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
 
 
 @Implicator.register("reichenbach")
 class ReichenbachImplicator(Implicator):
-    """
-    @brief Reichenbach implicator: I(a, b) = 1 - a + (a * b)
-    """
+    """@brief Reichenbach implicator: I(a, b) = 1 - a + (a * b)."""
+
     def __init__(self):
         self.validate_params()
 
-    def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return 1.0 - a + a * b
-    
+
+    def _compute_scalar(self, a: float, b: float) -> float:
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
 
 
 @Implicator.register("goguen", "product")
 class GoguenImplicator(Implicator):
-    """
-    @brief Goguen implicator: I(a, b) = 1 if a <= b; b / a otherwise
-    """
+    """@brief Goguen implicator: I(a, b) = 1 if a <= b; b / a otherwise."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        safe_a = xp.where(a > 0.0, a, 1.0)
+        ratio = b / safe_a
+        return xp.where(a <= b, 1.0, xp.where(a > 0.0, ratio, 1.0))
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        return 1.0 if a <= b else b / a if a > 0 else 1.0
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("rescher")
 class RescherImplicator(Implicator):
-    """
-    @brief Rescher implicator: I(a, b) = 1 if a <= b; 0.0 otherwise
-    """
+    """@brief Rescher implicator: I(a, b) = 1 if a <= b; 0 otherwise."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.where(a <= b, 1.0, 0.0)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        return 1.0 if a <= b else 0.0
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("yager")
 class YagerImplicator(Implicator):
-    """
-    @brief Yager implicator: I(a, b) = b^a if a > 0 or b > 0; 1 otherwise
-    """
+    """@brief Yager implicator: I(a, b) = b^a if a > 0 or b > 0; 1 otherwise."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.where((a == 0.0) & (b == 0.0), 1.0, b ** a)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        
-        if (a==b==0):
-            return 1.0
-        return b**a
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("weber")
 class WeberImplicator(Implicator):
-    """
-    @brief Weber implicator: I(a, b) = b if a == 1 ; 1 if a<1
-    """
+    """@brief Weber implicator: I(a, b) = b if a == 1; 1 if a < 1."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.where(a == 1.0, b, 1.0)
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        
-        if a == 1.0:
-            return b
-        if a < 1.0:
-            return 1.0
-        else:
-            raise ValueError("must not happen")
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @Implicator.register("fodor")
 class FodorImplicator(Implicator):
-    """
-    @brief Fodor implicator: I(a, b) = max(1 - a, b) if a > b; 1 otherwise
-    """
+    """@brief Fodor implicator: I(a, b) = max(1 - a, b) if a > b; 1 otherwise."""
+
     def __init__(self):
         self.validate_params()
 
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
+        return xp.where(a <= b, 1.0, xp.maximum(1.0 - a, b))
+
     def _compute_scalar(self, a: float, b: float) -> float:
-        if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-            raise ValueError("Inputs must be in range [0.0, 1.0].")
-        
-        return 1.0 if a <= b else max(1.0 - a, b)
-    
+        return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
-
-# @Implicator.register("gaines")
-# class GainesImplicator(Implicator):
-#     """
-#     @brief Gaines implicator: I(a, b) = 1 if a <= b; else b / a
-#     """
-#     def __init__(self):
-#         self.validate_params()
-
-#     def _compute_scalar(self, a: float, b: float) -> float:
-#         if not (0.0 <= a <= 1.0 and 0.0 <= b <= 1.0):
-#             raise ValueError("Inputs must be in range [0.0, 1.0].")
-#         if a <= b:
-#             return 1.0
-#         # a>b and a!=0
-#         elif a > 0:
-#             return b / a
-#         # a>b and a=0
-#         else:
-#             return 0.0
-        
-    # @classmethod
-    # def validate_params(cls, **kwargs):
-    #     """
-    #     @brief This class does not need parameter validation
-    #     """
-    #     pass
-
-    # def _get_params(self)-> dict:
-    #     """
-    #     @brief no parameters
-    #     """
-    #     return {}
-
-
-#endregion
-
-#region<Parameterized implicators>
-
-
-
-
-
-
-# @Implicator.register("yager")
-# class YagerParametricImplicator(Implicator):
-#     # we need __init__ because needed parameters for yager implicator gotten
-#     # be checking the signature of this function. Moreover, it is called when
-#     # create function is called
-#     def __init__(self, p: float = 2.0):
-#         self.p = p
-
-#     def _compute_scalar(self, a: float, b: float) -> float:
-#         if not (0 <= a <= 1 and 0 <= b <= 1):
-#             raise ValueError("Inputs must be in range [0, 1].")
-#         return min(1.0, (1 - (a ** self.p) + (b ** self.p)) ** (1.0 / self.p))
-
-#     @classmethod
-#     def validate_params(cls, **kwargs):
-#         p = kwargs.get("p")
-#         if p is None:
-#             raise ValueError("Missing required parameter: p")
-#         if not isinstance(p, (int, float)) or p <= 0:
-#             raise ValueError("Parameter 'p' must be a positive number.")
-
-# @Implicator.register("weber")
-# class WeberImplicator(Implicator):
-#     def __init__(self, p: float = 2.0):
-#         self.p = p
-
-#     def _compute_scalar(self, a: float, b: float) -> float:
-#         denom = (a ** self.p + (1 - a) ** self.p)
-#         return min(1.0, b ** self.p / denom if denom != 0 else 1.0)
-
-#     @classmethod
-#     def validate_params(cls, **kwargs):
-#         p = kwargs.get("p")
-#         if p is None:
-#             raise ValueError("Missing required parameter: p")
-#         if not isinstance(p, (int, float)) or p <= 0:
-#             raise ValueError("Parameter 'p' must be a positive number.")
-
-# @Implicator.register("frank")
-# class FrankImplicator(Implicator):
-#     def __init__(self, p: float = 2.0):
-#         self.p = p
-
-#     def _compute_scalar(self, a: float, b: float) -> float:
-#         if self.p == 1:
-#             return 1.0 - a + a * b
-#         num = (self.p ** b - 1) * (1 - self.p ** a)
-#         denom = self.p - 1
-#         result = 1 + num / denom
-#         return np.clip(np.log(result) / np.log(self.p), 0, 1)
-
-#     @classmethod
-#     def validate_params(cls, **kwargs):
-#         p = kwargs.get("p")
-#         if p is None or not isinstance(p, (int, float)) or p <= 0 or p == 1:
-#             raise ValueError("Parameter 'p' must be > 0 and != 1")
-
-# @Implicator.register("sugeno-weber", "sw")
-# class SugenoWeberImplicator(Implicator):
-#     def __init__(self, p: float = 1.0):
-#         self.p = p
-
-#     def _compute_scalar(self, a: float, b: float) -> float:
-#         denom = 1 + self.p * (1 - a) * b
-#         return min(1.0, (b - a + a * b) / denom if denom != 0 else 1.0)
-
-#     @classmethod
-#     def validate_params(cls, **kwargs):
-#         p = kwargs.get("p")
-#         if p is None or not isinstance(p, (int, float)):
-#             raise ValueError("Parameter 'p' must be a number")
-
-#endregion

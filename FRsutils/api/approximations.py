@@ -22,6 +22,8 @@ classes:
 # engine="dense"                      Preserve existing dense matrix-backed behavior
 # engine="blockwise"                  Exact ITFRS/VQRS/OWAFRS blockwise accumulators
 # backend="cupy"                    Optional GPU similarity-block computation
+# result metadata                    engine/backend/block-size provenance in result objects
+# used_gpu_approximation_accumulators Marks Phase 3 GPU-resident ITFRS accumulator path
 
 # ✅ Design Patterns & Clean Code Notes
 # - Facade Pattern: stable task API above internal model/similarity builders
@@ -64,6 +66,10 @@ classes:
 #     engine="blockwise",
 #     backend="cupy",
 # )
+# gpu_blockwise.engine
+# gpu_blockwise.backend
+# gpu_blockwise.used_gpu_similarity_blocks
+# gpu_blockwise.used_gpu_approximation_accumulators
 """
 
 from __future__ import annotations
@@ -280,6 +286,12 @@ def _compute_dense_approximations(
         similarity=_similarity_name_from_config(effective_config),
         similarity_matrix=sim if return_similarity_matrix else None,
         config=dict(effective_config),
+        engine="dense",
+        backend="numpy",
+        block_size=None,
+        used_blockwise=False,
+        used_gpu_similarity_blocks=False,
+        used_gpu_approximation_accumulators=False,
     )
 
 
@@ -340,6 +352,7 @@ def _compute_blockwise_approximations(
     else:
         blockwise = compute_owafrs_blockwise(similarity_engine, labels, config=effective_config)
     similarity_matrix_for_result = similarity_engine.to_dense() if return_similarity_matrix else None
+    resolved_backend = getattr(getattr(similarity_engine, "backend", None), "name", "numpy")
 
     return FuzzyRoughApproximationResult(
         lower=np.asarray(blockwise.lower),
@@ -350,6 +363,14 @@ def _compute_blockwise_approximations(
         similarity=_similarity_name_from_config(effective_config),
         similarity_matrix=similarity_matrix_for_result,
         config=dict(effective_config),
+        engine="blockwise",
+        backend=resolved_backend,
+        block_size=block_size,
+        used_blockwise=True,
+        used_gpu_similarity_blocks=resolved_backend == "cupy",
+        used_gpu_approximation_accumulators=bool(
+            getattr(blockwise, "used_gpu_approximation_accumulators", False)
+        ),
     )
 
 

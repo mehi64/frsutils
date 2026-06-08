@@ -3,17 +3,18 @@
 @file fuzzy_quantifiers.py
 @brief Framework for parameterized fuzzy quantifiers used in fuzzy logic systems.
 
-Supports registration, instantiation via alias, and computation of linear and quadratic fuzzy quantifiers.
+Supports registration, instantiation via alias, computation of linear and
+quadratic fuzzy quantifiers, and backend-aware formula hooks for NumPy/CuPy-like
+array namespaces.
 
 ##############################################
 # ✅ Summary of Design Principles & Clean Code
 # - Registry Pattern: supports alias-based instantiation via decorators
 # - Factory Method: `create()` builds objects from name + params
-# - Strategy Pattern: each subclass (Linear, Quadratic) defines specific quantifier logic
+# - Strategy Pattern: each subclass defines a specific quantifier formula
 # - Adapter Pattern: `to_dict()` / `from_dict()` for serialization
 # - Fail-Fast Validation: type and range checks in validate_params
-# - LSP: all quantifiers are substitutable via the same base interface
-# - SRP: each class handles only its quantification logic
+# - Backend Boundary: component owns its NumPy/CuPy formula
 ##############################################
 
 @example
@@ -22,37 +23,46 @@ Supports registration, instantiation via alias, and computation of linear and qu
 array([0. , 0.25, 1. ])
 """
 
+from typing import Any
 import numpy as np
 from abc import abstractmethod
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
 from FRsutils.utils.validation_utils.validation_utils import validate_range_0_1
 
-class FuzzyQuantifier(RegistryFactoryMixin):
-    """
-    @brief Abstract base class for fuzzy quantifiers.
-    """
 
-    @abstractmethod
+class FuzzyQuantifier(RegistryFactoryMixin):
+    """@brief Abstract base class for fuzzy quantifiers."""
+
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """
-        @brief Computes the fuzzy membership value(s) for input.
-
-        @param x: Scalar or array of values in [0, 1]
-        @return: Scalar or array of membership degrees
+        @brief Compute fuzzy membership value(s) for NumPy input.
         """
-        raise NotImplementedError("all subclasses must implement __call__")
+        return self.compute_backend(np.asarray(x), xp=np, validate_inputs=self.validate_inputs)
 
+    @abstractmethod
+    def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """
+        @brief Compute fuzzy membership value(s) using a backend array namespace.
+        """
+        raise NotImplementedError("all subclasses must implement compute_backend")
+
+    def _validate_backend_input(self, x: Any, *, xp: Any = np, validate_inputs: bool = True) -> None:
+        """
+        @brief Validate quantifier input range for NumPy/CuPy-like arrays.
+        """
+        if not validate_inputs:
+            return
+        if xp is np:
+            validate_range_0_1(np.asarray(x))
+            return
+        out_of_range = xp.any((x < 0.0) | (x > 1.0))
+        if bool(xp.asnumpy(out_of_range)):
+            raise ValueError("Fuzzy quantifier inputs must be in range [0.0, 1.0].")
 
     @classmethod
     def validate_params(cls, **kwargs):
         """
-        @brief Validates the alpha and beta parameters.
-
-        Ensures:
-        - Both are floats or ints
-        - 0 <= alpha < beta <= 1
-
-        @throws ValueError on invalid parameters
+        @brief Validate alpha and beta parameters.
         """
         alpha = kwargs.get("alpha")
         beta = kwargs.get("beta")
@@ -66,39 +76,24 @@ class FuzzyQuantifier(RegistryFactoryMixin):
 
     def _get_params(self) -> dict:
         """
-        @brief Returns parameters for serialization
-
-        @return: Dict with 'alpha' and 'beta'
+        @brief Returns parameters for serialization.
         """
-        return {"alpha": self.alpha,
-                "beta": self.beta,
-                "validate_inputs" : self.validate_inputs}
-
+        return {"alpha": self.alpha, "beta": self.beta, "validate_inputs": self.validate_inputs}
 
     @classmethod
     def from_dict(cls, data: dict) -> "FuzzyQuantifier":
         """
-        @brief Instantiates a quantifier from dictionary config.
-
-        Supports both the new standardized serialization:
-            {"type": "LinearFuzzyQuantifier", "name": "linear", "params": {"alpha": ..., "beta": ...}}
-        and the legacy compact format:
-            {"type": "linear", "alpha": ..., "beta": ...}
-
-        @param data: Serialized dictionary.
-        @return: Constructed FuzzyQuantifier object.
+        @brief Instantiate a quantifier from dictionary config.
         """
         if not isinstance(data, dict):
             raise TypeError("data must be a dict")
 
-        # New format (preferred)
         if "name" in data and "params" in data:
             params = data.get("params") or {}
             if not isinstance(params, dict):
                 raise TypeError("data['params'] must be a dict")
             return cls.create(data["name"], **params)
 
-        # Alternate mixin-like format
         if "type" in data and "params" in data:
             params = data.get("params") or {}
             if not isinstance(params, dict):
@@ -106,7 +101,6 @@ class FuzzyQuantifier(RegistryFactoryMixin):
             name = data.get("name") or data.get("type")
             return cls.create(name, **params)
 
-        # Legacy compact format
         if "type" in data and "alpha" in data and "beta" in data:
             return cls.create(
                 data["type"],
@@ -120,117 +114,51 @@ class FuzzyQuantifier(RegistryFactoryMixin):
 
 @FuzzyQuantifier.register("linear")
 class LinearFuzzyQuantifier(FuzzyQuantifier):
-    """
-    @brief Linear fuzzy quantifier: piecewise linear membership.
+    """@brief Linear piecewise fuzzy quantifier."""
 
-    Defined as:
-    Q(x) = 0            if x <= alpha  
-           1            if x >= beta  
-           (x - alpha)/(beta - alpha) otherwise
-    """
-
-    def __init__(self, 
-                 alpha: float, 
-                 beta: float,
-                 validate_inputs: bool = True):
-        """
-        @brief constructs a linear fuzzy quantifier
-
-        @param alpha: Threshold for the left edge of the membership function
-        @param beta: Threshold for the right edge of the membership function
-        @param validate_inputs: Whether to validate inputs per call 
-        of the fuzzy quantifier(default: True)
-
-        NOTE: validate_inputs checks the correctness of input data (np.ndarray) and
-        it is different than validate_params() which checks the correctness of the
-        parameters (alpha and beta).
-        
-        @return: nothing
-        """
+    def __init__(self, alpha: float, beta: float, validate_inputs: bool = True):
         self.validate_params(alpha=alpha, beta=beta)
         self.alpha = alpha
         self.beta = beta
         self.validate_inputs = validate_inputs
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
-        x = np.asarray(x)
-
-        if self.validate_inputs:
-            validate_range_0_1(x)
-
-        return np.where(x <= self.alpha, 0.0,
-                        np.where(x >= self.beta, 1.0,
-                                 (x - self.alpha) / (self.beta - self.alpha)))
+    def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """@brief Backend-aware linear fuzzy quantifier formula."""
+        self._validate_backend_input(x, xp=xp, validate_inputs=validate_inputs)
+        return xp.where(
+            x <= self.alpha,
+            0.0,
+            xp.where(x >= self.beta, 1.0, (x - self.alpha) / (self.beta - self.alpha)),
+        )
 
     def to_dict(self) -> dict:
-        """
-        @brief Serialize instance to a standardized dict.
-
-        @return: Dict with (type, name, params).
-        """
+        """@brief Serialize instance to a standardized dict."""
         return {"type": self.name, "name": self.name, "params": self._get_params(), "alpha": self.alpha, "beta": self.beta}
 
 
 @FuzzyQuantifier.register("quadratic", "quad")
 class QuadraticFuzzyQuantifier(FuzzyQuantifier):
-    """
-    @brief Quadratic fuzzy quantifier: smooth parabolic membership.
+    """@brief Quadratic smooth fuzzy quantifier."""
 
-    Defined as:
-    Q(x) =  0                                     if x <= alpha  
-            2*((x-alpha)/(beta-alpha))^2          if alpha < x <= mid  
-            1 - 2*((x-beta)/(beta-alpha))^2       if mid < x <= beta  
-            1                                     if x > beta
-    """
-
-    def __init__(self, 
-                 alpha: float, 
-                 beta: float,
-                 validate_inputs: bool = True):
-        """
-        @brief constructs a linear fuzzy quantifier
-
-        @param alpha: Threshold for the left edge of the membership function
-        @param beta: Threshold for the right edge of the membership function
-        @param validate_inputs: Whether to validate inputs per call 
-        of the fuzzy quantifier(default: True)
-        
-        NOTE: validate_inputs checks the correctness of input data (np.ndarray) and
-        it is different than validate_params() which checks the correctness of the
-        parameters (alpha and beta).
-        
-        @return: nothing
-        """
+    def __init__(self, alpha: float, beta: float, validate_inputs: bool = True):
         self.validate_params(alpha=alpha, beta=beta)
         self.alpha = alpha
         self.beta = beta
         self.validate_inputs = validate_inputs
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
-        x = np.asarray(x)
-
-        if self.validate_inputs:
-             validate_range_0_1(x)
-
+    def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """@brief Backend-aware quadratic fuzzy quantifier formula."""
+        self._validate_backend_input(x, xp=xp, validate_inputs=validate_inputs)
         mid = (self.alpha + self.beta) / 2.0
         denom = (self.beta - self.alpha) ** 2.0
-
-        result = np.zeros_like(x)
-        mask2 = (self.alpha < x) & (x <= mid)
-        mask3 = (mid < x) & (x <= self.beta)
-        mask4 = self.beta < x
-
-        result[mask2] = 2.0 * ((x[mask2] - self.alpha) ** 2.0) / denom
-        result[mask3] = 1.0 - (2.0 * ((x[mask3] - self.beta) ** 2.0) / denom)
-        result[mask4] = 1.0
-        return result
+        lower_curve = 2.0 * ((x - self.alpha) ** 2.0) / denom
+        upper_curve = 1.0 - (2.0 * ((x - self.beta) ** 2.0) / denom)
+        return xp.where(
+            x <= self.alpha,
+            0.0,
+            xp.where(x <= mid, lower_curve, xp.where(x <= self.beta, upper_curve, 1.0)),
+        )
 
     def to_dict(self) -> dict:
-        """
-        @brief Serialize instance to dict
-
-        @return: Dict with type, alpha, and beta
-        """
-        return {"type": 'quadratic',
-                "alpha": self.alpha,
-                "beta": self.beta}
+        """@brief Serialize instance to dict."""
+        return {"type": "quadratic", "name": self.name, "params": self._get_params(), "alpha": self.alpha, "beta": self.beta}

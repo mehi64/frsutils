@@ -223,11 +223,65 @@ result = compute_approximations(
 ```
 
 `backend="cupy"` is an optional experimental backend for GPU-accelerated
-similarity-block computation. The current public contract is conservative:
-block values are converted back to NumPy before the approximation accumulators
-run, and public outputs remain NumPy arrays for sklearn/downstream compatibility.
-Do not claim full GPU-native fuzzy-rough execution yet. See
-[`docs/backend_execution_status.md`](docs/backend_execution_status.md).
+similarity-block computation. For `model="itfrs"` and `model="vqrs"` with
+`engine="blockwise"`, approximation reductions/accumulators can also stay
+CuPy-resident until final public NumPy output conversion. OWAFRS deliberately remains on the conservative NumPy row-buffer path after the
+Phase 5 decision because exact OWA execution requires row-wise sorting and a
+separate memory/sorting benchmark. Do not claim full GPU-native fuzzy-rough
+execution yet. See
+[`docs/backend_execution_status.md`](docs/backend_execution_status.md) and
+[`docs/phase_5_owafrs_non_gpu_resident_decision.md`](docs/phase_5_owafrs_non_gpu_resident_decision.md).
+
+The returned result records execution provenance so benchmark scripts and
+downstream packages can verify which path was used:
+
+```python
+result.engine                      # "dense" or "blockwise"
+result.backend                     # "numpy" or resolved optional backend
+result.block_size                  # None for dense; integer for blockwise
+result.used_blockwise              # bool
+result.used_gpu_similarity_blocks          # bool
+result.used_gpu_approximation_accumulators # bool, true for CuPy blockwise ITFRS/VQRS; false for OWAFRS
+```
+
+The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`,
+`backend`, and `block_size` parameters.
+
+
+## Benchmark suite
+
+Phase 6 adds a reproducible benchmark harness for the public approximation API:
+
+```bash
+python benchmarks/benchmark_fuzzy_rough_execution.py     --models itfrs,vqrs,owafrs     --sample-sizes 128,256,512     --n-features 8     --block-sizes 64,128     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy     --repeats 3     --output-json benchmark_results.json     --output-csv benchmark_results.csv
+```
+
+The suite compares dense NumPy, exact blockwise NumPy, and optional CuPy-backed
+blockwise execution. It records runtime, lightweight Python allocator peak
+memory, dense-reference numerical-equivalence errors, and public execution
+metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
+[`docs/phase_6_benchmark_suite.md`](docs/phase_6_benchmark_suite.md).
+
+
+## Release-ready examples and paper claim boundary
+
+Phase 7 adds two small release-ready examples:
+
+```bash
+python examples/phase7_public_api_quickstart.py
+python examples/phase7_benchmark_smoke.py --output-dir phase7_benchmark_smoke_output
+```
+
+Use the wording in [`docs/paper_claims.md`](docs/paper_claims.md) when describing
+FRsutils in a release note, software paper, or benchmark report. The safe claim
+is that FRsutils provides dense and exact blockwise fuzzy-rough approximation
+APIs, optional CuPy-accelerated similarity blocks, and experimental
+CuPy-resident blockwise approximation accumulators for ITFRS/VQRS. Public
+outputs remain NumPy arrays, and OWAFRS remains on the conservative exact
+blockwise NumPy row-buffer path in this release.
+
+Before tagging or submitting, use
+[`docs/release_checklist.md`](docs/release_checklist.md).
 
 ## Algorithms and contents
 

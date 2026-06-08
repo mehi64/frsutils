@@ -1,327 +1,279 @@
 """
 @file tnorms.py
-@brief Fuzzy T-norms Framework
+@brief Fuzzy T-norm framework with NumPy-compatible and backend-aware formulas.
 
-Provides a pluggable architecture for defining T-norm operators used in fuzzy rough set theory.
-Implements factory registration, serialization, validation, and multi-input support.
+Provides a pluggable architecture for defining T-norm operators used in fuzzy
+rough set theory. Implements factory registration, serialization, validation,
+multi-input reduction, and formula-level backend hooks for blockwise NumPy/CuPy
+execution.
 
 ##############################################
 # ✅ Quick Summary of Features
-# Feature				Description
+# Feature                              Description
 # ----------------------------------------------------------------------------------
-# register(*names)		Register T-norm with aliases
-# create(name, **kwargs)	Instantiate T-norm from registry
-# list_available()		Returns registered T-norms
-# to_dict() / from_dict()	Serialization / deserialization
-# help()				Returns class-level documentation
-# validate_params()		Validates constructor parameters
-# name				Returns lowercase class name
-# get_params()			Introspect parameter structure and values
-# __call__()				Handles scalar, vector, matrix application
-# reduce()				Aggregation operation
+# register(*names)                     Register T-norm with aliases
+# create(name, **kwargs)               Instantiate T-norm from registry
+# list_available()                     Returns registered T-norms
+# to_dict() / from_dict()              Serialization / deserialization
+# validate_params()                    Validates constructor parameters
+# __call__()                           NumPy-compatible element-wise application
+# compute_backend(a, b, xp=...)        Backend-aware element-wise formula
+# reduce()                             NumPy-compatible aggregation operation
+# reduce_backend(arr, xp=...)          Backend-aware aggregation operation
 
 # ✅ Summary Table of Design Patterns
-# Category				Name			Usage & Where Applied
+# Category              Name                Usage & Where Applied
 # ----------------------------------------------------------------------------------
-# Design Pattern		Factory Method		TNorm.create(name, **kwargs)
-# Design Pattern		Registry Pattern	TNorm._registry and register()
-# Design Pattern		Template Method		Defines abstract __call__ and reduce methods
-# Design Pattern		Strategy Pattern	Each subclass defines its logic
-# Design Pattern		Decorator		    @TNorm.register(...)
-# Design Pattern		Adapter			    Serialization via to_dict/from_dict
-# Architecture		    Pluggable			New T-norms extend base class via registration
-# Clean Code			SRP, DRY, LSP, Fail-Fast, Reflection
+# Design Pattern        Factory Method      TNorm.create(name, **kwargs)
+# Design Pattern        Registry Pattern    TNorm._registry and register()
+# Design Pattern        Template Method     Defines shared compute/reduce hooks
+# Design Pattern        Strategy Pattern    Each subclass defines its logic
+# Design Pattern        Decorator           @TNorm.register(...)
+# Architecture          Pluggable           New T-norms extend base class via registration
+# Clean Code            SRP, DRY, LSP, Fail-Fast, Reflection
+# Backend Boundary      NumPy/CuPy formulas are owned by components, not engines
 ##############################################
 """
 
+from typing import Any
 import numpy as np
 from abc import abstractmethod
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+
 
 class TNorm(RegistryFactoryMixin):
     """
     @brief Abstract base class for all T-norms.
 
     Provides registration, factory instantiation, serialization, and support for
-    scalar/vector/matrix input handling. Subclasses must define `_call__` and `reduce`.
+    scalar/vector/matrix input handling. Dense public behavior remains NumPy-based,
+    while `compute_backend` and `reduce_backend` provide formula-level hooks for
+    similarity/approximation engines.
     """
-    
-    @abstractmethod
+
     def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """
-        @brief Apply the T-norm to two arrays or matrices element-wise.
-
-        @param a: First input array.
-        @param b: Second input array.
-        @return: Element-wise result of the T-norm.
+        @brief Apply the T-norm to two NumPy arrays or matrices element-wise.
         """
-        raise NotImplementedError("all subclasses must implement __call__")
+        return self.compute_backend(a, b, xp=np)
 
-    @abstractmethod
     def reduce(self, arr: np.ndarray) -> np.ndarray:
         """
-        @brief Reduce an array using the T-norm.
-
-        @param arr: 2D array of shape (n_samples, n_features).
-        @return: Reduced array along axis=0.
+        @brief Reduce a NumPy array using the T-norm.
         """
-        raise NotImplementedError("all subclasses must implement reduce")
+        return self.reduce_backend(arr, xp=np)
+
+    @abstractmethod
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        """
+        @brief Apply the T-norm to two backend arrays element-wise.
+        """
+        raise NotImplementedError("all subclasses must implement compute_backend")
+
+    @abstractmethod
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
+        """
+        @brief Reduce a backend array using the T-norm.
+        """
+        raise NotImplementedError("all subclasses must implement reduce_backend")
 
     @classmethod
     @abstractmethod
     def validate_params(cls, **kwargs):
         """
         @brief Optional parameter validation hook for subclasses.
-        
-        @param kwargs: Parameters to validate.
         """
         raise NotImplementedError("all subclasses must implement validate_params")
-    
+
     @abstractmethod
-    def _get_params(self)-> dict:
-        raise NotImplementedError("all derived calsses need to implemet _get_params")
+    def _get_params(self) -> dict:
+        raise NotImplementedError("all derived classes need to implement _get_params")
 
 
 @TNorm.register('minimum', 'min', 'goedel', 'standardintersection')
 class MinTNorm(TNorm):
-    """
-    @brief Minimum T-norm: min(a, b)
-    """
+    """@brief Minimum T-norm: min(a, b)."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        return np.minimum(a, b)
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        return xp.minimum(a, b)
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
-        return np.min(arr, axis=0)
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
+        return xp.min(arr, axis=0)
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
 
 
 @TNorm.register('product', 'prod', 'algebraic')
 class ProductTNorm(TNorm):
-    """
-    @brief Product T-norm: a * b
-    """
+    """@brief Product T-norm: a * b."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
         return a * b
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
-        return np.prod(arr, axis=0)
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
+        return xp.prod(arr, axis=0)
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @TNorm.register('lukasiewicz', 'luk', 'bounded', 'boundeddifference')
 class LukasiewiczTNorm(TNorm):
-    """
-    @brief Łukasiewicz T-norm: max(0, a + b - 1)
-    """
+    """@brief Łukasiewicz T-norm: max(0, a + b - 1)."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        return np.maximum(0.0, a + b - 1.0)
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        return xp.maximum(0.0, a + b - 1.0)
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
         result = arr[0]
         for x in arr[1:]:
-            result = np.maximum(0.0, result + x - 1.0)
+            result = self.compute_backend(result, x, xp=xp)
         return result
-    
+
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @TNorm.register("drastic", "drasticproduct")
 class DrasticProductTNorm(TNorm):
-    """
-    @brief Drastic Product T-norm:
-    - a if b == 1
-    - b if a == 1
-    - 0 otherwise
-    """
+    """@brief Drastic Product T-norm."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        return np.where(b == 1.0, a, np.where(a == 1.0, b, 0.0))
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        return xp.where(b == 1.0, a, xp.where(a == 1.0, b, 0.0))
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
         result = arr[0]
         for x in arr[1:]:
-            result = np.where(x == 1.0, result, np.where(result == 1.0, x, 0.0))
+            result = self.compute_backend(result, x, xp=xp)
         return result
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @TNorm.register("einstein", "einsteinproduct")
 class EinsteinProductTNorm(TNorm):
-    """
-    @brief Einstein Product T-norm:
-    T(a, b) = (a * b) / (2 - (a + b - a * b))
-    """
+    """@brief Einstein Product T-norm."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        denom = 2 - (a + b - a * b)
-        return np.where(denom != 0, (a * b) / denom, 0.0)
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        denom = 2.0 - (a + b - a * b)
+        safe_denom = xp.where(denom != 0.0, denom, 1.0)
+        return xp.where(denom != 0.0, (a * b) / safe_denom, 0.0)
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
         result = arr[0]
         for x in arr[1:]:
-            result = (result * x) / (2 - (result + x - result * x))
+            result = self.compute_backend(result, x, xp=xp)
         return result
-    
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+
+    def _get_params(self) -> dict:
         return {}
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
+
 
 @TNorm.register("hamacher", "hamacherproduct")
 class HamacherProductTNorm(TNorm):
-    """
-    @brief Hamacher Product T-norm:
-    T(a,b) = 0 if a = b = 0, else ab / (a + b - ab)
-    """
+    """@brief Hamacher Product T-norm."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        with np.errstate(divide='ignore', invalid='ignore'):
-            denom = a + b - a * b
-            result = np.divide(a * b, denom, out=np.zeros_like(a), where=denom != 0)
-        return result
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        denom = a + b - a * b
+        safe_denom = xp.where(denom != 0.0, denom, 1.0)
+        return xp.where(denom != 0.0, (a * b) / safe_denom, 0.0)
 
-
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
         result = arr[0]
         for x in arr[1:]:
-            denom = result + x - result * x
-            result = np.where(denom != 0, (result * x) / denom, 0.0)
-
+            result = self.compute_backend(result, x, xp=xp)
         return result
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @TNorm.register("nilpotent", "nilpotentminimum")
 class NilpotentMinimumTNorm(TNorm):
-    """
-    @brief Nilpotent Minimum T-norm:
-    T(a, b) = min(a, b) if (a + b) > 1 else 0
-    """
+    """@brief Nilpotent Minimum T-norm."""
+
     def __init__(self):
         self.validate_params()
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        return np.where((a + b) > 1.0, np.minimum(a, b), 0.0)
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        return xp.where((a + b) > 1.0, xp.minimum(a, b), 0.0)
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
         result = arr[0]
         for x in arr[1:]:
-            result = np.where((result + x) > 1.0, np.minimum(result, x), 0.0)
+            result = self.compute_backend(result, x, xp=xp)
         return result
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief This class does not need parameter validation
-        """
         pass
 
-    def _get_params(self)-> dict:
-        """
-        @brief no parameters
-        """
+    def _get_params(self) -> dict:
         return {}
+
 
 @TNorm.register('yager', 'yg')
 class YagerTNorm(TNorm):
     """
-    @brief Yager T-norm: 
-    1 - min(1, [(1 - a)^p + (1 - b)^p]^(1/p))
-
-    @param p: Exponent parameter that controls the shape (default = 2.0).
+    @brief Yager T-norm: 1 - min(1, [(1 - a)^p + (1 - b)^p]^(1/p)).
     """
+
     def __init__(self, p: float = 2.0):
         self.validate_params(p=p)
         self.p = p
 
-    def __call__(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
-        # Compute Yager T-norm element-wise
-        return 1.0 - np.minimum(
+    def compute_backend(self, a: Any, b: Any, *, xp: Any = np):
+        return 1.0 - xp.minimum(
             1.0, ((1.0 - a) ** self.p + (1.0 - b) ** self.p) ** (1.0 / self.p)
         )
 
-    def reduce(self, arr: np.ndarray) -> np.ndarray:
-        # Reduce across axis using Yager logic
-        return 1.0 - np.minimum(
-            1.0, np.sum((1.0 - arr) ** self.p, axis=0) ** (1.0 / self.p)
+    def reduce_backend(self, arr: Any, *, xp: Any = np):
+        return 1.0 - xp.minimum(
+            1.0, xp.sum((1.0 - arr) ** self.p, axis=0) ** (1.0 / self.p)
         )
 
     @classmethod
@@ -333,7 +285,6 @@ class YagerTNorm(TNorm):
             raise ValueError("Parameter 'p' must be a float or int")
         if p <= 0:
             raise ValueError("Parameter 'p' must be greater than 0")
-
 
     def _get_params(self) -> dict:
         return {"p": self.p}
