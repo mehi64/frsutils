@@ -5,13 +5,30 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "FRsutils"
 version = "0.0.3"
+requires-python = ">=3.10"
 description = "A Python library for fuzzy-rough set utility functions."
 authors = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
 readme = "README.md"
 license = {text = " AGPL-3.0"}
 keywords = ["fuzzy-rough sets", "mathematics", "data science"]
 dependencies = [
-    "numpy>=1.21.0"
+    "numpy>=1.21.0",
+    "scikit-learn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pandas",
+    "openpyxl",
+    "colorlog",
+    "matplotlib",
+]
+gpu-cuda12x = [
+    "cupy-cuda12x",
+]
+gpu-cuda11x = [
+    "cupy-cuda11x",
 ]
 
 [project.urls]

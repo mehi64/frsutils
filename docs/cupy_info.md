@@ -1,4 +1,12 @@
-# cupy info
+# CuPy / GPU Notes
+
+CuPy support in FRsutils is currently optional and experimental. The supported
+public meaning is `backend="cupy"` for similarity-block computation through the
+blockwise execution path. Public result arrays remain NumPy arrays, and the
+blockwise approximation accumulators are still NumPy-resident.
+
+For the frozen implementation status and next roadmap, see
+[`backend_execution_status.md`](backend_execution_status.md).
 
 ## 1.Install
 

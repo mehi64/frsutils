@@ -32,12 +32,15 @@ pip install -e .
 
 ## Core requirements
 
-FRsutils core intentionally keeps a small mandatory dependency set:
+FRsutils core intentionally keeps the mandatory dependency set small, but the
+public API includes an sklearn-style positive-region scorer, so scikit-learn is
+part of the runtime contract:
 
 - Python >= 3.10
 - NumPy >= 1.21.0
+- scikit-learn
 
-## Optional development / dataset dependencies
+## Optional development / dataset / GPU dependencies
 
 Install these only when you need the related workflows:
 
@@ -46,7 +49,8 @@ Install these only when you need the related workflows:
 - `colorlog` for colored logging; FRsutils falls back to standard logging if it
   is not installed
 - `matplotlib` for plotting examples/tests
-- `cupy` for future/experimental GPU work
+- `cupy-cuda12x` or another CUDA-compatible CuPy wheel for explicit
+  `backend="cupy"` experiments
 
 ## Oversampling package
 
@@ -196,6 +200,34 @@ print(scores)
 
 See [`docs/public_api_contract.md`](docs/public_api_contract.md) for the stable
 public API boundary and downstream-package rules.
+
+## Execution engines and backend status
+
+FRsutils now exposes dense and exact blockwise execution through the public API.
+Dense mode preserves the historical full-matrix behavior. Blockwise mode avoids
+materializing the full `n x n` similarity matrix for approximation computation
+and is available for ITFRS, VQRS, and OWAFRS.
+
+```python
+from FRsutils.api import compute_approximations
+
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+    engine="blockwise",
+    block_size=512,
+    backend="numpy",
+)
+```
+
+`backend="cupy"` is an optional experimental backend for GPU-accelerated
+similarity-block computation. The current public contract is conservative:
+block values are converted back to NumPy before the approximation accumulators
+run, and public outputs remain NumPy arrays for sklearn/downstream compatibility.
+Do not claim full GPU-native fuzzy-rough execution yet. See
+[`docs/backend_execution_status.md`](docs/backend_execution_status.md).
 
 ## Algorithms and contents
 

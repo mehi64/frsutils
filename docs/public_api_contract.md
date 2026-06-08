@@ -64,6 +64,25 @@ result.positive_region
 The return value is a `FuzzyRoughApproximationResult`, not a positional tuple.
 Downstream code should access named fields instead of relying on tuple order.
 
+`compute_approximations` also owns the public execution-engine boundary:
+
+```python
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+    engine="blockwise",
+    block_size=1024,
+    backend="numpy",
+)
+```
+
+Supported engine aliases are `"dense"` and `"blockwise"`. Supported backend
+aliases are `"numpy"`, `"auto"`, and explicit optional `"cupy"`. The CuPy path
+currently accelerates similarity-block calculation only; public outputs remain
+NumPy arrays.
+
 ### `compute_positive_region`
 
 Use this shortcut when only positive-region scores are needed.
@@ -77,15 +96,28 @@ scores = compute_positive_region(
 )
 ```
 
-### `build_similarity_matrix`
+### `build_similarity_matrix` and `build_similarity_engine`
 
-Use this when a user or downstream package needs to build and reuse the pairwise
-similarity matrix explicitly.
+Use `build_similarity_matrix` when a user or downstream package needs to build
+and reuse the pairwise similarity matrix explicitly.
 
 ```python
 similarity_matrix = build_similarity_matrix(
     X,
     similarity="linear",
+)
+```
+
+Use `build_similarity_engine` when advanced code needs the exact dense/blockwise
+similarity-engine abstraction directly:
+
+```python
+engine = build_similarity_engine(
+    X,
+    engine="blockwise",
+    block_size=512,
+    similarity="linear",
+    backend="numpy",
 )
 ```
 
@@ -113,6 +145,10 @@ scorer = FuzzyRoughPositiveRegionScorer(
 scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
+
+Current limitation: the scorer wraps the dense/default approximation path and
+does not yet expose explicit `engine`, `backend`, or `block_size` constructor
+parameters. Those are tracked as the next public API metadata/scorer phase.
 
 ## Advanced public API
 
@@ -203,6 +239,12 @@ result = compute_approximations(
 
 Nested dictionaries are internal implementation details unless explicitly passed
 through advanced APIs that document support for them.
+
+## Backend and blockwise status
+
+See [`backend_execution_status.md`](backend_execution_status.md) for the frozen
+implementation status, historical phase mapping, and the reduced next-phase
+roadmap.
 
 ## Versioning expectation
 
