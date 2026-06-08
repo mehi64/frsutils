@@ -79,39 +79,123 @@ research, e.g.:
 
 ## Public API quickstart
 
-FRsutils exposes a small public facade through `FRsutils.api`. End users should
-prefer the task-oriented helpers, while downstream libraries should depend only
+FRsutils exposes its stable user and downstream-package interface through
+`FRsutils.api`. End users should prefer the task-oriented helpers in this
+namespace. Downstream packages, including `frsampling`, should also depend only
 on this facade instead of importing from `FRsutils.core` or `FRsutils.utils`.
 
+The smallest end-user workflow is: prepare normalized numeric data, compute
+fuzzy-rough approximations, and read the named fields from the result object.
+
 ```python
+import numpy as np
+
 from FRsutils.api import compute_approximations, compute_positive_region
 
-result = compute_approximations(X, y, model="itfrs", similarity="linear")
-positive_region = result.positive_region
+# FRsutils expects numeric feature values on a comparable scale. In real
+# experiments, normalize or scale your data before calling the fuzzy-rough API.
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.10, 0.20],
+        [0.85, 0.80],
+        [0.95, 0.90],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 1, 1])
+
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+)
+
+print("lower approximation:", result.lower)
+print("upper approximation:", result.upper)
+print("boundary region:", result.boundary)
+print("positive region:", result.positive_region)
 
 # Shortcut when only positive-region scores are needed.
-scores = compute_positive_region(X, y, model="itfrs", similarity="linear")
+scores = compute_positive_region(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+)
+print("positive-region scores:", scores)
 ```
 
-For reusable fitted scoring workflows, use the Phase 3 scorer:
+For reusable fitted scoring workflows, use the sklearn-style positive-region
+scorer:
 
 ```python
+import numpy as np
+
 from FRsutils.api import FuzzyRoughPositiveRegionScorer
 
-scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.10, 0.20],
+        [0.85, 0.80],
+        [0.95, 0.90],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 1, 1])
+
+scorer = FuzzyRoughPositiveRegionScorer(
+    model="itfrs",
+    similarity="linear",
+)
+
 scores = scorer.fit_score(X, y)
-full_result = scorer.as_result()
+result = scorer.as_result()
+
+print(scores)
+print(result.lower)
+print(result.upper)
 ```
 
-Downstream libraries such as `frsampling` should use the builder-level public
-API when they need to reuse a precomputed similarity matrix:
+Downstream packages should use the builder-level public API when they need to
+reuse a precomputed similarity matrix. This keeps external packages independent
+from FRsutils internals while avoiding repeated similarity-matrix construction.
 
 ```python
+import numpy as np
+
 from FRsutils.api import build_similarity_matrix, compute_positive_region
 
-sim = build_similarity_matrix(X, similarity="linear")
-scores = compute_positive_region(X=None, y=y, model="itfrs", similarity_matrix=sim)
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.10, 0.20],
+        [0.85, 0.80],
+        [0.95, 0.90],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 1, 1])
+
+similarity_matrix = build_similarity_matrix(
+    X,
+    similarity="linear",
+)
+
+scores = compute_positive_region(
+    X=None,
+    y=y,
+    model="itfrs",
+    similarity_matrix=similarity_matrix,
+)
+
+print(scores)
 ```
+
+See [`docs/public_api_contract.md`](docs/public_api_contract.md) for the stable
+public API boundary and downstream-package rules.
 
 ## Algorithms and contents
 

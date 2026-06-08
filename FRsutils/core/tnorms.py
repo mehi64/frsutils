@@ -308,7 +308,7 @@ class YagerTNorm(TNorm):
 
     @param p: Exponent parameter that controls the shape (default = 2.0).
     """
-    def __init__(self, p: float):
+    def __init__(self, p: float = 2.0):
         self.validate_params(p=p)
         self.p = p
 
