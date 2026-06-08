@@ -8,7 +8,8 @@ Do not instantiate `_TinyLogger` directly.
 
 
 Provides:
-- Colorized terminal logging (if colorlog is installed)
+- Colorized terminal logging
+- Project-root logs directory creation before file logging
 - Structured CSV/JSON logging to a separate file (JSON is not tested)
 - Run ID & experiment tagging
 - Config, metrics, Git info, system info logging (commented in code and not tested)
@@ -40,6 +41,7 @@ import inspect
 import logging
 import os
 import sys
+from pathlib import Path
 import json
 import csv
 from datetime import datetime
@@ -52,6 +54,44 @@ try:
     import colorlog
 except ImportError:  # pragma: no cover - exercised only when optional colorlog is absent
     colorlog = None
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_LOGS_DIR = PROJECT_ROOT / "logs"
+
+
+def _ensure_project_logs_dir():
+    """
+    @brief Ensures that the project-level logs directory exists.
+    @return Path to the project-level logs directory.
+    """
+
+    DEFAULT_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    return DEFAULT_LOGS_DIR
+
+
+def _resolve_project_log_path(file_path):
+    """
+    @brief Resolves relative log file paths from project root and ensures parent directory exists.
+    @param file_path Relative or absolute log file path.
+    @return Absolute Path object for the log file.
+    """
+
+    _ensure_project_logs_dir()
+    path = Path(file_path)
+    resolved_path = path if path.is_absolute() else PROJECT_ROOT / path
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    return resolved_path
+
+
+def _ensure_log_file_parent(file_path):
+    """
+    @brief Ensures the parent directory for a log file exists.
+    @param file_path Relative or absolute log file path.
+    @return Absolute Path object for the log file.
+    """
+
+    return _resolve_project_log_path(file_path)
 
 
 class _TinyLogger:
@@ -93,6 +133,10 @@ class _TinyLogger:
 
         if caller != 'get_logger':
             raise RuntimeError("Direct instantiation is not allowed. Use get_logger() instead.")
+
+        # Always create the project-level logs directory before configuring logging.
+        _ensure_project_logs_dir()
+        self.file_path = _resolve_project_log_path(file_path)
         
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
@@ -114,8 +158,8 @@ class _TinyLogger:
         # file_path="E:/tst/some_folder/log_output.json",
         # then self.structured_path="E:/tst/some_folder/log_output.csv"
         if log_file_extension:
-            base, _ = os.path.splitext(file_path)
-            self.structured_path = base + f".{log_file_extension}"
+            base, _ = os.path.splitext(str(self.file_path))
+            self.structured_path = _ensure_log_file_parent(base + f".{log_file_extension}")
         else:
             self.structured_path = None
 
@@ -175,10 +219,12 @@ class _TinyLogger:
         }
 
         if self.structured_output == "json":
+            _ensure_log_file_parent(self.structured_path)
             with open(self.structured_path, "a") as f:
                 f.write(json.dumps(log_entry) + "\n")
 
         elif self.structured_output == "csv":
+            _ensure_log_file_parent(self.structured_path)
             write_header = not os.path.exists(self.structured_path) or os.stat(self.structured_path).st_size == 0
             with open(self.structured_path, "a", newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=log_entry.keys())
