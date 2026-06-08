@@ -13,8 +13,13 @@ avoid coupling downstream code to deep internal paths such as
 # ----------------------------------------------------------------------------------
 # build_similarity_matrix              Build pairwise fuzzy similarity matrices
 # build_fuzzy_rough_model              Build registered fuzzy-rough models from config
+# compute_approximations               Compute lower/upper/boundary/positive-region outputs
+# compute_positive_region              Compute positive-region scores directly
+# FuzzyRoughApproximationResult        Stable public approximation result object
+# FuzzyRoughPositiveRegionScorer     sklearn-style fitted positive-region scorer
 # get_fuzzy_rough_model_class          Resolve model classes by public alias
 # list_fuzzy_rough_models              Inspect available fuzzy-rough model aliases
+# list_similarities                    Inspect available similarity aliases
 # normalize_flat_config_to_nested      Convert sklearn-friendly flat params to nested config
 # apply_config_aliases                 Apply backwards-compatible flat config aliases
 # extract_prefixed_params              Extract component-specific flat params
@@ -32,22 +37,28 @@ avoid coupling downstream code to deep internal paths such as
 
 # from FRsutils.api import build_similarity_matrix, build_fuzzy_rough_model
 #
+# result = compute_approximations(X, y, model="itfrs", similarity="linear")
+# positive_region = result.positive_region
+#
 # sim = build_similarity_matrix(X, similarity="gaussian", similarity_sigma=0.5)
-# model = build_fuzzy_rough_model(
-#     "itfrs",
-#     similarity_matrix=sim,
-#     labels=y,
-#     ub_tnorm_name="minimum",
-#     lb_implicator_name="lukasiewicz",
-# )
-# positive_region = model.positive_region()
+# positive_region = compute_positive_region(X=None, y=y, similarity_matrix=sim)
 """
+
+from FRsutils.api.approximations import (
+    compute_approximations,
+    compute_boundary_region,
+    compute_lower_approximation,
+    compute_positive_region,
+    compute_upper_approximation,
+)
 
 from FRsutils.api.config import (
     apply_config_aliases,
     extract_prefixed_params,
     normalize_flat_config_to_nested,
 )
+from FRsutils.api.results import FuzzyRoughApproximationResult
+from FRsutils.api.scoring import FuzzyRoughPositiveRegionScorer
 from FRsutils.api.models import (
     FuzzyRoughModel,
     ITFRS,
@@ -61,11 +72,14 @@ from FRsutils.api.similarity import (
     Similarity,
     build_similarity_matrix,
     calculate_similarity_matrix,
+    list_similarities,
 )
 
 __all__ = [
     "Similarity",
     "FuzzyRoughModel",
+    "FuzzyRoughApproximationResult",
+    "FuzzyRoughPositiveRegionScorer",
     "ITFRS",
     "OWAFRS",
     "VQRS",
@@ -73,8 +87,14 @@ __all__ = [
     "build_fuzzy_rough_model",
     "build_similarity_matrix",
     "calculate_similarity_matrix",
+    "compute_approximations",
+    "compute_boundary_region",
+    "compute_lower_approximation",
+    "compute_positive_region",
+    "compute_upper_approximation",
     "extract_prefixed_params",
     "get_fuzzy_rough_model_class",
     "list_fuzzy_rough_models",
+    "list_similarities",
     "normalize_flat_config_to_nested",
 ]

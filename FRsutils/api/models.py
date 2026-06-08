@@ -3,8 +3,8 @@
 @brief Public fuzzy-rough model API for downstream FRsutils consumers.
 
 This module exposes model construction and registry lookup through a stable API.
-External packages such as a standalone `frsmote` package should use this module
-instead of importing directly from deep internal model paths.
+External packages such as a standalone `frsampling` package should use this
+module instead of importing directly from deep internal model paths.
 
 ##############################################
 # ✅ Quick Summary of Features
@@ -21,6 +21,7 @@ instead of importing directly from deep internal model paths.
 # - Registry Pattern: resolves fuzzy-rough model implementations by alias
 # - Factory Method: build_fuzzy_rough_model constructs model instances
 # - Adapter Pattern: accepts flat sklearn-style config or nested internal config
+# - Boundary Validation: validates matrix/labels/config at the public API edge
 # - Dependency Inversion: downstream packages depend on this API, not internals
 ##############################################
 
@@ -62,10 +63,6 @@ def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
 
     @param config: Candidate configuration mapping.
     @return: True if the mapping contains nested fuzzy-rough config sections.
-
-    Notes:
-    - Flat configs may legitimately contain keys such as `similarity="gaussian"`.
-      Therefore, a key alone is not enough to classify the config as nested.
     """
     if isinstance(config.get("fr_model"), Mapping):
         return True
@@ -74,6 +71,45 @@ def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
     if isinstance(config.get("similarity_tnorm"), Mapping):
         return True
     return False
+
+
+def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
+    """
+    @brief Convert and validate a public similarity-matrix input.
+
+    @param similarity_matrix: Candidate square pairwise similarity matrix.
+    @return: 2D NumPy array.
+    @raises ValueError: If the matrix is missing, non-square, or not 2D.
+    """
+    if similarity_matrix is None:
+        raise ValueError("similarity_matrix must be provided.")
+
+    sim = np.asarray(similarity_matrix, dtype=float)
+    if sim.ndim != 2:
+        raise ValueError("similarity_matrix must be a 2D array.")
+    if sim.shape[0] != sim.shape[1]:
+        raise ValueError("similarity_matrix must be square.")
+    return sim
+
+
+def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
+    """
+    @brief Convert and validate labels aligned with a similarity matrix.
+
+    @param labels: Candidate label vector.
+    @param expected_length: Required label length.
+    @return: 1D NumPy label array.
+    @raises ValueError: If labels are missing or misaligned.
+    """
+    if labels is None:
+        raise ValueError("labels must be provided.")
+
+    labels_array = np.asarray(labels)
+    if labels_array.ndim != 1:
+        raise ValueError("labels must be a 1D array-like vector.")
+    if len(labels_array) != expected_length:
+        raise ValueError("Length of labels must match similarity_matrix size.")
+    return labels_array
 
 
 def get_fuzzy_rough_model_class(model_type: str):
@@ -99,11 +135,48 @@ def list_fuzzy_rough_models() -> Dict[str, list[str]]:
     return FuzzyRoughModel.list_available()
 
 
+def _resolve_model_type(
+    *,
+    model_type: Optional[str],
+    external_config: Mapping[str, Any],
+    nested_config: Mapping[str, Any],
+) -> str:
+    """
+    @brief Resolve the model alias from explicit, flat, or nested config sources.
+
+    @param model_type: Explicit model alias from the public positional/keyword arg.
+    @param external_config: Flat-or-mixed public config snapshot.
+    @param nested_config: Nested FRsutils config snapshot.
+    @return: Normalized model alias.
+    @raises ValueError: If aliases conflict or no alias is available.
+    """
+    nested_type = None
+    fr_cfg = nested_config.get("fr_model", {}) if isinstance(nested_config, Mapping) else {}
+    if isinstance(fr_cfg, Mapping):
+        nested_type = fr_cfg.get("type")
+
+    flat_type = external_config.get("type")
+    candidates = [value for value in (model_type, nested_type, flat_type) if value is not None]
+    normalized = []
+    for value in candidates:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("A fuzzy-rough model type must be a non-empty string.")
+        normalized.append(value.strip().lower())
+
+    if not normalized:
+        raise ValueError("A fuzzy-rough model type must be provided via model_type or config['type'].")
+
+    if len(set(normalized)) > 1:
+        raise ValueError(f"Conflicting fuzzy-rough model types were provided: {sorted(set(normalized))}.")
+
+    return normalized[0]
+
+
 def build_fuzzy_rough_model(
     model_type: Optional[str] = None,
     *,
-    similarity_matrix: np.ndarray,
-    labels: np.ndarray,
+    similarity_matrix: Any,
+    labels: Any,
     config: Optional[Mapping[str, Any]] = None,
     **flat_config: Any,
 ) -> FuzzyRoughModel:
@@ -115,17 +188,20 @@ def build_fuzzy_rough_model(
     - flat sklearn-style params, e.g. `type="itfrs"`, `ub_tnorm_name="minimum"`
     - nested FRsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
 
-    @param model_type: Optional explicit model alias. Overrides config when provided.
+    @param model_type: Optional explicit model alias. Must agree with config when both are provided.
     @param similarity_matrix: Pairwise similarity matrix used by the model.
     @param labels: Label vector aligned with the similarity matrix.
     @param config: Optional flat or nested configuration mapping.
     @param flat_config: Additional flat configuration values.
     @return: Constructed fuzzy-rough model instance.
     @raises TypeError: If config is not mapping-like.
-    @raises ValueError: If the model type cannot be resolved.
+    @raises ValueError: If the model type or matrix/labels are invalid.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
+
+    sim = _as_similarity_matrix(similarity_matrix)
+    labels_array = _as_labels(labels, expected_length=sim.shape[0])
 
     external_config: Dict[str, Any] = dict(config or {})
     external_config.update(flat_config)
@@ -135,28 +211,28 @@ def build_fuzzy_rough_model(
         fr_cfg = nested_config.get("fr_model", {})
         if not isinstance(fr_cfg, Mapping):
             raise TypeError("nested config section 'fr_model' must be a mapping.")
-        resolved_type = model_type or fr_cfg.get("type") or external_config.get("type")
     else:
         if model_type is not None:
             external_config["type"] = model_type
         nested_config = normalize_flat_config_to_nested(external_config)
-        resolved_type = model_type or nested_config.get("fr_model", {}).get("type") or external_config.get("type")
 
-    if not isinstance(resolved_type, str) or not resolved_type.strip():
-        raise ValueError("A fuzzy-rough model type must be provided via model_type or config['type'].")
-
+    resolved_type = _resolve_model_type(
+        model_type=model_type,
+        external_config=external_config,
+        nested_config=nested_config,
+    )
     model_cls = get_fuzzy_rough_model_class(resolved_type)
 
-    # Keep the original flat config for backwards-compatible `from_config` paths,
-    # and pass nested config through the private key already used internally by
-    # FRsutils model constructors.
+    # Keep the original flat/mixed config for backwards-compatible `from_config`
+    # paths, and pass nested config through the private key already used
+    # internally by FRsutils model constructors.
     constructor_config = dict(external_config)
-    constructor_config["type"] = resolved_type.strip().lower()
+    constructor_config["type"] = resolved_type
     constructor_config["_nested_config"] = nested_config
 
     return model_cls.from_config(
-        similarity_matrix=similarity_matrix,
-        labels=labels,
+        similarity_matrix=sim,
+        labels=labels_array,
         **constructor_config,
     )
 

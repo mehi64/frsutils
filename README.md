@@ -8,7 +8,7 @@ t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
 approximations, and positive-region computation.
 
 Fuzzy-rough oversampling algorithms such as FRSMOTE now live in the standalone
-`fuzzy_rough_oversampling` package. That package depends on FRsutils through the
+`frsampling` package. That package depends on FRsutils through the
 public `FRsutils.api` facade.
 
 # For Developers
@@ -54,20 +54,17 @@ Install the standalone oversampling package when you need FRSMOTE or future
 fuzzy-rough oversamplers such as FRADASYN:
 
 ```bash
-cd fuzzy_rough_oversampling
+cd frsampling
 pip install -e .
 ```
 
 Use the new import path:
 
 ```python
-from fuzzy_rough_oversampling import FRSMOTE
+from frsampling import FRSMOTE
 ```
 
-No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import paths. Existing scripts must be migrated explicitly.
-
-Migration guide:
-[FRSMOTE migration from FRsutils](docs/frsmote_migration.md).
+No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import paths. Existing scripts must be migrated explicitly. See the `frsampling` repository migration guide for FRSMOTE-specific migration details.
 
 # Fuzzy-Rough set utilities [Under development]
 
@@ -78,6 +75,43 @@ research, e.g.:
 - upper approximation
 - positive region
 - boundary region
+
+
+## Public API quickstart
+
+FRsutils exposes a small public facade through `FRsutils.api`. End users should
+prefer the task-oriented helpers, while downstream libraries should depend only
+on this facade instead of importing from `FRsutils.core` or `FRsutils.utils`.
+
+```python
+from FRsutils.api import compute_approximations, compute_positive_region
+
+result = compute_approximations(X, y, model="itfrs", similarity="linear")
+positive_region = result.positive_region
+
+# Shortcut when only positive-region scores are needed.
+scores = compute_positive_region(X, y, model="itfrs", similarity="linear")
+```
+
+For reusable fitted scoring workflows, use the Phase 3 scorer:
+
+```python
+from FRsutils.api import FuzzyRoughPositiveRegionScorer
+
+scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
+scores = scorer.fit_score(X, y)
+full_result = scorer.as_result()
+```
+
+Downstream libraries such as `frsampling` should use the builder-level public
+API when they need to reuse a precomputed similarity matrix:
+
+```python
+from FRsutils.api import build_similarity_matrix, compute_positive_region
+
+sim = build_similarity_matrix(X, similarity="linear")
+scores = compute_positive_region(X=None, y=y, model="itfrs", similarity_matrix=sim)
+```
 
 ## Algorithms and contents
 
@@ -119,13 +153,13 @@ research, e.g.:
 ## Fuzzy-rough oversampling boundary
 
 Fuzzy-rough oversampling algorithms are no longer part of FRsutils core. They
-live in the standalone `fuzzy_rough_oversampling` package, which depends on
+live in the standalone `frsampling` package, which depends on
 FRsutils through the public `FRsutils.api` facade. FRsutils intentionally does
-not provide old FRSMOTE compatibility wrappers after Phase 7.
+not provide old FRSMOTE compatibility wrappers.
 
 ```text
-fuzzy_rough_oversampling  --->  FRsutils.api
-FRsutils                  -X->  fuzzy_rough_oversampling
+frsampling  --->  FRsutils.api
+FRsutils    -X->  frsampling
 ```
 
 FRsutils should be cited/used as the fuzzy-rough core engine: similarities,
@@ -160,8 +194,8 @@ python -m pytest tests -q
 For the standalone oversampling package:
 
 ```bash
-PYTHONPATH="$PWD:$PWD/fuzzy_rough_oversampling/src" \
-python -m pytest fuzzy_rough_oversampling/tests -q
+PYTHONPATH="$PWD:$PWD/frsampling/src" \
+python -m pytest frsampling/tests -q
 ```
 
 For more information on test procedures, please refer to
