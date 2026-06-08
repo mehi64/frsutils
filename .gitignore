@@ -12,3 +12,5 @@ FRsutils.egg-info/
 *.zip
 *.csv
 temp/
+logs/*.csv
+logs/*.json

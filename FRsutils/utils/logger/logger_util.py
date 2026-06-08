@@ -8,7 +8,7 @@ Do not instantiate `_TinyLogger` directly.
 
 
 Provides:
-- Colorized terminal logging
+- Colorized terminal logging (if colorlog is installed)
 - Structured CSV/JSON logging to a separate file (JSON is not tested)
 - Run ID & experiment tagging
 - Config, metrics, Git info, system info logging (commented in code and not tested)
