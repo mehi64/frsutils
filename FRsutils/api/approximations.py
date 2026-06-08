@@ -19,10 +19,14 @@ classes:
 # compute_upper_approximation          Convenience wrapper for upper approximation
 # compute_boundary_region              Convenience wrapper for boundary region
 # compute_positive_region              Convenience wrapper for positive-region scores
+# engine="dense"                      Preserve existing dense matrix-backed behavior
+# engine="blockwise"                  Exact ITFRS/VQRS/OWAFRS blockwise accumulators
+# backend="cupy"                    Optional GPU similarity-block computation
 
 # ✅ Design Patterns & Clean Code Notes
 # - Facade Pattern: stable task API above internal model/similarity builders
 # - Adapter Pattern: accepts flat sklearn-style params or nested config
+# - Strategy Pattern: dispatches between dense and blockwise execution engines
 # - Dependency Inversion: downstream packages depend on FRsutils.api only
 # - DRY: single compute_approximations implementation powers all wrappers
 ##############################################
@@ -42,6 +46,24 @@ classes:
 #     lb_implicator_name="lukasiewicz",
 # )
 # positive_scores = compute_positive_region(X, y, model="itfrs")
+#
+# blockwise = compute_approximations(
+#     X,
+#     y,
+#     model="itfrs",
+#     similarity="linear",
+#     engine="blockwise",
+#     block_size=512,
+# )
+#
+# gpu_blockwise = compute_approximations(
+#     X,
+#     y,
+#     model="itfrs",
+#     similarity="linear",
+#     engine="blockwise",
+#     backend="cupy",
+# )
 """
 
 from __future__ import annotations
@@ -53,7 +75,12 @@ import numpy as np
 
 from FRsutils.api.models import build_fuzzy_rough_model
 from FRsutils.api.results import FuzzyRoughApproximationResult
-from FRsutils.api.similarity import build_similarity_matrix
+from FRsutils.api.similarity import build_similarity_engine, build_similarity_matrix
+from FRsutils.core.approximation_engines import (
+    compute_itfrs_blockwise,
+    compute_owafrs_blockwise,
+    compute_vqrs_blockwise,
+)
 
 
 _DEFAULT_MODEL_CONFIG: Dict[str, Any] = {
@@ -168,43 +195,59 @@ def _prepare_effective_config(
     return effective
 
 
-def compute_approximations(
-    X: Optional[np.ndarray],
-    y: np.ndarray,
+def _normalize_execution_engine(engine: str) -> str:
+    """
+    @brief Normalize the approximation execution-engine alias.
+
+    @param engine: Public execution-engine alias.
+    @return: Canonical alias, either "dense" or "blockwise".
+    @raises TypeError: If engine is not a non-empty string.
+    @raises ValueError: If engine is unknown.
+    """
+    if not isinstance(engine, str) or not engine.strip():
+        raise TypeError("engine must be a non-empty string.")
+
+    normalized = engine.strip().lower()
+    if normalized in {"dense", "full", "matrix"}:
+        return "dense"
+    if normalized in {"blockwise", "chunkwise", "blocked"}:
+        return "blockwise"
+    raise ValueError("Unknown approximation engine. Use engine='dense' or engine='blockwise'.")
+
+
+def _similarity_name_from_config(effective_config: Mapping[str, Any]) -> Optional[str]:
+    """
+    @brief Extract a public similarity name from flat or nested effective config.
+
+    @param effective_config: Effective approximation config.
+    @return: Similarity alias when available.
+    """
+    similarity_cfg = effective_config.get("similarity")
+    if isinstance(similarity_cfg, Mapping):
+        return similarity_cfg.get("name")
+    return similarity_cfg
+
+
+def _compute_dense_approximations(
     *,
-    model: str = "itfrs",
-    similarity: Optional[str] = None,
-    similarity_matrix: Optional[np.ndarray] = None,
-    config: Optional[Mapping[str, Any]] = None,
-    return_similarity_matrix: bool = False,
-    **flat_config: Any,
+    X: Optional[np.ndarray],
+    labels: np.ndarray,
+    model_alias: str,
+    similarity_matrix: Optional[np.ndarray],
+    effective_config: Mapping[str, Any],
+    return_similarity_matrix: bool,
 ) -> FuzzyRoughApproximationResult:
     """
-    @brief Compute fuzzy-rough lower, upper, boundary, and positive-region values.
+    @brief Compute approximations through the existing dense model path.
 
-    @param X: Input feature matrix. Required unless similarity_matrix is provided.
-    @param y: Label vector aligned with X and/or similarity_matrix.
-    @param model: Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
-    @param similarity: Optional similarity alias for matrix construction.
-    @param similarity_matrix: Optional precomputed pairwise similarity matrix.
-    @param config: Optional flat or nested FRsutils config mapping.
-    @param return_similarity_matrix: If True, include the matrix in the result object.
-    @param flat_config: Additional flat sklearn-style model/similarity parameters.
-    @return: FuzzyRoughApproximationResult with named approximation arrays.
-    @raises ValueError: If neither X nor similarity_matrix is provided.
+    @param X: Optional feature matrix used when no precomputed matrix is supplied.
+    @param labels: Label vector.
+    @param model_alias: Normalized fuzzy-rough model alias.
+    @param similarity_matrix: Optional precomputed dense pairwise matrix.
+    @param effective_config: Flat or nested config snapshot.
+    @param return_similarity_matrix: Whether to include the dense matrix in the result.
+    @return: Public approximation result object.
     """
-    if not isinstance(model, str) or not model.strip():
-        raise TypeError("model must be a non-empty string.")
-
-    model_alias = model.strip().lower()
-    labels = np.asarray(y)
-    effective_config = _prepare_effective_config(
-        model=model_alias,
-        similarity=similarity,
-        config=config,
-        flat_config=flat_config,
-    )
-
     sim = similarity_matrix
     if sim is None:
         if X is None:
@@ -228,21 +271,151 @@ def compute_approximations(
     boundary = np.asarray(fr_model.boundary_region())
     positive_region = np.asarray(fr_model.positive_region())
 
-    similarity_name = None
-    if isinstance(effective_config.get("similarity"), Mapping):
-        similarity_name = effective_config.get("similarity", {}).get("name")
-    else:
-        similarity_name = effective_config.get("similarity")
-
     return FuzzyRoughApproximationResult(
         lower=lower,
         upper=upper,
         boundary=boundary,
         positive_region=positive_region,
         model=model_alias,
-        similarity=similarity_name,
+        similarity=_similarity_name_from_config(effective_config),
         similarity_matrix=sim if return_similarity_matrix else None,
         config=dict(effective_config),
+    )
+
+
+def _compute_blockwise_approximations(
+    *,
+    X: Optional[np.ndarray],
+    labels: np.ndarray,
+    model_alias: str,
+    similarity_matrix: Optional[np.ndarray],
+    effective_config: Mapping[str, Any],
+    return_similarity_matrix: bool,
+    block_size: int,
+    backend: str,
+) -> FuzzyRoughApproximationResult:
+    """
+    @brief Compute exact blockwise approximations for supported models.
+
+    @param X: Feature matrix required for blockwise similarity generation.
+    @param labels: Label vector.
+    @param model_alias: Normalized model alias. Blockwise supports ITFRS, VQRS, and OWAFRS.
+    @param similarity_matrix: Must be None for blockwise execution.
+    @param effective_config: Flat or nested config snapshot.
+    @param return_similarity_matrix: Whether to materialize and return the matrix for inspection.
+    @param block_size: Positive block size passed to the similarity engine.
+    @param backend: Array backend alias. NumPy/auto are stable; CuPy is optional and explicit.
+    @return: Public approximation result object.
+    """
+    if model_alias not in {"itfrs", "vqrs", "owafrs"}:
+        raise NotImplementedError(
+            "Blockwise approximations currently support only model='itfrs', model='vqrs', or model='owafrs'."
+        )
+    if similarity_matrix is not None:
+        raise ValueError("engine='blockwise' requires X and does not accept precomputed similarity_matrix.")
+    if X is None:
+        raise ValueError("X must be provided when engine='blockwise'.")
+
+    if _is_nested_frs_config(effective_config):
+        similarity_engine = build_similarity_engine(
+            np.asarray(X),
+            engine="blockwise",
+            block_size=block_size,
+            config=effective_config,
+            backend=backend,
+        )
+    else:
+        similarity_engine = build_similarity_engine(
+            np.asarray(X),
+            engine="blockwise",
+            block_size=block_size,
+            backend=backend,
+            **effective_config,
+        )
+
+    if model_alias == "itfrs":
+        blockwise = compute_itfrs_blockwise(similarity_engine, labels, config=effective_config)
+    elif model_alias == "vqrs":
+        blockwise = compute_vqrs_blockwise(similarity_engine, labels, config=effective_config)
+    else:
+        blockwise = compute_owafrs_blockwise(similarity_engine, labels, config=effective_config)
+    similarity_matrix_for_result = similarity_engine.to_dense() if return_similarity_matrix else None
+
+    return FuzzyRoughApproximationResult(
+        lower=np.asarray(blockwise.lower),
+        upper=np.asarray(blockwise.upper),
+        boundary=np.asarray(blockwise.boundary),
+        positive_region=np.asarray(blockwise.positive_region),
+        model=model_alias,
+        similarity=_similarity_name_from_config(effective_config),
+        similarity_matrix=similarity_matrix_for_result,
+        config=dict(effective_config),
+    )
+
+
+def compute_approximations(
+    X: Optional[np.ndarray],
+    y: np.ndarray,
+    *,
+    model: str = "itfrs",
+    similarity: Optional[str] = None,
+    similarity_matrix: Optional[np.ndarray] = None,
+    config: Optional[Mapping[str, Any]] = None,
+    return_similarity_matrix: bool = False,
+    engine: str = "dense",
+    block_size: int = 1024,
+    backend: str = "numpy",
+    **flat_config: Any,
+) -> FuzzyRoughApproximationResult:
+    """
+    @brief Compute fuzzy-rough lower, upper, boundary, and positive-region values.
+
+    @param X: Input feature matrix. Required unless similarity_matrix is provided.
+    @param y: Label vector aligned with X and/or similarity_matrix.
+    @param model: Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
+    @param similarity: Optional similarity alias for matrix construction.
+    @param similarity_matrix: Optional precomputed pairwise similarity matrix.
+    @param config: Optional flat or nested FRsutils config mapping.
+    @param return_similarity_matrix: If True, include the matrix in the result object.
+    @param engine: Approximation execution engine, "dense" or "blockwise".
+    @param block_size: Positive block size used by engine="blockwise".
+    @param backend: Array backend alias. Use "numpy"/"auto" or explicit optional "cupy".
+    @param flat_config: Additional flat sklearn-style model/similarity parameters.
+    @return: FuzzyRoughApproximationResult with named approximation arrays.
+    @raises ValueError: If required matrix/X inputs are missing.
+    """
+    if not isinstance(model, str) or not model.strip():
+        raise TypeError("model must be a non-empty string.")
+
+    model_alias = model.strip().lower()
+    labels = np.asarray(y)
+    effective_config = _prepare_effective_config(
+        model=model_alias,
+        similarity=similarity,
+        config=config,
+        flat_config=flat_config,
+    )
+    execution_engine = _normalize_execution_engine(engine)
+
+    if execution_engine == "blockwise":
+        return _compute_blockwise_approximations(
+            X=X,
+            labels=labels,
+            model_alias=model_alias,
+            similarity_matrix=similarity_matrix,
+            effective_config=effective_config,
+            return_similarity_matrix=return_similarity_matrix,
+            block_size=block_size,
+            backend=backend,
+        )
+
+    return _compute_dense_approximations(
+        X=X,
+        labels=labels,
+        model_alias=model_alias,
+        similarity_matrix=similarity_matrix,
+        effective_config=effective_config,
+        return_similarity_matrix=return_similarity_matrix,
     )
 
 

@@ -14,12 +14,15 @@ and keeps downstream packages independent from internal module organization.
 # list_similarities                    Inspect registered similarity aliases
 # calculate_similarity_matrix          Low-level pairwise matrix calculation helper
 # build_similarity_matrix              Validated public similarity matrix builder
+# build_similarity_engine              Build dense/blockwise similarity engines
+# backend="cupy"                       Optional GPU block computation for blockwise engines
 
 # ✅ Design Patterns & Clean Code Notes
 # - Facade Pattern: stable import path for public similarity operations
 # - Strategy Pattern: similarity functions and t-norms remain pluggable internally
 # - Registry Pattern: similarity aliases are still resolved by the core registry
 # - Boundary Validation: validates user/downstream inputs at the public API edge
+# - Conservative Extension: engine support is additive and keeps dense behavior stable
 ##############################################
 
 ##############################################
@@ -46,6 +49,13 @@ from FRsutils.core.similarities import (
     Similarity,
     build_similarity_matrix as _core_build_similarity_matrix,
     calculate_similarity_matrix as _core_calculate_similarity_matrix,
+)
+from FRsutils.core.similarity_engine import (
+    BaseSimilarityEngine,
+    BlockwiseSimilarityEngine,
+    DenseSimilarityEngine,
+    SimilarityBlock,
+    build_similarity_engine as _core_build_similarity_engine,
 )
 
 
@@ -115,8 +125,55 @@ def build_similarity_matrix(
     return _core_build_similarity_matrix(X_array, config=config_dict, **flat_config)
 
 
+def build_similarity_engine(
+    X: Any,
+    *,
+    engine: str = "dense",
+    block_size: int = 1024,
+    config: Optional[Mapping[str, Any]] = None,
+    backend: str = "numpy",
+    **flat_config: Any,
+) -> BaseSimilarityEngine:
+    """
+    @brief Build a dense or blockwise similarity engine from public inputs.
+
+    The engine abstraction is additive. Existing callers should keep using
+    `build_similarity_matrix`; blockwise approximation code can consume the
+    returned engine directly. backend="cupy" accelerates similarity-block
+    calculation when CuPy is installed and a CUDA device is available.
+
+    @param X: Normalized 2D feature matrix.
+    @param engine: Engine alias, currently "dense" or "blockwise".
+    @param block_size: Positive block size for blockwise engines.
+    @param config: Optional flat or nested FRsutils config mapping.
+    @param backend: Backend alias. Use "numpy"/"auto" or explicit optional "cupy".
+    @param flat_config: Additional flat configuration values.
+    @return: Similarity engine instance.
+    @raises TypeError: If config is not mapping-like.
+    @raises ValueError: If X is not a 2D matrix or engine/backend is unsupported.
+    """
+    if config is not None and not isinstance(config, Mapping):
+        raise TypeError("config must be a mapping when provided.")
+
+    X_array = _as_2d_feature_matrix(X)
+    config_dict = dict(config) if config is not None else None
+    return _core_build_similarity_engine(
+        X_array,
+        engine=engine,
+        block_size=block_size,
+        config=config_dict,
+        backend=backend,
+        **flat_config,
+    )
+
+
 __all__ = [
     "Similarity",
+    "SimilarityBlock",
+    "BaseSimilarityEngine",
+    "BlockwiseSimilarityEngine",
+    "DenseSimilarityEngine",
+    "build_similarity_engine",
     "build_similarity_matrix",
     "calculate_similarity_matrix",
     "list_similarities",

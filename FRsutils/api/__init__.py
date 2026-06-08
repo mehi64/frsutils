@@ -12,6 +12,7 @@ avoid coupling downstream code to deep internal paths such as
 # Feature                              Description
 # ----------------------------------------------------------------------------------
 # build_similarity_matrix              Build pairwise fuzzy similarity matrices
+# build_similarity_engine              Build dense/blockwise similarity engines
 # build_fuzzy_rough_model              Build registered fuzzy-rough models from config
 # compute_approximations               Compute lower/upper/boundary/positive-region outputs
 # compute_positive_region              Compute positive-region scores directly
@@ -69,7 +70,12 @@ from FRsutils.api.models import (
     list_fuzzy_rough_models,
 )
 from FRsutils.api.similarity import (
+    BaseSimilarityEngine,
+    BlockwiseSimilarityEngine,
+    DenseSimilarityEngine,
     Similarity,
+    SimilarityBlock,
+    build_similarity_engine,
     build_similarity_matrix,
     calculate_similarity_matrix,
     list_similarities,
@@ -77,6 +83,10 @@ from FRsutils.api.similarity import (
 
 __all__ = [
     "Similarity",
+    "SimilarityBlock",
+    "BaseSimilarityEngine",
+    "BlockwiseSimilarityEngine",
+    "DenseSimilarityEngine",
     "FuzzyRoughModel",
     "FuzzyRoughApproximationResult",
     "FuzzyRoughPositiveRegionScorer",
@@ -85,6 +95,7 @@ __all__ = [
     "VQRS",
     "apply_config_aliases",
     "build_fuzzy_rough_model",
+    "build_similarity_engine",
     "build_similarity_matrix",
     "calculate_similarity_matrix",
     "compute_approximations",
