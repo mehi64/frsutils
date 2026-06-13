@@ -22,10 +22,13 @@ from FRsutils.api import compute_approximations, compute_positive_region  # noqa
 
 
 def make_demo_dataset() -> Tuple[np.ndarray, np.ndarray]:
-    """
-    @brief Build a tiny normalized numeric dataset for public API examples.
-
-    @return: Tuple `(X, y)` with values already in a comparable `[0, 1]` range.
+    """Build a tiny normalized numeric dataset for public API examples.
+        
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            Tuple `(X, y)` with values already in a comparable `[0, 1]` range.
+        
     """
     X = np.array(
         [
@@ -43,20 +46,30 @@ def make_demo_dataset() -> Tuple[np.ndarray, np.ndarray]:
 
 
 def _format_array(values: np.ndarray) -> str:
-    """
-    @brief Format NumPy arrays compactly for console examples.
-
-    @param values: Array to display.
-    @return: Compact string with stable precision.
+    """Format NumPy arrays compactly for console examples.
+        
+        Parameters
+        ----------
+        values : np.ndarray
+            Array to display.
+        
+        Returns
+        -------
+        str
+            Compact string with stable precision.
+        
     """
     return np.array2string(values, precision=4, suppress_small=True)
 
 
 def main() -> int:
-    """
-    @brief Run the Phase 7 public API quickstart.
-
-    @return: Process exit code.
+    """Run the Phase 7 public API quickstart.
+        
+        Returns
+        -------
+        int
+            Process exit code.
+        
     """
     X, y = make_demo_dataset()
 

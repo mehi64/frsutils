@@ -74,9 +74,8 @@ def test_tnorm_call_output_matches_expected(tnorm_name, testset):
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
 def test_scalar_call_output_matches_expected_values(tnorm_name, testset):
-    """
-    @brief Validates that scalar TNorm calls produce the correct result as per the expected values.
-
+    """Validates that scalar TNorm calls produce the correct result as per the expected values.
+    
     This ensures that the scalar invocation path of __call__ yields the same output
     as vectorized usage for each (a, b) test pair in get_tnorm_call_testsets().
     """
@@ -148,9 +147,9 @@ def test_reduce_consistency_with_call(tnorm_name):
 
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 def test_equivalence_of_constructor_create_fromdict_with_random_data(tnorm_name):
-    """
-    @brief Tests whether constructor, create(), and from_dict() produce identical outputs
-           for randomly generated vectors.
+    """Tests whether constructor, create(), and from_dict() produce identical outputs
+    
+    for randomly generated vectors.
     """
     rng = np.random.default_rng(seed=123)
     a = rng.uniform(0, 1, size=1000)
@@ -174,9 +173,9 @@ def test_equivalence_of_constructor_create_fromdict_with_random_data(tnorm_name)
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
 def test_equivalence_of_constructor_create_fromdict(tnorm_name, testset):
-    """
-    @brief Verifies that constructor, factory, and from_dict instances all behave identically
-           on predefined test data from get_tnorm_call_testsets().
+    """Verifies that constructor, factory, and from_dict instances all behave identically
+    
+    on predefined test data from get_tnorm_call_testsets().
     """
     # Skip parametric Yager if p is not defined
     if "yager" in tnorm_name and "p=" not in tnorm_name:
@@ -207,9 +206,7 @@ def test_equivalence_of_constructor_create_fromdict(tnorm_name, testset):
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
 def test_scalar_call_matches_vectorized_outputs(tnorm_name, testset):
-    """
-    @brief Ensures TNorm scalar calls match vectorized results for each test pair.
-    """
+    """Ensures TNorm scalar calls match vectorized results for each test pair."""
 
     if "yager" in tnorm_name and "p=" not in tnorm_name:
         return
@@ -236,10 +233,9 @@ def test_scalar_call_matches_vectorized_outputs(tnorm_name, testset):
 
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 def test_tnorm_matrix_consistency_with_scalar_application(tnorm_name):
-    """
-    @brief Ensures that applying T-norm to A and B matrices is the same as
-           applying scalar T-norm to A[i,j], B[i,j] for each element.
-
+    """Ensures that applying T-norm to A and B matrices is the same as
+    
+    applying scalar T-norm to A[i,j], B[i,j] for each element.
     This verifies consistency between vectorized and scalar logic.
     """
     rng = np.random.default_rng(seed=42)
@@ -276,9 +272,9 @@ def test_tnorm_matrix_consistency_with_scalar_application(tnorm_name):
 
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 def test_tnorm_instances_are_distinct(tnorm_name):
-    """
-    @brief Ensures that tnorm1 (direct), tnorm2 (create), and tnorm3 (from_dict)
-           are separate instances in memory.
+    """Ensures that tnorm1 (direct), tnorm2 (create), and tnorm3 (from_dict)
+    
+    are separate instances in memory.
     """
     cls = TNorm.get_class(tnorm_name)
     tnorm1 = cls(**({"p": 2.0} if tnorm_name == "yager" else {}))
@@ -384,9 +380,7 @@ def test_tnorm_associativity(tnorm_name):
 
 @pytest.mark.parametrize("tnorm_name", list(registered_tnorms.keys()))
 def test_help(tnorm_name):
-    """
-    @brief Checks that each TNorm provides a valid help string (docstring).
-    """
+    """Checks that each TNorm provides a valid help string (docstring)."""
     # not very helpfull test
     obj = TNorm.create(tnorm_name, **({"p": 2.0} if "yager" in tnorm_name else {}))
     doc = obj.help()

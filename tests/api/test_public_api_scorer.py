@@ -26,7 +26,7 @@ Y_SMALL = np.array([0, 0, 1, 1])
 
 
 def test_positive_region_scorer_fit_score_matches_function_api():
-    """@brief fit_score returns the same values as compute_positive_region."""
+    """fit_score returns the same values as compute_positive_region."""
     scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
 
     fitted_scores = scorer.fit_score(X_SMALL, Y_SMALL)
@@ -38,7 +38,7 @@ def test_positive_region_scorer_fit_score_matches_function_api():
 
 
 def test_positive_region_scorer_exposes_full_result():
-    """@brief The scorer stores the named approximation result after fitting."""
+    """The scorer stores the named approximation result after fitting."""
     scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
     scorer.fit(X_SMALL, Y_SMALL)
 
@@ -52,7 +52,7 @@ def test_positive_region_scorer_exposes_full_result():
 
 
 def test_positive_region_scorer_accepts_precomputed_similarity_matrix():
-    """@brief Downstream packages can fit the scorer from a reused matrix."""
+    """Downstream packages can fit the scorer from a reused matrix."""
     sim = build_similarity_matrix(X_SMALL, similarity="linear")
     scorer = FuzzyRoughPositiveRegionScorer(
         model="itfrs",
@@ -67,7 +67,7 @@ def test_positive_region_scorer_accepts_precomputed_similarity_matrix():
 
 
 def test_positive_region_scorer_is_sklearn_parameter_compatible():
-    """@brief The scorer supports sklearn-style get_params/set_params."""
+    """The scorer supports sklearn-style get_params/set_params."""
     scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
     params = scorer.get_params()
 
@@ -81,7 +81,7 @@ def test_positive_region_scorer_is_sklearn_parameter_compatible():
 
 
 def test_positive_region_scorer_rejects_unfitted_access():
-    """@brief Unfitted scorer access fails with sklearn's NotFittedError."""
+    """Unfitted scorer access fails with sklearn's NotFittedError."""
     scorer = FuzzyRoughPositiveRegionScorer(model="itfrs")
 
     with pytest.raises(NotFittedError):

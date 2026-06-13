@@ -13,13 +13,18 @@ from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 
 @FuzzyRoughModel.register("vqrs")
 class VQRS(FuzzyRoughModel):
-    """
-    @brief VQRS model for fuzzy rough approximation using fuzzy quantifiers.
-
-    @param similarity_matrix: Pairwise similarity matrix (n x n)
-    @param labels: Corresponding label vector (n,)
-    @param fuzzy_quantifier_lower: FuzzyQuantifier instance for lower approx
-    @param fuzzy_quantifier_upper: FuzzyQuantifier instance for upper approx
+    """VQRS model for fuzzy rough approximation using fuzzy quantifiers.
+    
+    Parameters
+    ----------
+    similarity_matrix : object
+        Pairwise similarity matrix (n x n)
+    labels : object
+        Corresponding label vector (n,)
+    fuzzy_quantifier_lower : object
+        FuzzyQuantifier instance for lower approx
+    fuzzy_quantifier_upper : object
+        FuzzyQuantifier instance for upper approx
     """
     def __init__(self, 
                  similarity_matrix: np.ndarray, 
@@ -27,6 +32,7 @@ class VQRS(FuzzyRoughModel):
                  lb_fuzzy_quantifier: FuzzyQuantifier,
                  ub_fuzzy_quantifier: FuzzyQuantifier,
                  logger=None):
+        """Initialize the VQRS instance."""
         super().__init__(similarity_matrix, 
                          labels, 
                          logger=logger)
@@ -44,9 +50,7 @@ class VQRS(FuzzyRoughModel):
 
 
     def _interim_calculations(self) -> np.ndarray:
-        """
-        @brief R_Ay which is then feed into upper and lower quantifiers
-        """
+        """R_Ay which is then feed into upper and lower quantifiers"""
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.tnorm(self.similarity_matrix, label_mask)
 
@@ -63,28 +67,40 @@ class VQRS(FuzzyRoughModel):
         return interim
 
     def lower_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the lower approximation using the fuzzy quantifier.
-
-        @return: Lower approximation array (n,)
+        """Compute the lower approximation using the fuzzy quantifier.
+                
+                Returns
+                -------
+                np.ndarray
+                    Lower approximation array (n,)
+                
         """
         return self.lb_fuzzy_quantifier(self._interim_calculations())
 
     def upper_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the upper approximation using the fuzzy quantifier.
-
-        @return: Upper approximation array (n,)
+        """Compute the upper approximation using the fuzzy quantifier.
+                
+                Returns
+                -------
+                np.ndarray
+                    Upper approximation array (n,)
+                
         """
         return self.ub_fuzzy_quantifier(self._interim_calculations())
 
     def to_dict(self, include_data: bool = False) -> dict:
-        """
-        @brief Serialize the VQS model to a dictionary.
-
-        @param include_data: If True, include similarity_matrix and labels in the output.
-
-        @return: Dictionary representation of the model.
+        """Serialize the VQS model to a dictionary.
+                
+                Parameters
+                ----------
+                include_data : bool
+                    If True, include similarity_matrix and labels in the output.
+                
+                Returns
+                -------
+                dict
+                    Dictionary representation of the model.
+                
         """
         data = {
             "type": "vqrs",
@@ -100,15 +116,24 @@ class VQRS(FuzzyRoughModel):
 
     @classmethod
     def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "VQRS":
-        """
-        @brief Reconstruct an VQRS model from a serialized dictionary.
-
-        @param data: Serialized dictionary (from to_dict)
-        @param similarity_matrix: Optional matrix to override or fill in if not in data
-        @param labels: Optional label vector to override or fill in if not in data
-        @param logger: Optional logger
-
-        @return: VQRS instance
+        """Reconstruct an VQRS model from a serialized dictionary.
+                
+                Parameters
+                ----------
+                data : dict
+                    Serialized dictionary (from to_dict)
+                similarity_matrix : object
+                    Optional matrix to override or fill in if not in data
+                labels : object
+                    Optional label vector to override or fill in if not in data
+                logger : object
+                    Optional logger
+                
+                Returns
+                -------
+                'VQRS'
+                    VQRS instance
+                
         """
         fq_lower = FuzzyQuantifier.from_dict(data["lb_fuzzy_quantifier"])
         fq_upper = FuzzyQuantifier.from_dict(data["ub_fuzzy_quantifier"])
@@ -123,10 +148,13 @@ class VQRS(FuzzyRoughModel):
         return cls(sim, lbl, fq_lower, fq_upper, logger=logger)
 
     def _get_params(self) -> dict:
-        """
-        @brief Describe internal lower and upper fuzzy_quantifier parameters.
-
-        @return: Dictionary containing lower and upper fuzzy_quantifier used in vqrs.
+        """Describe internal lower and upper fuzzy_quantifier parameters.
+                
+                Returns
+                -------
+                dict
+                    Dictionary containing lower and upper fuzzy_quantifier used in vqrs.
+                
         """
         return {
             "tnorm": self.tnorm,
@@ -138,13 +166,22 @@ class VQRS(FuzzyRoughModel):
 
     @classmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict) -> "VQRS":
-        """
-        @brief Create a VQRS instance from a configuration dictionary.
-
-        @param config: Serialized config dict (can include tnorm, fuzzy quantifiers, and optionally data)
-        @param similarity_matrix: Optional override for similarity matrix
-        @param labels: Optional override for label vector
-        @return: VQRS instance
+        """Create a VQRS instance from a configuration dictionary.
+                
+                Parameters
+                ----------
+                config : dict
+                    Serialized config dict (can include tnorm, fuzzy quantifiers, and optionally data)
+                similarity_matrix : object
+                    Optional override for similarity matrix
+                labels : object
+                    Optional override for label vector
+                
+                Returns
+                -------
+                'VQRS'
+                    VQRS instance
+                
         """
         nested = config.pop("_nested_config", None)
 
@@ -197,10 +234,12 @@ class VQRS(FuzzyRoughModel):
     
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief validation hook.
-
-        @param kwargs
+        """validation hook.
+        
+        Parameters
+        ----------
+        kwargs : object
+            Parameter value.
         """
         fq_l = kwargs.get("lb_fuzzy_quantifier")
         fq_u = kwargs.get("ub_fuzzy_quantifier")
@@ -212,6 +251,7 @@ class VQRS(FuzzyRoughModel):
             raise ValueError("fuzzy_quantifier_upper must be a valid FuzzyQuantifier instance.")
 
     def describe_params_detailed(self) -> dict:
+        """Return detailed parameter metadata for this component."""
         return {
             "lb_fuzzy_quantifier": self.lb_fuzzy_quantifier.describe_params_detailed(),
             "ub_fuzzy_quantifier": self.ub_fuzzy_quantifier.describe_params_detailed()

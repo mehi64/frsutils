@@ -11,7 +11,7 @@ from FRsutils.core.tnorms import TNorm
 
 
 def test_similarity_components_expose_backend_formula_equivalent_to_numpy_call():
-    """@brief Linear/Gaussian backend formulas match existing NumPy formulas."""
+    """Linear/Gaussian backend formulas match existing NumPy formulas."""
     diff = np.array([[0.0, 0.25], [-0.5, 0.75]])
 
     for similarity in [Similarity.create("linear"), Similarity.create("gaussian", sigma=0.67)]:
@@ -21,7 +21,7 @@ def test_similarity_components_expose_backend_formula_equivalent_to_numpy_call()
 
 
 def test_tnorm_components_expose_backend_formula_equivalent_to_numpy_call():
-    """@brief Supported T-norm backend formulas match existing NumPy calls."""
+    """Supported T-norm backend formulas match existing NumPy calls."""
     a = np.array([[0.0, 0.25, 0.5], [0.75, 1.0, 0.2]])
     b = np.array([[1.0, 0.5, 0.2], [0.25, 0.9, 0.8]])
 
@@ -33,7 +33,7 @@ def test_tnorm_components_expose_backend_formula_equivalent_to_numpy_call():
 
 
 def test_implicator_components_expose_vectorized_backend_formulas():
-    """@brief Implicator backend formulas match public NumPy calls without np.vectorize mirroring."""
+    """Implicator backend formulas match public NumPy calls without np.vectorize mirroring."""
     a = np.array([[0.0, 0.25, 0.5], [0.75, 1.0, 0.2]])
     b = np.array([[1.0, 0.5, 0.2], [0.25, 0.9, 0.8]])
 
@@ -45,7 +45,7 @@ def test_implicator_components_expose_vectorized_backend_formulas():
 
 
 def test_fuzzy_quantifier_components_expose_backend_formulas():
-    """@brief Fuzzy quantifier backend formulas match public NumPy calls."""
+    """Fuzzy quantifier backend formulas match public NumPy calls."""
     x = np.array([0.0, 0.1, 0.3, 0.5, 0.7, 1.0])
 
     for name in ["linear", "quadratic"]:
@@ -56,7 +56,8 @@ def test_fuzzy_quantifier_components_expose_backend_formulas():
 
 
 def test_similarity_block_uses_component_backend_contract_for_numpy_path():
-    """@brief Similarity engine block output remains equivalent after delegating formulas to components."""
+    """Similarity engine block output remains equivalent after delegating formulas to components.
+    """
     X = np.array([[0.0, 0.1], [0.4, 0.3], [1.0, 0.8]])
     rows = X[:2]
     cols = X[1:]

@@ -14,52 +14,86 @@ import numpy as np
 
 @dataclass(frozen=True)
 class ArrayBackend:
-    """
-    @brief Small immutable descriptor for array-backend behavior.
-
-    @param name: Canonical backend name, e.g. "numpy" or "cupy".
-    @param xp: Array namespace module.
+    """Small immutable descriptor for array-backend behavior.
+    
+    Parameters
+    ----------
+    name : object
+        Canonical backend name, e.g. "numpy" or "cupy".
+    xp : object
+        Array namespace module.
     """
 
     name: str
     xp: Any
 
     def asarray(self, value: Any, dtype: Any = None):
-        """
-        @brief Convert a value into an array using this backend namespace.
-
-        @param value: Candidate array-like value.
-        @param dtype: Optional dtype passed through to the backend.
-        @return: Backend array.
+        """Convert a value into an array using this backend namespace.
+                
+                Parameters
+                ----------
+                value : Any
+                    Candidate array-like value.
+                dtype : Any
+                    Optional dtype passed through to the backend.
+                
+                Returns
+                -------
+                object
+                    Backend array.
+                
         """
         return self.xp.asarray(value, dtype=dtype)
 
     def zeros(self, shape: Any, dtype: Any = np.float64):
-        """
-        @brief Allocate a zero array using this backend namespace.
-
-        @param shape: Target array shape.
-        @param dtype: Target dtype.
-        @return: Backend zero array.
+        """Allocate a zero array using this backend namespace.
+                
+                Parameters
+                ----------
+                shape : Any
+                    Target array shape.
+                dtype : Any
+                    Target dtype.
+                
+                Returns
+                -------
+                object
+                    Backend zero array.
+                
         """
         return self.xp.zeros(shape, dtype=dtype)
 
     def ones(self, shape: Any, dtype: Any = np.float64):
-        """
-        @brief Allocate a ones array using this backend namespace.
-
-        @param shape: Target array shape.
-        @param dtype: Target dtype.
-        @return: Backend ones array.
+        """Allocate a ones array using this backend namespace.
+                
+                Parameters
+                ----------
+                shape : Any
+                    Target array shape.
+                dtype : Any
+                    Target dtype.
+                
+                Returns
+                -------
+                object
+                    Backend ones array.
+                
         """
         return self.xp.ones(shape, dtype=dtype)
 
     def to_numpy(self, value: Any) -> np.ndarray:
-        """
-        @brief Convert a backend array to a NumPy array.
-
-        @param value: Backend or NumPy array-like value.
-        @return: NumPy array.
+        """Convert a backend array to a NumPy array.
+                
+                Parameters
+                ----------
+                value : Any
+                    Backend or NumPy array-like value.
+                
+                Returns
+                -------
+                np.ndarray
+                    NumPy array.
+                
         """
         if self.name == "cupy":
             return self.xp.asnumpy(value)
@@ -67,11 +101,18 @@ class ArrayBackend:
 
 
 def _build_cupy_backend() -> ArrayBackend:
-    """
-    @brief Import CuPy lazily and return a backend descriptor.
-
-    @return: CuPy ArrayBackend descriptor.
-    @raises ImportError: If CuPy is not installed in the current environment.
+    """Import CuPy lazily and return a backend descriptor.
+        
+        Returns
+        -------
+        ArrayBackend
+            CuPy ArrayBackend descriptor.
+        
+        Raises
+        ------
+        ImportError
+            If CuPy is not installed in the current environment.
+        
     """
     try:
         import cupy as cp  # type: ignore
@@ -84,17 +125,30 @@ def _build_cupy_backend() -> ArrayBackend:
 
 
 def build_array_backend(backend: str = "numpy") -> ArrayBackend:
-    """
-    @brief Resolve a supported array backend alias.
-
-    NumPy and `auto` resolve to NumPy to preserve the stable CPU behavior from
-    earlier phases. CuPy is opt-in through `backend="cupy"` or `backend="cuda"`.
-
-    @param backend: Backend alias: "numpy", "auto", "cupy", or "cuda".
-    @return: ArrayBackend descriptor.
-    @raises TypeError: If backend is not a string.
-    @raises ValueError: If backend is unknown.
-    @raises ImportError: If CuPy is requested but not installed.
+    """Resolve a supported array backend alias.
+        
+        NumPy and `auto` resolve to NumPy to preserve the stable CPU behavior from
+        earlier phases. CuPy is opt-in through `backend="cupy"` or `backend="cuda"`.
+        
+        Parameters
+        ----------
+        backend : str
+            Backend alias: "numpy", "auto", "cupy", or "cuda".
+        
+        Returns
+        -------
+        ArrayBackend
+            ArrayBackend descriptor.
+        
+        Raises
+        ------
+        TypeError
+            If backend is not a string.
+        ValueError
+            If backend is unknown.
+        ImportError
+            If CuPy is requested but not installed.
+        
     """
     if not isinstance(backend, str) or not backend.strip():
         raise TypeError("backend must be a non-empty string.")
@@ -109,32 +163,54 @@ def build_array_backend(backend: str = "numpy") -> ArrayBackend:
 
 
 def is_numpy_backend(backend: ArrayBackend) -> bool:
-    """
-    @brief Return True when the resolved backend is NumPy.
-
-    @param backend: ArrayBackend descriptor.
-    @return: True for NumPy-backed execution.
+    """Return True when the resolved backend is NumPy.
+        
+        Parameters
+        ----------
+        backend : ArrayBackend
+            ArrayBackend descriptor.
+        
+        Returns
+        -------
+        bool
+            True for NumPy-backed execution.
+        
     """
     return isinstance(backend, ArrayBackend) and backend.name == "numpy"
 
 
 def is_cupy_backend(backend: ArrayBackend) -> bool:
-    """
-    @brief Return True when the resolved backend is CuPy.
-
-    @param backend: ArrayBackend descriptor.
-    @return: True for CuPy-backed execution.
+    """Return True when the resolved backend is CuPy.
+        
+        Parameters
+        ----------
+        backend : ArrayBackend
+            ArrayBackend descriptor.
+        
+        Returns
+        -------
+        bool
+            True for CuPy-backed execution.
+        
     """
     return isinstance(backend, ArrayBackend) and backend.name == "cupy"
 
 
 def to_numpy(value: Any, backend: ArrayBackend) -> np.ndarray:
-    """
-    @brief Convert a backend array to NumPy using a backend descriptor.
-
-    @param value: Backend array-like value.
-    @param backend: ArrayBackend descriptor.
-    @return: NumPy array.
+    """Convert a backend array to NumPy using a backend descriptor.
+        
+        Parameters
+        ----------
+        value : Any
+            Backend array-like value.
+        backend : ArrayBackend
+            ArrayBackend descriptor.
+        
+        Returns
+        -------
+        np.ndarray
+            NumPy array.
+        
     """
     if not isinstance(backend, ArrayBackend):
         raise TypeError("backend must be an ArrayBackend instance.")

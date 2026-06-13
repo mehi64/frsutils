@@ -33,13 +33,18 @@ from FRsutils.api import compute_approximations  # noqa: E402
 
 @dataclass(frozen=True)
 class BenchmarkScenario:
-    """
-    @brief Immutable benchmark scenario definition.
-
-    @param name: Public scenario name written to reports.
-    @param engine: FRsutils approximation engine alias.
-    @param backend: FRsutils backend alias.
-    @param uses_block_size: True if the scenario should be expanded over block sizes.
+    """Immutable benchmark scenario definition.
+    
+    Parameters
+    ----------
+    name : object
+        Public scenario name written to reports.
+    engine : object
+        FRsutils approximation engine alias.
+    backend : object
+        FRsutils backend alias.
+    uses_block_size : object
+        True if the scenario should be expanded over block sizes.
     """
 
     name: str
@@ -50,32 +55,56 @@ class BenchmarkScenario:
 
 @dataclass(frozen=True)
 class BenchmarkCaseResult:
-    """
-    @brief Flat benchmark row written to JSON/CSV reports.
-
-    @param status: "success", "skipped", or "failed".
-    @param scenario: Scenario alias.
-    @param model: Fuzzy-rough model alias.
-    @param n_samples: Number of benchmark samples.
-    @param n_features: Number of benchmark features.
-    @param block_size: Block size for blockwise scenarios; None for dense.
-    @param backend: Requested backend alias.
-    @param resolved_backend: Backend reported by FRsutils result metadata.
-    @param engine: Execution engine reported by FRsutils result metadata.
-    @param repeats: Number of timed repetitions attempted.
-    @param median_runtime_seconds: Median runtime across successful repetitions.
-    @param mean_runtime_seconds: Mean runtime across successful repetitions.
-    @param min_runtime_seconds: Minimum runtime across successful repetitions.
-    @param max_runtime_seconds: Maximum runtime across successful repetitions.
-    @param python_peak_memory_bytes: Peak Python allocator memory observed via tracemalloc.
-    @param max_abs_error_lower: Max absolute lower-approximation error vs dense reference.
-    @param max_abs_error_upper: Max absolute upper-approximation error vs dense reference.
-    @param max_abs_error_positive_region: Max absolute positive-region error vs dense reference.
-    @param used_blockwise: Result metadata flag.
-    @param used_gpu_similarity_blocks: Result metadata flag.
-    @param used_gpu_approximation_accumulators: Result metadata flag.
-    @param error_type: Exception type for skipped/failed cases.
-    @param error_message: Exception message for skipped/failed cases.
+    """Flat benchmark row written to JSON/CSV reports.
+    
+    Parameters
+    ----------
+    status : object
+        "success", "skipped", or "failed".
+    scenario : object
+        Scenario alias.
+    model : object
+        Fuzzy-rough model alias.
+    n_samples : object
+        Number of benchmark samples.
+    n_features : object
+        Number of benchmark features.
+    block_size : object
+        Block size for blockwise scenarios; None for dense.
+    backend : object
+        Requested backend alias.
+    resolved_backend : object
+        Backend reported by FRsutils result metadata.
+    engine : object
+        Execution engine reported by FRsutils result metadata.
+    repeats : object
+        Number of timed repetitions attempted.
+    median_runtime_seconds : object
+        Median runtime across successful repetitions.
+    mean_runtime_seconds : object
+        Mean runtime across successful repetitions.
+    min_runtime_seconds : object
+        Minimum runtime across successful repetitions.
+    max_runtime_seconds : object
+        Maximum runtime across successful repetitions.
+    python_peak_memory_bytes : object
+        Peak Python allocator memory observed via tracemalloc.
+    max_abs_error_lower : object
+        Max absolute lower-approximation error vs dense reference.
+    max_abs_error_upper : object
+        Max absolute upper-approximation error vs dense reference.
+    max_abs_error_positive_region : object
+        Max absolute positive-region error vs dense reference.
+    used_blockwise : object
+        Result metadata flag.
+    used_gpu_similarity_blocks : object
+        Result metadata flag.
+    used_gpu_approximation_accumulators : object
+        Result metadata flag.
+    error_type : object
+        Exception type for skipped/failed cases.
+    error_message : object
+        Exception message for skipped/failed cases.
     """
 
     status: str
@@ -126,16 +155,27 @@ SCENARIOS: Dict[str, BenchmarkScenario] = {
 
 
 class BenchmarkConfigurationError(ValueError):
-    """@brief Raised when benchmark CLI/configuration values are invalid."""
+    """Raised when benchmark CLI/configuration values are invalid."""
 
 
 def parse_csv_values(value: str) -> List[str]:
-    """
-    @brief Parse a comma-separated string into non-empty normalized tokens.
-
-    @param value: Comma-separated input string.
-    @return: Lower-case tokens.
-    @raises BenchmarkConfigurationError: If no tokens are provided.
+    """Parse a comma-separated string into non-empty normalized tokens.
+        
+        Parameters
+        ----------
+        value : str
+            Comma-separated input string.
+        
+        Returns
+        -------
+        List[str]
+            Lower-case tokens.
+        
+        Raises
+        ------
+        BenchmarkConfigurationError
+            If no tokens are provided.
+        
     """
     tokens = [token.strip().lower() for token in str(value).split(",") if token.strip()]
     if not tokens:
@@ -144,12 +184,23 @@ def parse_csv_values(value: str) -> List[str]:
 
 
 def parse_int_values(value: str) -> List[int]:
-    """
-    @brief Parse a comma-separated string into positive integers.
-
-    @param value: Comma-separated integer string.
-    @return: Positive integer values.
-    @raises BenchmarkConfigurationError: If a value is invalid or non-positive.
+    """Parse a comma-separated string into positive integers.
+        
+        Parameters
+        ----------
+        value : str
+            Comma-separated integer string.
+        
+        Returns
+        -------
+        List[int]
+            Positive integer values.
+        
+        Raises
+        ------
+        BenchmarkConfigurationError
+            If a value is invalid or non-positive.
+        
     """
     values: List[int] = []
     for token in parse_csv_values(value):
@@ -169,17 +220,26 @@ def make_synthetic_dataset(
     n_features: int,
     random_state: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    @brief Build a deterministic numeric benchmark dataset.
-
-    The generator creates two mildly separated classes while keeping all features
-    in a comparable numeric range. It intentionally avoids scikit-learn so the
-    benchmark script has no extra runtime dependency beyond FRsutils itself.
-
-    @param n_samples: Number of samples.
-    @param n_features: Number of numeric features.
-    @param random_state: RNG seed.
-    @return: Tuple `(X, y)`.
+    """Build a deterministic numeric benchmark dataset.
+        
+        The generator creates two mildly separated classes while keeping all features
+        in a comparable numeric range. It intentionally avoids scikit-learn so the
+        benchmark script has no extra runtime dependency beyond FRsutils itself.
+        
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples.
+        n_features : int
+            Number of numeric features.
+        random_state : int
+            RNG seed.
+        
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            Tuple `(X, y)`.
+        
     """
     if n_samples < 2:
         raise BenchmarkConfigurationError("n_samples must be at least 2.")
@@ -200,12 +260,20 @@ def make_synthetic_dataset(
 
 
 def _scenario_is_optional_cupy_failure(exc: BaseException, scenario: BenchmarkScenario) -> bool:
-    """
-    @brief Return True when an exception should be treated as an optional CuPy skip.
-
-    @param exc: Exception raised while running a benchmark case.
-    @param scenario: Scenario being executed.
-    @return: True when the row should be reported as skipped.
+    """Return True when an exception should be treated as an optional CuPy skip.
+        
+        Parameters
+        ----------
+        exc : BaseException
+            Exception raised while running a benchmark case.
+        scenario : BenchmarkScenario
+            Scenario being executed.
+        
+        Returns
+        -------
+        bool
+            True when the row should be reported as skipped.
+        
     """
     if scenario.backend != "cupy":
         return False
@@ -214,22 +282,37 @@ def _scenario_is_optional_cupy_failure(exc: BaseException, scenario: BenchmarkSc
 
 
 def _max_abs_error(candidate: np.ndarray, reference: np.ndarray) -> float:
-    """
-    @brief Compute max absolute numerical error as a plain float.
-
-    @param candidate: Candidate output array.
-    @param reference: Dense reference output array.
-    @return: Maximum absolute error.
+    """Compute max absolute numerical error as a plain float.
+        
+        Parameters
+        ----------
+        candidate : np.ndarray
+            Candidate output array.
+        reference : np.ndarray
+            Dense reference output array.
+        
+        Returns
+        -------
+        float
+            Maximum absolute error.
+        
     """
     return float(np.max(np.abs(np.asarray(candidate) - np.asarray(reference))))
 
 
 def _runtime_summary(values: Sequence[float]) -> Tuple[float, float, float, float]:
-    """
-    @brief Summarize successful runtime measurements.
-
-    @param values: Runtime values in seconds.
-    @return: `(median, mean, min, max)`.
+    """Summarize successful runtime measurements.
+        
+        Parameters
+        ----------
+        values : Sequence[float]
+            Runtime values in seconds.
+        
+        Returns
+        -------
+        Tuple[float, float, float, float]
+            `(median, mean, min, max)`.
+        
     """
     return (
         float(statistics.median(values)),
@@ -247,15 +330,26 @@ def _execute_once(
     scenario: BenchmarkScenario,
     block_size: Optional[int],
 ):
-    """
-    @brief Execute one FRsutils approximation case through the public API.
-
-    @param X: Feature matrix.
-    @param y: Label vector.
-    @param model: Fuzzy-rough model alias.
-    @param scenario: Execution scenario.
-    @param block_size: Optional block size for blockwise scenarios.
-    @return: FuzzyRoughApproximationResult.
+    """Execute one FRsutils approximation case through the public API.
+        
+        Parameters
+        ----------
+        X : np.ndarray
+            Feature matrix.
+        y : np.ndarray
+            Label vector.
+        model : str
+            Fuzzy-rough model alias.
+        scenario : BenchmarkScenario
+            Execution scenario.
+        block_size : Optional[int]
+            Optional block size for blockwise scenarios.
+        
+        Returns
+        -------
+        object
+            FuzzyRoughApproximationResult.
+        
     """
     kwargs: Dict[str, Any] = {
         "model": model,
@@ -278,17 +372,30 @@ def benchmark_one_case(
     repeats: int,
     dense_reference: Optional[Any],
 ) -> BenchmarkCaseResult:
-    """
-    @brief Time and validate one benchmark case.
-
-    @param X: Feature matrix.
-    @param y: Label vector.
-    @param model: Fuzzy-rough model alias.
-    @param scenario: Execution scenario.
-    @param block_size: Optional block size for blockwise scenarios.
-    @param repeats: Number of timed repetitions.
-    @param dense_reference: Dense reference result for numerical equivalence.
-    @return: BenchmarkCaseResult row.
+    """Time and validate one benchmark case.
+        
+        Parameters
+        ----------
+        X : np.ndarray
+            Feature matrix.
+        y : np.ndarray
+            Label vector.
+        model : str
+            Fuzzy-rough model alias.
+        scenario : BenchmarkScenario
+            Execution scenario.
+        block_size : Optional[int]
+            Optional block size for blockwise scenarios.
+        repeats : int
+            Number of timed repetitions.
+        dense_reference : Optional[Any]
+            Dense reference result for numerical equivalence.
+        
+        Returns
+        -------
+        BenchmarkCaseResult
+            BenchmarkCaseResult row.
+        
     """
     if repeats < 1:
         raise BenchmarkConfigurationError("repeats must be positive.")
@@ -385,17 +492,30 @@ def run_benchmark_suite(
     repeats: int,
     random_state: int,
 ) -> Dict[str, Any]:
-    """
-    @brief Execute the Phase 6 benchmark matrix.
-
-    @param models: Fuzzy-rough model aliases.
-    @param sample_sizes: Sample sizes to generate.
-    @param n_features: Number of synthetic features.
-    @param block_sizes: Block sizes for blockwise scenarios.
-    @param scenario_names: Scenario aliases from SCENARIOS.
-    @param repeats: Timed repetitions per case.
-    @param random_state: Base RNG seed.
-    @return: Dictionary with metadata and benchmark row dictionaries.
+    """Execute the Phase 6 benchmark matrix.
+        
+        Parameters
+        ----------
+        models : Sequence[str]
+            Fuzzy-rough model aliases.
+        sample_sizes : Sequence[int]
+            Sample sizes to generate.
+        n_features : int
+            Number of synthetic features.
+        block_sizes : Sequence[int]
+            Block sizes for blockwise scenarios.
+        scenario_names : Sequence[str]
+            Scenario aliases from SCENARIOS.
+        repeats : int
+            Timed repetitions per case.
+        random_state : int
+            Base RNG seed.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with metadata and benchmark row dictionaries.
+        
     """
     normalized_models = [model.strip().lower() for model in models]
     normalized_scenarios = [name.strip().lower() for name in scenario_names]
@@ -456,11 +576,18 @@ def run_benchmark_suite(
 
 
 def _make_json_safe(value: Any) -> Any:
-    """
-    @brief Convert non-standard numeric values into JSON-safe objects.
-
-    @param value: Candidate value.
-    @return: JSON-safe value.
+    """Convert non-standard numeric values into JSON-safe objects.
+        
+        Parameters
+        ----------
+        value : Any
+            Candidate value.
+        
+        Returns
+        -------
+        Any
+            JSON-safe value.
+        
     """
     if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
         return None
@@ -472,11 +599,15 @@ def _make_json_safe(value: Any) -> Any:
 
 
 def write_json_report(report: Mapping[str, Any], output_path: Path) -> None:
-    """
-    @brief Write a benchmark report to JSON.
-
-    @param report: Benchmark report dictionary.
-    @param output_path: Target JSON path.
+    """Write a benchmark report to JSON.
+        
+        Parameters
+        ----------
+        report : Mapping[str, Any]
+            Benchmark report dictionary.
+        output_path : Path
+            Target JSON path.
+        
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as file_obj:
@@ -485,11 +616,15 @@ def write_json_report(report: Mapping[str, Any], output_path: Path) -> None:
 
 
 def write_csv_report(report: Mapping[str, Any], output_path: Path) -> None:
-    """
-    @brief Write benchmark result rows to CSV.
-
-    @param report: Benchmark report dictionary.
-    @param output_path: Target CSV path.
+    """Write benchmark result rows to CSV.
+        
+        Parameters
+        ----------
+        report : Mapping[str, Any]
+            Benchmark report dictionary.
+        output_path : Path
+            Target CSV path.
+        
     """
     rows = list(report.get("results", []))
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -505,10 +640,13 @@ def write_csv_report(report: Mapping[str, Any], output_path: Path) -> None:
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    """
-    @brief Build the command-line parser for the benchmark script.
-
-    @return: Configured argparse parser.
+    """Build the command-line parser for the benchmark script.
+        
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argparse parser.
+        
     """
     parser = argparse.ArgumentParser(description="Run FRsutils Phase 6 execution benchmarks.")
     parser.add_argument("--models", default="itfrs,vqrs,owafrs", help="Comma-separated model aliases.")
@@ -528,11 +666,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """
-    @brief CLI entry point.
-
-    @param argv: Optional argument list; defaults to sys.argv.
-    @return: Process exit code.
+    """CLI entry point.
+        
+        Parameters
+        ----------
+        argv : Optional[Sequence[str]]
+            Optional argument list; defaults to sys.argv.
+        
+        Returns
+        -------
+        int
+            Process exit code.
+        
     """
     parser = build_arg_parser()
     args = parser.parse_args(argv)

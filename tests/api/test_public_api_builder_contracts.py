@@ -27,7 +27,7 @@ Y_SMALL = np.array([0, 0, 1, 1])
 
 
 def test_public_similarity_builder_accepts_flat_config():
-    """@brief Downstream packages can build matrices from flat params."""
+    """Downstream packages can build matrices from flat params."""
     sim = build_similarity_matrix(
         X_SMALL,
         similarity="gaussian",
@@ -42,7 +42,7 @@ def test_public_similarity_builder_accepts_flat_config():
 
 
 def test_public_similarity_builder_accepts_nested_config():
-    """@brief Downstream packages can reuse normalized nested config."""
+    """Downstream packages can reuse normalized nested config."""
     config = normalize_flat_config_to_nested(
         {
             "type": "itfrs",
@@ -60,7 +60,7 @@ def test_public_similarity_builder_accepts_nested_config():
 
 
 def test_public_model_builder_accepts_type_from_flat_config():
-    """@brief Downstream packages may provide model type as flat `type`."""
+    """Downstream packages may provide model type as flat `type`."""
     sim = build_similarity_matrix(X_SMALL, similarity="linear")
     model = build_fuzzy_rough_model(
         similarity_matrix=sim,
@@ -75,7 +75,7 @@ def test_public_model_builder_accepts_type_from_flat_config():
 
 
 def test_public_model_builder_accepts_nested_config_with_extra_flat_kwargs():
-    """@brief Mixed nested config plus flat runtime kwargs supports frsampling's bridge."""
+    """Mixed nested config plus flat runtime kwargs supports frsampling's bridge."""
     config = normalize_flat_config_to_nested(
         {
             "type": "itfrs",
@@ -101,7 +101,7 @@ def test_public_model_builder_accepts_nested_config_with_extra_flat_kwargs():
 
 
 def test_public_model_builder_rejects_conflicting_model_types():
-    """@brief Public boundary fails fast when explicit and config model types conflict."""
+    """Public boundary fails fast when explicit and config model types conflict."""
     config = normalize_flat_config_to_nested(
         {
             "type": "itfrs",
@@ -123,7 +123,7 @@ def test_public_model_builder_rejects_conflicting_model_types():
 
 
 def test_public_registry_listing_helpers_are_available():
-    """@brief Downstream packages can inspect public registries through the facade."""
+    """Downstream packages can inspect public registries through the facade."""
     models = list_fuzzy_rough_models()
     similarities = list_similarities()
 

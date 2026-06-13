@@ -36,7 +36,7 @@ X_ENGINE = np.array(
     ],
 )
 def test_dense_similarity_engine_matches_existing_dense_builder(flat_config):
-    """@brief DenseSimilarityEngine must be a compatibility wrapper for the current dense path."""
+    """DenseSimilarityEngine must be a compatibility wrapper for the current dense path."""
     expected = build_similarity_matrix(X_ENGINE, **flat_config)
     engine = build_similarity_engine(X_ENGINE, engine="dense", **flat_config)
 
@@ -52,7 +52,7 @@ def test_dense_similarity_engine_matches_existing_dense_builder(flat_config):
 
 @pytest.mark.parametrize("block_size", [1, 2, 3, 10])
 def test_blockwise_similarity_engine_materializes_existing_dense_matrix(block_size):
-    """@brief Blockwise materialization must match the legacy exact dense matrix."""
+    """Blockwise materialization must match the legacy exact dense matrix."""
     expected = build_similarity_matrix(
         X_ENGINE,
         similarity="linear",
@@ -72,7 +72,7 @@ def test_blockwise_similarity_engine_materializes_existing_dense_matrix(block_si
 
 
 def test_blockwise_similarity_engine_exposes_expected_block_slices_and_shapes():
-    """@brief Block iterator exposes reusable row/column slices for future accumulators."""
+    """Block iterator exposes reusable row/column slices for future accumulators."""
     engine = build_similarity_engine(
         X_ENGINE,
         engine="blockwise",
@@ -108,7 +108,7 @@ def test_blockwise_similarity_engine_exposes_expected_block_slices_and_shapes():
 
 
 def test_similarity_engine_nested_config_matches_flat_config():
-    """@brief Engine construction must preserve the flat/nested config equivalence contract."""
+    """Engine construction must preserve the flat/nested config equivalence contract."""
     flat_config = {
         "type": "itfrs",
         "similarity": "linear",
@@ -126,7 +126,7 @@ def test_similarity_engine_nested_config_matches_flat_config():
 
 
 def test_calculate_similarity_block_matches_corresponding_dense_submatrix():
-    """@brief Low-level block helper must match the same slice from the dense matrix."""
+    """Low-level block helper must match the same slice from the dense matrix."""
     similarity_func = Similarity.create("linear")
     tnorm_func = TNorm.create("minimum")
 
@@ -143,7 +143,7 @@ def test_calculate_similarity_block_matches_corresponding_dense_submatrix():
 
 
 def test_similarity_engine_does_not_mutate_input_matrix():
-    """@brief Engine construction/materialization must not modify the caller's feature matrix."""
+    """Engine construction/materialization must not modify the caller's feature matrix."""
     X = X_ENGINE.copy()
     before = X.copy()
 
@@ -155,7 +155,7 @@ def test_similarity_engine_does_not_mutate_input_matrix():
 
 @pytest.mark.parametrize("engine_name", ["unknown", "", 123])
 def test_invalid_similarity_engine_name_is_rejected(engine_name):
-    """@brief Engine aliases are validated at the public construction boundary."""
+    """Engine aliases are validated at the public construction boundary."""
     expected_error = TypeError if not isinstance(engine_name, str) or not str(engine_name).strip() else ValueError
     with pytest.raises(expected_error):
         build_similarity_engine(X_ENGINE, engine=engine_name, similarity="linear")
@@ -163,7 +163,7 @@ def test_invalid_similarity_engine_name_is_rejected(engine_name):
 
 @pytest.mark.parametrize("block_size, expected_error", [(0, ValueError), (-1, ValueError), (1.5, TypeError)])
 def test_invalid_block_size_is_rejected_for_blockwise_engine(block_size, expected_error):
-    """@brief Blockwise engine rejects invalid block sizes before computation."""
+    """Blockwise engine rejects invalid block sizes before computation."""
     with pytest.raises(expected_error):
         build_similarity_engine(
             X_ENGINE,
@@ -174,6 +174,6 @@ def test_invalid_block_size_is_rejected_for_blockwise_engine(block_size, expecte
 
 
 def test_similarity_engine_rejects_unknown_backend_alias():
-    """@brief Backend aliases remain validated at the public construction boundary."""
+    """Backend aliases remain validated at the public construction boundary."""
     with pytest.raises(ValueError):
         build_similarity_engine(X_ENGINE, engine="blockwise", backend="unknown", similarity="linear")

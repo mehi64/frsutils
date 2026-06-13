@@ -22,15 +22,22 @@ from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 @dataclass(frozen=True)
 class ITFRSBlockwiseApproximation:
-    """
-    @brief Immutable exact ITFRS blockwise approximation outputs.
-
-    @param lower: Lower approximation values.
-    @param upper: Upper approximation values.
-    @param boundary: Boundary values computed as upper - lower.
-    @param positive_region: Positive-region values, identical to lower for ITFRS.
-    @param execution_backend: Backend that owned the ITFRS accumulators.
-    @param used_gpu_approximation_accumulators: True when CuPy held ITFRS accumulators/reductions.
+    """Immutable exact ITFRS blockwise approximation outputs.
+    
+    Parameters
+    ----------
+    lower : object
+        Lower approximation values.
+    upper : object
+        Upper approximation values.
+    boundary : object
+        Boundary values computed as upper - lower.
+    positive_region : object
+        Positive-region values, identical to lower for ITFRS.
+    execution_backend : object
+        Backend that owned the ITFRS accumulators.
+    used_gpu_approximation_accumulators : object
+        True when CuPy held ITFRS accumulators/reductions.
     """
 
     lower: np.ndarray
@@ -43,16 +50,24 @@ class ITFRSBlockwiseApproximation:
 
 @dataclass(frozen=True)
 class VQRSBlockwiseApproximation:
-    """
-    @brief Immutable exact VQRS blockwise approximation outputs.
-
-    @param lower: Lower approximation values after the lower fuzzy quantifier.
-    @param upper: Upper approximation values after the upper fuzzy quantifier.
-    @param boundary: Boundary values computed as upper - lower.
-    @param positive_region: Positive-region values, identical to lower by the base model contract.
-    @param interim: Raw VQRS ratio values before fuzzy quantifier application.
-    @param execution_backend: Backend that owned the VQRS accumulators.
-    @param used_gpu_approximation_accumulators: True when CuPy held VQRS accumulators/reductions.
+    """Immutable exact VQRS blockwise approximation outputs.
+    
+    Parameters
+    ----------
+    lower : object
+        Lower approximation values after the lower fuzzy quantifier.
+    upper : object
+        Upper approximation values after the upper fuzzy quantifier.
+    boundary : object
+        Boundary values computed as upper - lower.
+    positive_region : object
+        Positive-region values, identical to lower by the base model contract.
+    interim : object
+        Raw VQRS ratio values before fuzzy quantifier application.
+    execution_backend : object
+        Backend that owned the VQRS accumulators.
+    used_gpu_approximation_accumulators : object
+        True when CuPy held VQRS accumulators/reductions.
     """
 
     lower: np.ndarray
@@ -66,13 +81,18 @@ class VQRSBlockwiseApproximation:
 
 @dataclass(frozen=True)
 class OWAFRSBlockwiseApproximation:
-    """
-    @brief Immutable exact OWAFRS blockwise approximation outputs.
-
-    @param lower: Lower approximation values after OWA aggregation.
-    @param upper: Upper approximation values after OWA aggregation.
-    @param boundary: Boundary values computed as upper - lower.
-    @param positive_region: Positive-region values, identical to lower by the base model contract.
+    """Immutable exact OWAFRS blockwise approximation outputs.
+    
+    Parameters
+    ----------
+    lower : object
+        Lower approximation values after OWA aggregation.
+    upper : object
+        Upper approximation values after OWA aggregation.
+    boundary : object
+        Boundary values computed as upper - lower.
+    positive_region : object
+        Positive-region values, identical to lower by the base model contract.
     """
 
     lower: np.ndarray
@@ -82,23 +102,42 @@ class OWAFRSBlockwiseApproximation:
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """
-    @brief Return True when config already looks like FRsutils nested config.
-
-    @param config: Candidate config mapping.
-    @return: True when fuzzy-rough nested sections are present.
+    """Return True when config already looks like FRsutils nested config.
+        
+        Parameters
+        ----------
+        config : Mapping[str, Any]
+            Candidate config mapping.
+        
+        Returns
+        -------
+        bool
+            True when fuzzy-rough nested sections are present.
+        
     """
     return isinstance(config.get("fr_model"), Mapping) or isinstance(config.get("similarity"), Mapping)
 
 
 def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
-    """
-    @brief Convert and validate label input for blockwise approximations.
-
-    @param labels: Candidate label vector.
-    @param expected_length: Required number of labels.
-    @return: One-dimensional NumPy label array.
-    @raises ValueError: If labels are not one-dimensional or length-matched.
+    """Convert and validate label input for blockwise approximations.
+        
+        Parameters
+        ----------
+        labels : Any
+            Candidate label vector.
+        expected_length : int
+            Required number of labels.
+        
+        Returns
+        -------
+        np.ndarray
+            One-dimensional NumPy label array.
+        
+        Raises
+        ------
+        ValueError
+            If labels are not one-dimensional or length-matched.
+        
     """
     labels_array = np.asarray(labels)
     if labels_array.ndim != 1:
@@ -109,13 +148,25 @@ def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
 
 
 def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type: str = "itfrs") -> Mapping[str, Any]:
-    """
-    @brief Normalize a flat or nested config into nested FRsutils form.
-
-    @param config: Optional flat or nested config mapping.
-    @param default_model_type: Model alias used when config is omitted.
-    @return: Nested FRsutils config mapping.
-    @raises TypeError: If config is not mapping-like.
+    """Normalize a flat or nested config into nested FRsutils form.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested config mapping.
+        default_model_type : str
+            Model alias used when config is omitted.
+        
+        Returns
+        -------
+        Mapping[str, Any]
+            Nested FRsutils config mapping.
+        
+        Raises
+        ------
+        TypeError
+            If config is not mapping-like.
+        
     """
     if config is None:
         if default_model_type == "vqrs":
@@ -144,12 +195,23 @@ def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type
 
 
 def build_itfrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tuple[TNorm, Implicator]:
-    """
-    @brief Build ITFRS upper T-norm and lower implicator from flat or nested config.
-
-    @param config: Optional flat or nested FRsutils config mapping.
-    @return: Tuple `(ub_tnorm, lb_implicator)`.
-    @raises ValueError: If required component specs cannot be resolved.
+    """Build ITFRS upper T-norm and lower implicator from flat or nested config.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        
+        Returns
+        -------
+        Tuple[TNorm, Implicator]
+            Tuple `(ub_tnorm, lb_implicator)`.
+        
+        Raises
+        ------
+        ValueError
+            If required component specs cannot be resolved.
+        
     """
     nested = _as_nested_config(config)
     fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
@@ -168,16 +230,27 @@ def build_itfrs_components_from_config(config: Optional[Mapping[str, Any]]) -> T
 
 
 def build_vqrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tuple[FuzzyQuantifier, FuzzyQuantifier, TNorm]:
-    """
-    @brief Build VQRS fuzzy quantifiers and fixed minimum T-norm from config.
-
-    Dense VQRS currently uses a minimum T-norm internally. The blockwise path
-    mirrors that behavior exactly and resolves only the lower/upper fuzzy
-    quantifiers from the public flat or nested FRsutils config.
-
-    @param config: Optional flat or nested FRsutils config mapping.
-    @return: Tuple `(lb_fuzzy_quantifier, ub_fuzzy_quantifier, tnorm)`.
-    @raises TypeError: If config sections cannot be resolved.
+    """Build VQRS fuzzy quantifiers and fixed minimum T-norm from config.
+        
+        Dense VQRS currently uses a minimum T-norm internally. The blockwise path
+        mirrors that behavior exactly and resolves only the lower/upper fuzzy
+        quantifiers from the public flat or nested FRsutils config.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        
+        Returns
+        -------
+        Tuple[FuzzyQuantifier, FuzzyQuantifier, TNorm]
+            Tuple `(lb_fuzzy_quantifier, ub_fuzzy_quantifier, tnorm)`.
+        
+        Raises
+        ------
+        TypeError
+            If config sections cannot be resolved.
+        
     """
     nested = _as_nested_config(config, default_model_type="vqrs")
     fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
@@ -199,12 +272,23 @@ def build_vqrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tu
 def build_owafrs_components_from_config(
     config: Optional[Mapping[str, Any]],
 ) -> Tuple[TNorm, Implicator, OWAWeights, OWAWeights]:
-    """
-    @brief Build OWAFRS T-norm, implicator, and OWA strategies from config.
-
-    @param config: Optional flat or nested FRsutils config mapping.
-    @return: Tuple `(ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method)`.
-    @raises TypeError: If config sections cannot be resolved.
+    """Build OWAFRS T-norm, implicator, and OWA strategies from config.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        
+        Returns
+        -------
+        Tuple[TNorm, Implicator, OWAWeights, OWAWeights]
+            Tuple `(ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method)`.
+        
+        Raises
+        ------
+        TypeError
+            If config sections cannot be resolved.
+        
     """
     nested = _as_nested_config(config, default_model_type="owafrs")
     fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
@@ -229,27 +313,47 @@ def build_owafrs_components_from_config(
 
 
 def _backend_index_array(indices: np.ndarray, *, xp: Any):
-    """
-    @brief Convert NumPy integer indices to a backend-compatible index array.
-
-    @param indices: One-dimensional NumPy integer index array.
-    @param xp: Array namespace used by the active backend.
-    @return: Backend-compatible index array.
+    """Convert NumPy integer indices to a backend-compatible index array.
+        
+        Parameters
+        ----------
+        indices : np.ndarray
+            One-dimensional NumPy integer index array.
+        xp : Any
+            Array namespace used by the active backend.
+        
+        Returns
+        -------
+        object
+            Backend-compatible index array.
+        
     """
     return indices if xp is np else xp.asarray(indices, dtype=int)
 
 
 def _set_block_diagonal_values(values: Any, row_indices: np.ndarray, col_indices: np.ndarray, *, xp: Any, lower_value: float, upper_value: Optional[float] = None):
-    """
-    @brief Set local diagonal entries for one or two backend arrays.
-
-    @param values: First backend array to mutate.
-    @param row_indices: Local row positions as NumPy integers.
-    @param col_indices: Local column positions as NumPy integers.
-    @param xp: Array namespace used by the active backend.
-    @param lower_value: Value assigned to `values`.
-    @param upper_value: Reserved for readability at call sites; ignored here.
-    @return: None.
+    """Set local diagonal entries for one or two backend arrays.
+        
+        Parameters
+        ----------
+        values : Any
+            First backend array to mutate.
+        row_indices : np.ndarray
+            Local row positions as NumPy integers.
+        col_indices : np.ndarray
+            Local column positions as NumPy integers.
+        xp : Any
+            Array namespace used by the active backend.
+        lower_value : float
+            Value assigned to `values`.
+        upper_value : Optional[float]
+            Reserved for readability at call sites; ignored here.
+        
+        Returns
+        -------
+        object
+            None.
+        
     """
     if row_indices.size == 0:
         return
@@ -259,12 +363,20 @@ def _set_block_diagonal_values(values: Any, row_indices: np.ndarray, col_indices
 
 
 def _diagonal_positions_for_block(row_slice: slice, col_slice: slice) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    @brief Return local diagonal positions for overlapping row/column slices.
-
-    @param row_slice: Global row slice for a similarity block.
-    @param col_slice: Global column slice for a similarity block.
-    @return: Tuple of local row indices and local column indices where global sample ids match.
+    """Return local diagonal positions for overlapping row/column slices.
+        
+        Parameters
+        ----------
+        row_slice : slice
+            Global row slice for a similarity block.
+        col_slice : slice
+            Global column slice for a similarity block.
+        
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            Tuple of local row indices and local column indices where global sample ids match.
+        
     """
     row_indices = np.arange(row_slice.start or 0, row_slice.stop or 0)
     col_indices = np.arange(col_slice.start or 0, col_slice.stop or 0)
@@ -284,20 +396,29 @@ def _finalize_owafrs_row_buffer(
     lower_out: np.ndarray,
     upper_out: np.ndarray,
 ) -> None:
-    """
-    @brief Sort one OWAFRS row buffer and write final lower/upper values.
-
-    Dense OWAFRS sets the diagonal to zero, sorts every row descending, removes
-    one zero-valued self-comparison column, and applies model-specific OWA
-    weights. This helper mirrors that exact behavior for one row block.
-
-    @param row_slice: Global output row slice represented by the buffers.
-    @param lower_buffer: Lower implication values for all columns in the row block.
-    @param upper_buffer: Upper T-norm values for all columns in the row block.
-    @param lower_weights: Dense-compatible lower OWA weights.
-    @param upper_weights: Dense-compatible upper OWA weights.
-    @param lower_out: Full lower output array to mutate.
-    @param upper_out: Full upper output array to mutate.
+    """Sort one OWAFRS row buffer and write final lower/upper values.
+        
+        Dense OWAFRS sets the diagonal to zero, sorts every row descending, removes
+        one zero-valued self-comparison column, and applies model-specific OWA
+        weights. This helper mirrors that exact behavior for one row block.
+        
+        Parameters
+        ----------
+        row_slice : slice
+            Global output row slice represented by the buffers.
+        lower_buffer : np.ndarray
+            Lower implication values for all columns in the row block.
+        upper_buffer : np.ndarray
+            Upper T-norm values for all columns in the row block.
+        lower_weights : np.ndarray
+            Dense-compatible lower OWA weights.
+        upper_weights : np.ndarray
+            Dense-compatible upper OWA weights.
+        lower_out : np.ndarray
+            Full lower output array to mutate.
+        upper_out : np.ndarray
+            Full upper output array to mutate.
+        
     """
     sorted_lower = np.sort(lower_buffer, axis=1)[:, ::-1][:, :-1]
     sorted_upper = np.sort(upper_buffer, axis=1)[:, ::-1][:, :-1]
@@ -311,20 +432,33 @@ def compute_itfrs_blockwise(
     *,
     config: Optional[Mapping[str, Any]] = None,
 ) -> ITFRSBlockwiseApproximation:
-    """
-    @brief Compute exact ITFRS approximations from similarity blocks.
-
-    This function is mathematically equivalent to the dense ITFRS implementation
-    but keeps only row-level lower/upper accumulators in memory. When the
-    similarity engine resolves backend='cupy' and exposes iter_backend_blocks(),
-    this Phase 3 path keeps similarity blocks, implicator/T-norm values, and
-    min/max accumulators on GPU until the final public NumPy conversion.
-
-    @param similarity_engine: Dense or blockwise SimilarityEngine instance.
-    @param labels: Label vector aligned with the engine samples.
-    @param config: Flat or nested model configuration used to build ITFRS components.
-    @return: ITFRSBlockwiseApproximation value object.
-    @raises ValueError: If labels are not aligned with the engine samples.
+    """Compute exact ITFRS approximations from similarity blocks.
+        
+        This function is mathematically equivalent to the dense ITFRS implementation
+        but keeps only row-level lower/upper accumulators in memory. When the
+        similarity engine resolves backend='cupy' and exposes iter_backend_blocks(),
+        this Phase 3 path keeps similarity blocks, implicator/T-norm values, and
+        min/max accumulators on GPU until the final public NumPy conversion.
+        
+        Parameters
+        ----------
+        similarity_engine : BaseSimilarityEngine
+            Dense or blockwise SimilarityEngine instance.
+        labels : Any
+            Label vector aligned with the engine samples.
+        config : Optional[Mapping[str, Any]]
+            Flat or nested model configuration used to build ITFRS components.
+        
+        Returns
+        -------
+        ITFRSBlockwiseApproximation
+            ITFRSBlockwiseApproximation value object.
+        
+        Raises
+        ------
+        ValueError
+            If labels are not aligned with the engine samples.
+        
     """
     if not isinstance(similarity_engine, BaseSimilarityEngine):
         raise TypeError("similarity_engine must be a BaseSimilarityEngine instance.")
@@ -399,24 +533,37 @@ def compute_vqrs_blockwise(
     *,
     config: Optional[Mapping[str, Any]] = None,
 ) -> VQRSBlockwiseApproximation:
-    """
-    @brief Compute exact VQRS approximations from similarity blocks.
-
-    This function is mathematically equivalent to the dense VQRS implementation:
-    it accumulates the same numerator `sum(min(S_ij, same_label_ij))` and
-    denominator `sum(S_ij) - 1` row by row, then applies the configured lower
-    and upper fuzzy quantifiers. When the similarity engine resolves
-    backend='cupy' and exposes iter_backend_blocks(), this Phase 4 path keeps
-    similarity blocks, minimum T-norm values, numerator/denominator sums, and
-    fuzzy-quantifier application backend-resident until the final public NumPy
-    conversion. It avoids storing the full n x n matrix in either CPU or GPU
-    memory.
-
-    @param similarity_engine: Dense or blockwise SimilarityEngine instance.
-    @param labels: Label vector aligned with the engine samples.
-    @param config: Flat or nested model configuration used to build VQRS components.
-    @return: VQRSBlockwiseApproximation value object.
-    @raises ValueError: If labels are not aligned with the engine samples.
+    """Compute exact VQRS approximations from similarity blocks.
+        
+        This function is mathematically equivalent to the dense VQRS implementation:
+        it accumulates the same numerator `sum(min(S_ij, same_label_ij))` and
+        denominator `sum(S_ij) - 1` row by row, then applies the configured lower
+        and upper fuzzy quantifiers. When the similarity engine resolves
+        backend='cupy' and exposes iter_backend_blocks(), this Phase 4 path keeps
+        similarity blocks, minimum T-norm values, numerator/denominator sums, and
+        fuzzy-quantifier application backend-resident until the final public NumPy
+        conversion. It avoids storing the full n x n matrix in either CPU or GPU
+        memory.
+        
+        Parameters
+        ----------
+        similarity_engine : BaseSimilarityEngine
+            Dense or blockwise SimilarityEngine instance.
+        labels : Any
+            Label vector aligned with the engine samples.
+        config : Optional[Mapping[str, Any]]
+            Flat or nested model configuration used to build VQRS components.
+        
+        Returns
+        -------
+        VQRSBlockwiseApproximation
+            VQRSBlockwiseApproximation value object.
+        
+        Raises
+        ------
+        ValueError
+            If labels are not aligned with the engine samples.
+        
     """
     if not isinstance(similarity_engine, BaseSimilarityEngine):
         raise TypeError("similarity_engine must be a BaseSimilarityEngine instance.")
@@ -501,20 +648,33 @@ def compute_owafrs_blockwise(
     *,
     config: Optional[Mapping[str, Any]] = None,
 ) -> OWAFRSBlockwiseApproximation:
-    """
-    @brief Compute exact OWAFRS approximations from similarity blocks.
-
-    OWAFRS requires row-wise sorting before applying OWA weights, so it cannot
-    use only min/max or sum accumulators. This Phase 5 implementation keeps one
-    `row_block_size x n_samples` lower/upper buffer at a time, fills it from
-    similarity blocks, sorts it exactly like the dense OWAFRS model, writes the
-    result rows, and releases the buffer before moving to the next row block.
-
-    @param similarity_engine: Dense or blockwise SimilarityEngine instance.
-    @param labels: Label vector aligned with the engine samples.
-    @param config: Flat or nested model configuration used to build OWAFRS components.
-    @return: OWAFRSBlockwiseApproximation value object.
-    @raises ValueError: If labels are not aligned with the engine samples.
+    """Compute exact OWAFRS approximations from similarity blocks.
+        
+        OWAFRS requires row-wise sorting before applying OWA weights, so it cannot
+        use only min/max or sum accumulators. This Phase 5 implementation keeps one
+        `row_block_size x n_samples` lower/upper buffer at a time, fills it from
+        similarity blocks, sorts it exactly like the dense OWAFRS model, writes the
+        result rows, and releases the buffer before moving to the next row block.
+        
+        Parameters
+        ----------
+        similarity_engine : BaseSimilarityEngine
+            Dense or blockwise SimilarityEngine instance.
+        labels : Any
+            Label vector aligned with the engine samples.
+        config : Optional[Mapping[str, Any]]
+            Flat or nested model configuration used to build OWAFRS components.
+        
+        Returns
+        -------
+        OWAFRSBlockwiseApproximation
+            OWAFRSBlockwiseApproximation value object.
+        
+        Raises
+        ------
+        ValueError
+            If labels are not aligned with the engine samples.
+        
     """
     if not isinstance(similarity_engine, BaseSimilarityEngine):
         raise TypeError("similarity_engine must be a BaseSimilarityEngine instance.")

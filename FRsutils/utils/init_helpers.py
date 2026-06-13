@@ -14,19 +14,17 @@ from typing import Any, Dict, Mapping, MutableMapping, Optional, Set
 # -----------------------------------------------------------------------------
 
 def assign_allowed_kwargs(instance, kwargs: dict, schema: dict):
-    """
-    @brief Assigns validated kwargs to instance attributes based on a schema.
-
-    @param instance: The object to assign attributes to (usually 'self').
-    @param kwargs: Dictionary of keyword arguments to extract from.
-    @param schema: Dictionary of {key: spec} where spec may include:
-        - 'type': 'float', 'int', 'str', 'bool' (required)
-        - 'required': bool (default False)
-        - 'default': default value if missing and not required
-        - 'range': (min, max) for floats or ints
-        - 'allowed': set of allowed values (for strings)
-
-    @throws ValueError, TypeError if validation fails.
+    """Assigns validated kwargs to instance attributes based on a schema.
+        
+        Parameters
+        ----------
+        instance : object
+            The object to assign attributes to (usually 'self').
+        kwargs : dict
+            Dictionary of keyword arguments to extract from.
+        schema : dict
+            Dictionary of {key: spec} where spec may include: - 'type': 'float', 'int', 'str', 'bool' (required) - 'required': bool (default False) - 'default': default value if missing and not required - 'range': (min, max) for floats or ints - 'allowed': set of allowed values (for strings) @throws ValueError, TypeError if validation fails.
+        
     """
     for key, spec in schema.items():
         # Get value: first from kwargs, then default if available
@@ -82,13 +80,13 @@ _ALIAS_MAP: Dict[str, str] = {
 
 
 def apply_config_aliases(flat_config: MutableMapping[str, Any], *, explicit_keys: Optional[Set[str]] = None) -> None:
-    """ 
-    @brief Apply backward-compatible alias mapping in-place.
-
-    @param flat_config: Mutable dict-like config.
-
-    Notes:
-    - Only fills missing new keys; does not overwrite explicitly provided new keys.
+    """Apply backward-compatible alias mapping in-place.
+        
+        Parameters
+        ----------
+        flat_config : MutableMapping[str, Any]
+            Mutable dict-like config. Notes: - Only fills missing new keys; does not overwrite explicitly provided new keys.
+        
     """
     for legacy_key, new_key in _ALIAS_MAP.items():
         if legacy_key not in flat_config:
@@ -114,19 +112,26 @@ def apply_config_aliases(flat_config: MutableMapping[str, Any], *, explicit_keys
 
 
 def extract_prefixed_params(flat_config: Mapping[str, Any], prefix: str) -> Dict[str, Any]:
-    """
-    @brief Extract component-specific params based on the naming standard.
-
-    According to the flat naming standard, component parameters are encoded as:
+    """Extract component-specific params based on the naming standard.
+        
+        According to the flat naming standard, component parameters are encoded as:
         <prefix>_<param_name>
-
-    Example:
+        Example:
         prefix="similarity" extracts:
-            similarity_sigma -> {"sigma": value}
-
-    @param flat_config: Flat config mapping.
-    @param prefix: Component prefix.
-    @return: Dict of extracted parameters without the prefix.
+        similarity_sigma -> {"sigma": value}
+        
+        Parameters
+        ----------
+        flat_config : Mapping[str, Any]
+            Flat config mapping.
+        prefix : str
+            Component prefix.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Dict of extracted parameters without the prefix.
+        
     """
     pfx = f"{prefix}_"
     out: Dict[str, Any] = {}
@@ -143,14 +148,24 @@ def _component_spec_from_flat(
     prefix: str,
     explicit_obj_key: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
-    """ 
-    @brief Build a component spec from flat config.
-
-    @param flat_config: Flat input mapping.
-    @param selector_key: Key that contains component name (e.g., "ub_tnorm_name").
-    @param prefix: Prefix for component parameters (e.g., "ub_tnorm").
-    @param explicit_obj_key: Optional key that may contain a dict/instance (e.g., "ub_tnorm").
-    @return: {"name": <str>, "params": <dict>} or an existing dict if provided.
+    """Build a component spec from flat config.
+        
+        Parameters
+        ----------
+        flat_config : Mapping[str, Any]
+            Flat input mapping.
+        selector_key : str
+            Key that contains component name (e.g., "ub_tnorm_name").
+        prefix : str
+            Prefix for component parameters (e.g., "ub_tnorm").
+        explicit_obj_key : Optional[str]
+            Optional key that may contain a dict/instance (e.g., "ub_tnorm").
+        
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            {"name": <str>, "params": <dict>} or an existing dict if provided.
+        
     """
     if explicit_obj_key and explicit_obj_key in flat_config:
         obj = flat_config.get(explicit_obj_key)
@@ -176,14 +191,22 @@ def normalize_flat_config_to_nested(
     apply_aliases: bool = True,
     explicit_keys: Optional[Set[str]] = None,
 ) -> Dict[str, Any]:
-    """
-    @brief Convert a flat sklearn-friendly config to an internal nested config.
-
-    The returned nested structure isolates parameters by component to avoid naming collisions.
-
-    @param flat_config: Flat mapping (e.g., estimator.get_params() / GridSearchCV params).
-    @param apply_aliases: If True, supports a small set of legacy aliases.
-    @return: Nested config dictionary.
+    """Convert a flat sklearn-friendly config to an internal nested config.
+        
+        The returned nested structure isolates parameters by component to avoid naming collisions.
+        
+        Parameters
+        ----------
+        flat_config : Mapping[str, Any]
+            Flat mapping (e.g., estimator.get_params() / GridSearchCV params).
+        apply_aliases : bool
+            If True, supports a small set of legacy aliases.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Nested config dictionary.
+        
     """
     if not isinstance(flat_config, Mapping):
         raise TypeError("flat_config must be a mapping (dict-like).")

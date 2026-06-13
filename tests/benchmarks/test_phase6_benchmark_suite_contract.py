@@ -11,7 +11,7 @@ from benchmarks.benchmark_fuzzy_rough_execution import run_benchmark_suite, writ
 
 
 def test_phase6_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
-    """@brief Tiny CPU-only benchmark matrix should produce JSON/CSV rows."""
+    """Tiny CPU-only benchmark matrix should produce JSON/CSV rows."""
     report = run_benchmark_suite(
         models=["itfrs"],
         sample_sizes=[12],
@@ -47,7 +47,7 @@ def test_phase6_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
 
 
 def test_phase6_benchmark_cli_smoke(tmp_path):
-    """@brief CLI should run a tiny benchmark and write JSON/CSV outputs."""
+    """CLI should run a tiny benchmark and write JSON/CSV outputs."""
     repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "benchmarks" / "benchmark_fuzzy_rough_execution.py"
     json_path = tmp_path / "cli_benchmark.json"

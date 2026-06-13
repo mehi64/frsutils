@@ -27,9 +27,8 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------
 
 class DummyModel:
-    """
-    @brief Minimal class with a from_config factory for verifying forwarding.
-
+    """Minimal class with a from_config factory for verifying forwarding.
+    
     We store the last call inputs so tests can assert:
     - positional args are forwarded correctly
     - config keys/values are forwarded correctly
@@ -39,6 +38,7 @@ class DummyModel:
     @classmethod
     def from_config(cls, *args, **config):
         # Store inputs for assertions.
+        """From config."""
         cls.last_call = {
             "args": args,
             "config": dict(config),
@@ -53,17 +53,17 @@ class DummyModel:
 
 
 class DummyRegistry:
-    """
-    @brief Minimal registry with get_class(type_str) -> class.
-
+    """Minimal registry with get_class(type_str) -> class.
+    
     Contract expected by the mixin:
-        registry.get_class(config["type"]) -> class with from_config(...)
+    registry.get_class(config["type"]) -> class with from_config(...)
     """
     call_count = 0
     last_type = None
 
     @staticmethod
     def get_class(type_str: str):
+        """Return class values for tests or public helpers."""
         DummyRegistry.call_count += 1
         DummyRegistry.last_type = type_str
         if type_str != "dummy":
@@ -72,22 +72,20 @@ class DummyRegistry:
 
 
 class DummyComponent(LazyConstructibleMixin):
-    """
-    @brief Concrete subclass to make LazyConstructibleMixin instantiable.
-
+    """Concrete subclass to make LazyConstructibleMixin instantiable.
+    
     This class only exists for unit tests. It implements `_finalize_object` and
     records whether/when it was called, and what `_lazy_object` looked like then.
     """
 
     def __init__(self):
         # Note: mixin has no __init__. We add this only for test observability.
+        """Initialize the DummyComponent instance."""
         self.finalize_called = 0
         self.finalize_seen_lazy_object = "NOT_CALLED"
 
     def _finalize_object(self):
-        """
-        @brief Test hook: record finalize call count and the value of `_lazy_object`.
-        """
+        """Test hook: record finalize call count and the value of `_lazy_object`."""
         self.finalize_called += 1
         self.finalize_seen_lazy_object = getattr(self, "_lazy_object", None)
 
@@ -97,11 +95,10 @@ class DummyComponent(LazyConstructibleMixin):
 # ---------------------------------------------------------------------
 
 def test_default_state_when_state_attr_missing_is_unconfigured():
-    """
-    @brief When `_state` is not set, the mixin must behave as UNCONFIGURED.
-
+    """When `_state` is not set, the mixin must behave as UNCONFIGURED.
+    
     The implementation uses:
-        getattr(self, "_state", LifecycleState.UNCONFIGURED)
+    getattr(self, "_state", LifecycleState.UNCONFIGURED)
     """
     obj = DummyComponent()
 
@@ -115,9 +112,7 @@ def test_default_state_when_state_attr_missing_is_unconfigured():
 
 
 def test_set_state_allows_only_unconfigured_to_configured_to_built():
-    """
-    @brief Valid transition path: UNCONFIGURED -> CONFIGURED -> BUILT.
-    """
+    """Valid transition path: UNCONFIGURED -> CONFIGURED -> BUILT."""
     obj = DummyComponent()
 
     obj._set_state(LifecycleState.CONFIGURED)
@@ -136,9 +131,7 @@ def test_set_state_allows_only_unconfigured_to_configured_to_built():
     ],
 )
 def test_set_state_rejects_invalid_transitions(start_state, target_state):
-    """
-    @brief `_set_state` must reject illegal transitions based on _ALLOWED_TRANSITIONS.
-    """
+    """`_set_state` must reject illegal transitions based on _ALLOWED_TRANSITIONS."""
     obj = DummyComponent()
     obj._state = start_state
 
@@ -151,9 +144,7 @@ def test_set_state_rejects_invalid_transitions(start_state, target_state):
 # ---------------------------------------------------------------------
 
 def test_configure_rejects_empty_config():
-    """
-    @brief configure() must raise ValueError if config is empty.
-    """
+    """configure() must raise ValueError if config is empty."""
     obj = DummyComponent()
 
     with pytest.raises(ValueError, match=r"config cannot be empty"):
@@ -161,9 +152,7 @@ def test_configure_rejects_empty_config():
 
 
 def test_configure_sets_fields_and_transitions_to_configured():
-    """
-    @brief configure() stores config/registry, resets lazy object, and moves to CONFIGURED.
-    """
+    """configure() stores config/registry, resets lazy object, and moves to CONFIGURED."""
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1, b="x")
 
@@ -176,9 +165,7 @@ def test_configure_sets_fields_and_transitions_to_configured():
 
 
 def test_configure_stores_copy_not_reference():
-    """
-    @brief configure() must store a copy of input config so external dict mutations don't leak.
-    """
+    """configure() must store a copy of input config so external dict mutations don't leak."""
     obj = DummyComponent()
 
     user_cfg = {"type": "dummy", "a": 1}
@@ -192,9 +179,7 @@ def test_configure_stores_copy_not_reference():
 
 
 def test_configure_twice_replaces_config_and_keeps_configured_state():
-    """
-    @brief Current mixin contract allows reconfiguration while CONFIGURED.
-    """
+    """Current mixin contract allows reconfiguration while CONFIGURED."""
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1)
     obj.configure(model_registry=DummyRegistry, type="dummy", a=2)
@@ -205,9 +190,7 @@ def test_configure_twice_replaces_config_and_keeps_configured_state():
 
 
 def test_configure_after_build_resets_to_configured():
-    """
-    @brief Current mixin contract allows reconfiguration after build.
-    """
+    """Current mixin contract allows reconfiguration after build."""
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1)
     obj.build()
@@ -225,9 +208,7 @@ def test_configure_after_build_resets_to_configured():
 # ---------------------------------------------------------------------
 
 def test_build_requires_configured_state():
-    """
-    @brief build() must raise RuntimeError unless current state is CONFIGURED.
-    """
+    """build() must raise RuntimeError unless current state is CONFIGURED."""
     obj = DummyComponent()
 
     with pytest.raises(RuntimeError, match=r"not configured|already built"):
@@ -235,8 +216,8 @@ def test_build_requires_configured_state():
 
 
 def test_build_constructs_lazy_object_when_registry_and_type_present_and_forwards_args():
-    """
-    @brief If registry exists and config contains 'type', build() must:
+    """If registry exists and config contains 'type', build() must:
+    
     - resolve class via registry.get_class(config["type"])
     - call cls.from_config(*args, **config)
     - store the resulting object in `_lazy_object`
@@ -279,8 +260,8 @@ def test_build_constructs_lazy_object_when_registry_and_type_present_and_forward
 
 
 def test_build_does_not_construct_lazy_object_when_registry_is_none_but_still_builds_lifecycle():
-    """
-    @brief If model_registry is None, build() must skip construction but still:
+    """If model_registry is None, build() must skip construction but still:
+    
     - call finalize hook
     - transition to BUILT
     - allow lazy_object accessor to return None (valid)
@@ -299,9 +280,7 @@ def test_build_does_not_construct_lazy_object_when_registry_is_none_but_still_bu
 
 
 def test_configure_with_registry_requires_type_key():
-    """
-    @brief Current validation requires a type key when a registry is provided.
-    """
+    """Current validation requires a type key when a registry is provided."""
     obj = DummyComponent()
 
     with pytest.raises(ValueError, match=r"type"):
@@ -309,8 +288,8 @@ def test_configure_with_registry_requires_type_key():
 
 
 def test_build_twice_is_not_allowed_by_precondition():
-    """
-    @brief After the first build, the object is BUILT.
+    """After the first build, the object is BUILT.
+    
     Subsequent build() calls must raise because state != CONFIGURED.
     """
     obj = DummyComponent()
@@ -328,9 +307,7 @@ def test_build_twice_is_not_allowed_by_precondition():
 # ---------------------------------------------------------------------
 
 def test_lazy_object_raises_before_build_even_if_configured():
-    """
-    @brief Accessing lazy_object before build() must raise RuntimeError.
-    """
+    """Accessing lazy_object before build() must raise RuntimeError."""
     obj = DummyComponent()
     obj.configure(model_registry=DummyRegistry, type="dummy", a=1)
 
@@ -339,8 +316,8 @@ def test_lazy_object_raises_before_build_even_if_configured():
 
 
 def test_lazy_object_returns_built_object_after_build():
-    """
-    @brief After build(), lazy_object must return `_lazy_object` (may be None if not constructed).
+    """After build(), lazy_object must return `_lazy_object` (may be None if not constructed).
+    
     Here we force construction, so it must return the built dict.
     """
     obj = DummyComponent()

@@ -11,19 +11,19 @@ from FRsutils.api.similarity import build_similarity_engine
 
 
 class _FakeCupy(types.SimpleNamespace):
-    """@brief Minimal NumPy-backed CuPy stand-in for contract tests."""
+    """Minimal NumPy-backed CuPy stand-in for contract tests."""
 
     def __getattr__(self, name):
         return getattr(np, name)
 
     @staticmethod
     def asnumpy(value):
-        """@brief Mirror cupy.asnumpy with NumPy conversion."""
+        """Mirror cupy.asnumpy with NumPy conversion."""
         return np.asarray(value)
 
 
 def _install_fake_cupy(monkeypatch):
-    """@brief Install the fake CuPy module for the duration of one test."""
+    """Install the fake CuPy module for the duration of one test."""
     fake_cupy = _FakeCupy()
     monkeypatch.setitem(sys.modules, "cupy", fake_cupy)
     return fake_cupy
@@ -44,7 +44,7 @@ Y_PHASE3 = np.array([0, 0, 0, 1, 1, 1])
 
 
 def test_itfrs_fake_cupy_path_uses_gpu_resident_accumulator_metadata(monkeypatch):
-    """@brief ITFRS marks both similarity blocks and approximation accumulators as GPU-backed."""
+    """ITFRS marks both similarity blocks and approximation accumulators as GPU-backed."""
     _install_fake_cupy(monkeypatch)
 
     dense = compute_approximations(X_PHASE3, Y_PHASE3, model="itfrs", similarity="linear", engine="dense")
@@ -70,7 +70,7 @@ def test_itfrs_fake_cupy_path_uses_gpu_resident_accumulator_metadata(monkeypatch
 
 
 def test_backend_blocks_can_remain_backend_resident_with_cupy_alias(monkeypatch):
-    """@brief Blockwise engines expose backend-resident blocks separately from NumPy iter_blocks()."""
+    """Blockwise engines expose backend-resident blocks separately from NumPy iter_blocks()."""
     _install_fake_cupy(monkeypatch)
 
     engine = build_similarity_engine(
@@ -93,7 +93,7 @@ def test_backend_blocks_can_remain_backend_resident_with_cupy_alias(monkeypatch)
 
 
 def test_owafrs_fake_cupy_path_does_not_claim_gpu_approximation_accumulators(monkeypatch):
-    """@brief GPU-resident approximation metadata is still not claimed for OWAFRS."""
+    """GPU-resident approximation metadata is still not claimed for OWAFRS."""
     _install_fake_cupy(monkeypatch)
 
     owafrs = compute_approximations(

@@ -25,12 +25,23 @@ from FRsutils.core.similarity_engine import (
 
 
 def _as_2d_feature_matrix(X: Any) -> np.ndarray:
-    """
-    @brief Convert and validate a public feature-matrix input.
-
-    @param X: Candidate feature matrix.
-    @return: 2D NumPy array view/copy.
-    @raises ValueError: If X is missing or not two-dimensional.
+    """Convert and validate a public feature-matrix input.
+        
+        Parameters
+        ----------
+        X : Any
+            Candidate feature matrix.
+        
+        Returns
+        -------
+        np.ndarray
+            2D NumPy array view/copy.
+        
+        Raises
+        ------
+        ValueError
+            If X is missing or not two-dimensional.
+        
     """
     if X is None:
         raise ValueError("X must be provided when building a similarity matrix.")
@@ -42,22 +53,33 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
 
 
 def list_similarities():
-    """
-    @brief List registered public similarity aliases.
-
-    @return: Registry mapping from primary similarity names to aliases.
+    """List registered public similarity aliases.
+    
+    Returns
+    -------
+    object
+        Registry mapping from primary similarity names to aliases.
     """
     return Similarity.list_available()
 
 
 def calculate_similarity_matrix(X: Any, similarity_func: Similarity, tnorm) -> np.ndarray:
-    """
-    @brief Compute a pairwise similarity matrix using already-built components.
-
-    @param X: Normalized 2D feature matrix.
-    @param similarity_func: Similarity component instance.
-    @param tnorm: Binary T-norm component instance/callable.
-    @return: Pairwise similarity matrix.
+    """Compute a pairwise similarity matrix using already-built components.
+        
+        Parameters
+        ----------
+        X : Any
+            Normalized 2D feature matrix.
+        similarity_func : Similarity
+            Similarity component instance.
+        tnorm : object
+            Binary T-norm component instance/callable.
+        
+        Returns
+        -------
+        np.ndarray
+            Pairwise similarity matrix.
+        
     """
     return _core_calculate_similarity_matrix(_as_2d_feature_matrix(X), similarity_func, tnorm)
 
@@ -67,20 +89,34 @@ def build_similarity_matrix(
     config: Optional[Mapping[str, Any]] = None,
     **flat_config: Any,
 ) -> np.ndarray:
-    """
-    @brief Build a pairwise similarity matrix from flat or nested public config.
-
-    This is the stable public entry point for users and downstream packages.
-    It accepts:
-    - flat sklearn-style params, e.g. `similarity="gaussian"`
-    - nested FRsutils config, e.g. `{"similarity": {"name": ...}}`
-
-    @param X: Normalized 2D feature matrix.
-    @param config: Optional flat or nested FRsutils config mapping.
-    @param flat_config: Additional flat configuration values.
-    @return: Pairwise similarity matrix.
-    @raises TypeError: If config is provided but is not mapping-like.
-    @raises ValueError: If X is not a 2D matrix.
+    """Build a pairwise similarity matrix from flat or nested public config.
+        
+        This is the stable public entry point for users and downstream packages.
+        It accepts:
+        - flat sklearn-style params, e.g. `similarity="gaussian"`
+        - nested FRsutils config, e.g. `{"similarity": {"name": ...}}`
+        
+        Parameters
+        ----------
+        X : Any
+            Normalized 2D feature matrix.
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        flat_config : Any
+            Additional flat configuration values.
+        
+        Returns
+        -------
+        np.ndarray
+            Pairwise similarity matrix.
+        
+        Raises
+        ------
+        TypeError
+            If config is provided but is not mapping-like.
+        ValueError
+            If X is not a 2D matrix.
+        
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -99,23 +135,40 @@ def build_similarity_engine(
     backend: str = "numpy",
     **flat_config: Any,
 ) -> BaseSimilarityEngine:
-    """
-    @brief Build a dense or blockwise similarity engine from public inputs.
-
-    The engine abstraction is additive. Existing callers should keep using
-    `build_similarity_matrix`; blockwise approximation code can consume the
-    returned engine directly. backend="cupy" accelerates similarity-block
-    calculation when CuPy is installed and a CUDA device is available.
-
-    @param X: Normalized 2D feature matrix.
-    @param engine: Engine alias, currently "dense" or "blockwise".
-    @param block_size: Positive block size for blockwise engines.
-    @param config: Optional flat or nested FRsutils config mapping.
-    @param backend: Backend alias. Use "numpy"/"auto" or explicit optional "cupy".
-    @param flat_config: Additional flat configuration values.
-    @return: Similarity engine instance.
-    @raises TypeError: If config is not mapping-like.
-    @raises ValueError: If X is not a 2D matrix or engine/backend is unsupported.
+    """Build a dense or blockwise similarity engine from public inputs.
+        
+        The engine abstraction is additive. Existing callers should keep using
+        `build_similarity_matrix`; blockwise approximation code can consume the
+        returned engine directly. backend="cupy" accelerates similarity-block
+        calculation when CuPy is installed and a CUDA device is available.
+        
+        Parameters
+        ----------
+        X : Any
+            Normalized 2D feature matrix.
+        engine : str
+            Engine alias, currently "dense" or "blockwise".
+        block_size : int
+            Positive block size for blockwise engines.
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        backend : str
+            Backend alias. Use "numpy"/"auto" or explicit optional "cupy".
+        flat_config : Any
+            Additional flat configuration values.
+        
+        Returns
+        -------
+        BaseSimilarityEngine
+            Similarity engine instance.
+        
+        Raises
+        ------
+        TypeError
+            If config is not mapping-like.
+        ValueError
+            If X is not a 2D matrix or engine/backend is unsupported.
+        
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")

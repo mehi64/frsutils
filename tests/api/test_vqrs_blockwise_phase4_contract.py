@@ -11,19 +11,19 @@ from FRsutils.api import build_similarity_matrix, compute_approximations, comput
 
 
 class _FakeCupy(types.SimpleNamespace):
-    """@brief Minimal NumPy-backed CuPy stand-in for VQRS contract tests."""
+    """Minimal NumPy-backed CuPy stand-in for VQRS contract tests."""
 
     def __getattr__(self, name):
         return getattr(np, name)
 
     @staticmethod
     def asnumpy(value):
-        """@brief Mirror cupy.asnumpy with NumPy conversion."""
+        """Mirror cupy.asnumpy with NumPy conversion."""
         return np.asarray(value)
 
 
 def _install_fake_cupy(monkeypatch):
-    """@brief Install a fake CuPy module for CPU-only CI."""
+    """Install a fake CuPy module for CPU-only CI."""
     fake_cupy = _FakeCupy()
     monkeypatch.setitem(sys.modules, "cupy", fake_cupy)
     return fake_cupy
@@ -45,7 +45,7 @@ Y_BLOCKWISE = np.array([0, 0, 0, 1, 1, 1])
 
 @pytest.mark.parametrize("block_size", [1, 2, 4, 20])
 def test_blockwise_vqrs_matches_dense_vqrs_for_multiple_block_sizes(block_size):
-    """@brief Exact blockwise VQRS must match dense VQRS for all result fields."""
+    """Exact blockwise VQRS must match dense VQRS for all result fields."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -72,7 +72,7 @@ def test_blockwise_vqrs_matches_dense_vqrs_for_multiple_block_sizes(block_size):
 
 
 def test_blockwise_vqrs_matches_dense_with_custom_quantifier_parameters():
-    """@brief Blockwise VQRS must reuse lower/upper fuzzy-quantifier settings."""
+    """Blockwise VQRS must reuse lower/upper fuzzy-quantifier settings."""
     kwargs = dict(
         model="vqrs",
         similarity="gaussian",
@@ -101,7 +101,7 @@ def test_blockwise_vqrs_matches_dense_with_custom_quantifier_parameters():
 
 
 def test_blockwise_vqrs_can_materialize_similarity_matrix_when_requested():
-    """@brief return_similarity_matrix=True remains available for debugging/contract checks."""
+    """return_similarity_matrix=True remains available for debugging/contract checks."""
     expected_matrix = build_similarity_matrix(X_BLOCKWISE, similarity="linear")
     blockwise = compute_approximations(
         X_BLOCKWISE,
@@ -117,7 +117,7 @@ def test_blockwise_vqrs_can_materialize_similarity_matrix_when_requested():
 
 
 def test_compute_positive_region_wrapper_supports_blockwise_vqrs():
-    """@brief Convenience wrappers pass the VQRS blockwise execution options through."""
+    """Convenience wrappers pass the VQRS blockwise execution options through."""
     dense_scores = compute_positive_region(X_BLOCKWISE, Y_BLOCKWISE, model="vqrs", similarity="linear")
     blockwise_scores = compute_positive_region(
         X_BLOCKWISE,
@@ -132,7 +132,7 @@ def test_compute_positive_region_wrapper_supports_blockwise_vqrs():
 
 
 def test_blockwise_vqrs_fake_cupy_path_uses_gpu_resident_accumulator_metadata(monkeypatch):
-    """@brief VQRS marks CuPy similarity blocks and sum accumulators as GPU-backed."""
+    """VQRS marks CuPy similarity blocks and sum accumulators as GPU-backed."""
     _install_fake_cupy(monkeypatch)
 
     dense = compute_approximations(
@@ -164,7 +164,7 @@ def test_blockwise_vqrs_fake_cupy_path_uses_gpu_resident_accumulator_metadata(mo
 
 
 def test_blockwise_vqrs_fake_cupy_path_supports_custom_quantifier_parameters(monkeypatch):
-    """@brief VQRS keeps custom fuzzy-quantifier formulas equivalent on fake CuPy."""
+    """VQRS keeps custom fuzzy-quantifier formulas equivalent on fake CuPy."""
     _install_fake_cupy(monkeypatch)
 
     kwargs = dict(

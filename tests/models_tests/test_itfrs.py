@@ -17,6 +17,7 @@ pytestmark = pytest.mark.slow
 
 @pytest.fixture
 def synthetic_data_():
+    """Synthetic data ."""
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -27,6 +28,7 @@ def synthetic_data_():
 
 @pytest.fixture
 def model_instance(synthetic_data_):
+    """Model instance."""
     sim, lbl = synthetic_data_
     tnorm = MinTNorm()
     implicator = LukasiewiczImplicator()
@@ -36,8 +38,8 @@ def model_instance(synthetic_data_):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_lower_approximation_shape_ndarray_range_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Test lower_approximation shape, type, and value range for all combinations of TNorm and Implicator
+    """Test lower_approximation shape, type, and value range for all combinations of TNorm and Implicator
+    
     but correctness of values are not checked
     """
     sim_matrix = np.array([
@@ -61,8 +63,8 @@ def test_lower_approximation_shape_ndarray_range_all_combinations(tnorm_name, im
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_upper_approximation_shape_ndarray_range_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Test upper_approximation shape, type, and value range for all combinations of TNorm and Implicator.
+    """Test upper_approximation shape, type, and value range for all combinations of TNorm and Implicator.
+    
     but correctness of values are not checked
     """
     sim_matrix = np.array([
@@ -87,8 +89,8 @@ def test_upper_approximation_shape_ndarray_range_all_combinations(tnorm_name, im
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_boundary_region_all_combinations_shape_range(tnorm_name, implicator_name):
-    """
-    @brief Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
+    """Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
+    
     correctness of values are not checked
     """
     sim = np.array([
@@ -114,8 +116,8 @@ def test_boundary_region_all_combinations_shape_range(tnorm_name, implicator_nam
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_positive_region_all_combinations_shape_range(tnorm_name, implicator_name):
-    """
-    @brief Validates positive_region == lower_approximation across all ITFRS combinations
+    """Validates positive_region == lower_approximation across all ITFRS combinations
+    
     correctness of values are not checked
     """
     sim = np.array([
@@ -141,9 +143,7 @@ def test_positive_region_all_combinations_shape_range(tnorm_name, implicator_nam
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_to_dict_include_data_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Validates presence of all fields in `to_dict(include_data=True)`
-    """
+    """Validates presence of all fields in `to_dict(include_data=True)`"""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -166,9 +166,7 @@ def test_to_dict_include_data_all_combinations(tnorm_name, implicator_name):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_to_dict_exclude_data_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Validates presence/absence of fields in `to_dict(include_data=False)`
-    """
+    """Validates presence/absence of fields in `to_dict(include_data=False)`"""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -191,8 +189,7 @@ def test_to_dict_exclude_data_all_combinations(tnorm_name, implicator_name):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_from_dict_roundtrip_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Tests whether ITFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
+    """Tests whether ITFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
     """
     sim = np.array([
         [1.0, 0.8, 0.0],
@@ -218,9 +215,7 @@ def test_from_dict_roundtrip_all_combinations(tnorm_name, implicator_name):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_from_config_equivalence_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Test ITFRS.from_config builds a valid model for all combinations.
-    """
+    """Test ITFRS.from_config builds a valid model for all combinations."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -258,9 +253,7 @@ def test_from_config_equivalence_all_combinations(tnorm_name, implicator_name):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_describe_params_detailed_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Ensure that ITFRS.describe_params_detailed() contains keys.
-    """
+    """Ensure that ITFRS.describe_params_detailed() contains keys."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -284,9 +277,7 @@ def test_describe_params_detailed_all_combinations(tnorm_name, implicator_name):
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_get_params_internal_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Ensure _get_params returns full param dict.
-    """
+    """Ensure _get_params returns full param dict."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -309,9 +300,7 @@ def test_get_params_internal_all_combinations(tnorm_name, implicator_name):
 
 
 def test_validate_params_invalid_tnorm():
-    """
-    @brief Validation must fail when T-norm is missing or invalid.
-    """
+    """Validation must fail when T-norm is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -323,9 +312,7 @@ def test_validate_params_invalid_tnorm():
 
 
 def test_validate_params_invalid_implicator():
-    """
-    @brief Validation must fail when implicator is missing or invalid.
-    """
+    """Validation must fail when implicator is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -339,9 +326,7 @@ def test_validate_params_invalid_implicator():
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
 @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 def test_logger_works_all_combinations(tnorm_name, implicator_name):
-    """
-    @brief Sanity check for logger presence in all ITFRS combinations.
-    """
+    """Sanity check for logger presence in all ITFRS combinations."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -387,9 +372,7 @@ def test_logger_works_all_combinations(tnorm_name, implicator_name):
     ("yager", "yager_tn_upperBound_p_0_83")
 ])
 def test_itfrs_model_with_all_settings(test_case, implicator_name, expected_lower_key, tnorm_name, expected_upper_key):
-    """
-    @brief Test for `itfrs_model_with_all_settings` method of ITFRS model.
-    """
+    """Test for `itfrs_model_with_all_settings` method of ITFRS model."""
     sim = test_case["sim_matrix"]
     y = test_case["y"]
     expected = test_case["expected"]
@@ -410,6 +393,7 @@ def test_itfrs_model_with_all_settings(test_case, implicator_name, expected_lowe
 
 @pytest.fixture
 def synthetic_data():
+    """Synthetic data."""
     return ds.get_ITFRS_testing_testsets()[0]
 
 @pytest.mark.parametrize("implicator_name", ['reichenbach', 'kleenedienes', 'lukasiewicz', 'goedel', 'goguen', 'yager', 'rescher', 'weber', 'fodor'])
@@ -493,4 +477,5 @@ def test_to_dict_and_from_dict_roundtrip(synthetic_data):
     np.testing.assert_allclose(reconstructed.upper_approximation(), model.upper_approximation())    
     
 def normalize(name: str) -> str:
+    """Normalize."""
     return name.lower().replace("-", "").replace("_", "")

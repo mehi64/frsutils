@@ -20,7 +20,7 @@ Y_META = np.array([0, 0, 1, 1])
 
 
 def test_dense_result_exposes_execution_metadata():
-    """@brief Dense results explicitly report CPU/dense provenance."""
+    """Dense results explicitly report CPU/dense provenance."""
     result = compute_approximations(X_META, Y_META, model="itfrs", similarity="linear")
 
     assert result.engine == "dense"
@@ -38,7 +38,7 @@ def test_dense_result_exposes_execution_metadata():
 
 
 def test_blockwise_result_exposes_execution_metadata():
-    """@brief Blockwise results preserve engine, backend, and block-size metadata."""
+    """Blockwise results preserve engine, backend, and block-size metadata."""
     dense = compute_approximations(X_META, Y_META, model="itfrs", similarity="linear")
     blockwise = compute_approximations(
         X_META,
@@ -59,7 +59,7 @@ def test_blockwise_result_exposes_execution_metadata():
 
 
 def test_positive_region_scorer_forwards_engine_backend_and_block_size():
-    """@brief Public scorer can opt into the blockwise backend-aware path."""
+    """Public scorer can opt into the blockwise backend-aware path."""
     scorer = FuzzyRoughPositiveRegionScorer(
         model="itfrs",
         similarity="linear",
@@ -86,7 +86,7 @@ def test_positive_region_scorer_forwards_engine_backend_and_block_size():
 
 
 def test_positive_region_scorer_engine_params_are_sklearn_compatible():
-    """@brief New scorer params survive sklearn get_params/set_params/clone."""
+    """New scorer params survive sklearn get_params/set_params/clone."""
     scorer = FuzzyRoughPositiveRegionScorer(
         model="itfrs",
         similarity="linear",

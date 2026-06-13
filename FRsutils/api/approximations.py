@@ -42,22 +42,37 @@ _DEFAULT_MODEL_CONFIG: Dict[str, Any] = {
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """
-    @brief Return True when config looks like FRsutils internal nested config.
-
-    @param config: Candidate config mapping.
-    @return: True if fuzzy-rough nested sections are present.
+    """Return True when config looks like FRsutils internal nested config.
+        
+        Parameters
+        ----------
+        config : Mapping[str, Any]
+            Candidate config mapping.
+        
+        Returns
+        -------
+        bool
+            True if fuzzy-rough nested sections are present.
+        
     """
     return isinstance(config.get("fr_model"), Mapping) or isinstance(config.get("similarity"), Mapping)
 
 
 def _default_flat_config(model: str, similarity: Optional[str]) -> Dict[str, Any]:
-    """
-    @brief Build default flat config for public approximation APIs.
-
-    @param model: Public fuzzy-rough model alias.
-    @param similarity: Optional public similarity alias.
-    @return: Flat configuration dictionary with safe defaults.
+    """Build default flat config for public approximation APIs.
+        
+        Parameters
+        ----------
+        model : str
+            Public fuzzy-rough model alias.
+        similarity : Optional[str]
+            Optional public similarity alias.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Flat configuration dictionary with safe defaults.
+        
     """
     cfg = dict(_DEFAULT_MODEL_CONFIG)
     cfg["type"] = model
@@ -67,13 +82,22 @@ def _default_flat_config(model: str, similarity: Optional[str]) -> Dict[str, Any
 
 
 def _default_nested_config(model: str, similarity: Optional[str], config: Mapping[str, Any]) -> Dict[str, Any]:
-    """
-    @brief Fill missing required pieces in a nested config without overwriting explicit values.
-
-    @param model: Public fuzzy-rough model alias.
-    @param similarity: Optional public similarity alias.
-    @param config: User-provided nested config.
-    @return: Defensive copy with minimal defaults filled in.
+    """Fill missing required pieces in a nested config without overwriting explicit values.
+        
+        Parameters
+        ----------
+        model : str
+            Public fuzzy-rough model alias.
+        similarity : Optional[str]
+            Optional public similarity alias.
+        config : Mapping[str, Any]
+            User-provided nested config.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Defensive copy with minimal defaults filled in.
+        
     """
     nested = deepcopy(dict(config))
     nested.setdefault("similarity", {})
@@ -103,14 +127,24 @@ def _prepare_effective_config(
     config: Optional[Mapping[str, Any]],
     flat_config: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    """
-    @brief Merge user config with public defaults for approximation computation.
-
-    @param model: Public fuzzy-rough model alias.
-    @param similarity: Optional public similarity alias.
-    @param config: Optional flat or nested config mapping.
-    @param flat_config: Additional flat kwargs.
-    @return: Effective flat or nested config.
+    """Merge user config with public defaults for approximation computation.
+        
+        Parameters
+        ----------
+        model : str
+            Public fuzzy-rough model alias.
+        similarity : Optional[str]
+            Optional public similarity alias.
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested config mapping.
+        flat_config : Mapping[str, Any]
+            Additional flat kwargs.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Effective flat or nested config.
+        
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -134,13 +168,25 @@ def _prepare_effective_config(
 
 
 def _normalize_execution_engine(engine: str) -> str:
-    """
-    @brief Normalize the approximation execution-engine alias.
-
-    @param engine: Public execution-engine alias.
-    @return: Canonical alias, either "dense" or "blockwise".
-    @raises TypeError: If engine is not a non-empty string.
-    @raises ValueError: If engine is unknown.
+    """Normalize the approximation execution-engine alias.
+        
+        Parameters
+        ----------
+        engine : str
+            Public execution-engine alias.
+        
+        Returns
+        -------
+        str
+            Canonical alias, either "dense" or "blockwise".
+        
+        Raises
+        ------
+        TypeError
+            If engine is not a non-empty string.
+        ValueError
+            If engine is unknown.
+        
     """
     if not isinstance(engine, str) or not engine.strip():
         raise TypeError("engine must be a non-empty string.")
@@ -154,11 +200,18 @@ def _normalize_execution_engine(engine: str) -> str:
 
 
 def _similarity_name_from_config(effective_config: Mapping[str, Any]) -> Optional[str]:
-    """
-    @brief Extract a public similarity name from flat or nested effective config.
-
-    @param effective_config: Effective approximation config.
-    @return: Similarity alias when available.
+    """Extract a public similarity name from flat or nested effective config.
+        
+        Parameters
+        ----------
+        effective_config : Mapping[str, Any]
+            Effective approximation config.
+        
+        Returns
+        -------
+        Optional[str]
+            Similarity alias when available.
+        
     """
     similarity_cfg = effective_config.get("similarity")
     if isinstance(similarity_cfg, Mapping):
@@ -175,16 +228,28 @@ def _compute_dense_approximations(
     effective_config: Mapping[str, Any],
     return_similarity_matrix: bool,
 ) -> FuzzyRoughApproximationResult:
-    """
-    @brief Compute approximations through the existing dense model path.
-
-    @param X: Optional feature matrix used when no precomputed matrix is supplied.
-    @param labels: Label vector.
-    @param model_alias: Normalized fuzzy-rough model alias.
-    @param similarity_matrix: Optional precomputed dense pairwise matrix.
-    @param effective_config: Flat or nested config snapshot.
-    @param return_similarity_matrix: Whether to include the dense matrix in the result.
-    @return: Public approximation result object.
+    """Compute approximations through the existing dense model path.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Optional feature matrix used when no precomputed matrix is supplied.
+        labels : np.ndarray
+            Label vector.
+        model_alias : str
+            Normalized fuzzy-rough model alias.
+        similarity_matrix : Optional[np.ndarray]
+            Optional precomputed dense pairwise matrix.
+        effective_config : Mapping[str, Any]
+            Flat or nested config snapshot.
+        return_similarity_matrix : bool
+            Whether to include the dense matrix in the result.
+        
+        Returns
+        -------
+        FuzzyRoughApproximationResult
+            Public approximation result object.
+        
     """
     sim = similarity_matrix
     if sim is None:
@@ -238,18 +303,32 @@ def _compute_blockwise_approximations(
     block_size: int,
     backend: str,
 ) -> FuzzyRoughApproximationResult:
-    """
-    @brief Compute exact blockwise approximations for supported models.
-
-    @param X: Feature matrix required for blockwise similarity generation.
-    @param labels: Label vector.
-    @param model_alias: Normalized model alias. Blockwise supports ITFRS, VQRS, and OWAFRS.
-    @param similarity_matrix: Must be None for blockwise execution.
-    @param effective_config: Flat or nested config snapshot.
-    @param return_similarity_matrix: Whether to materialize and return the matrix for inspection.
-    @param block_size: Positive block size passed to the similarity engine.
-    @param backend: Array backend alias. NumPy/auto are stable; CuPy is optional and explicit.
-    @return: Public approximation result object.
+    """Compute exact blockwise approximations for supported models.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Feature matrix required for blockwise similarity generation.
+        labels : np.ndarray
+            Label vector.
+        model_alias : str
+            Normalized model alias. Blockwise supports ITFRS, VQRS, and OWAFRS.
+        similarity_matrix : Optional[np.ndarray]
+            Must be None for blockwise execution.
+        effective_config : Mapping[str, Any]
+            Flat or nested config snapshot.
+        return_similarity_matrix : bool
+            Whether to materialize and return the matrix for inspection.
+        block_size : int
+            Positive block size passed to the similarity engine.
+        backend : str
+            Array backend alias. NumPy/auto are stable; CuPy is optional and explicit.
+        
+        Returns
+        -------
+        FuzzyRoughApproximationResult
+            Public approximation result object.
+        
     """
     if model_alias not in {"itfrs", "vqrs", "owafrs"}:
         raise NotImplementedError(
@@ -320,22 +399,43 @@ def compute_approximations(
     backend: str = "numpy",
     **flat_config: Any,
 ) -> FuzzyRoughApproximationResult:
-    """
-    @brief Compute fuzzy-rough lower, upper, boundary, and positive-region values.
-
-    @param X: Input feature matrix. Required unless similarity_matrix is provided.
-    @param y: Label vector aligned with X and/or similarity_matrix.
-    @param model: Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
-    @param similarity: Optional similarity alias for matrix construction.
-    @param similarity_matrix: Optional precomputed pairwise similarity matrix.
-    @param config: Optional flat or nested FRsutils config mapping.
-    @param return_similarity_matrix: If True, include the matrix in the result object.
-    @param engine: Approximation execution engine, "dense" or "blockwise".
-    @param block_size: Positive block size used by engine="blockwise".
-    @param backend: Array backend alias. Use "numpy"/"auto" or explicit optional "cupy".
-    @param flat_config: Additional flat sklearn-style model/similarity parameters.
-    @return: FuzzyRoughApproximationResult with named approximation arrays.
-    @raises ValueError: If required matrix/X inputs are missing.
+    """Compute fuzzy-rough lower, upper, boundary, and positive-region values.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Input feature matrix. Required unless similarity_matrix is provided.
+        y : np.ndarray
+            Label vector aligned with X and/or similarity_matrix.
+        model : str
+            Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
+        similarity : Optional[str]
+            Optional similarity alias for matrix construction.
+        similarity_matrix : Optional[np.ndarray]
+            Optional precomputed pairwise similarity matrix.
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested FRsutils config mapping.
+        return_similarity_matrix : bool
+            If True, include the matrix in the result object.
+        engine : str
+            Approximation execution engine, "dense" or "blockwise".
+        block_size : int
+            Positive block size used by engine="blockwise".
+        backend : str
+            Array backend alias. Use "numpy"/"auto" or explicit optional "cupy".
+        flat_config : Any
+            Additional flat sklearn-style model/similarity parameters.
+        
+        Returns
+        -------
+        FuzzyRoughApproximationResult
+            FuzzyRoughApproximationResult with named approximation arrays.
+        
+        Raises
+        ------
+        ValueError
+            If required matrix/X inputs are missing.
+        
     """
     if not isinstance(model, str) or not model.strip():
         raise TypeError("model must be a non-empty string.")
@@ -373,49 +473,85 @@ def compute_approximations(
 
 
 def compute_lower_approximation(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
-    """
-    @brief Compute only the lower approximation values.
-
-    @param X: Input feature matrix, or None when similarity_matrix is provided in kwargs.
-    @param y: Label vector.
-    @param kwargs: Parameters forwarded to compute_approximations.
-    @return: Lower approximation array.
+    """Compute only the lower approximation values.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Input feature matrix, or None when similarity_matrix is provided in kwargs.
+        y : np.ndarray
+            Label vector.
+        kwargs : Any
+            Parameters forwarded to compute_approximations.
+        
+        Returns
+        -------
+        np.ndarray
+            Lower approximation array.
+        
     """
     return compute_approximations(X, y, **kwargs).lower
 
 
 def compute_upper_approximation(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
-    """
-    @brief Compute only the upper approximation values.
-
-    @param X: Input feature matrix, or None when similarity_matrix is provided in kwargs.
-    @param y: Label vector.
-    @param kwargs: Parameters forwarded to compute_approximations.
-    @return: Upper approximation array.
+    """Compute only the upper approximation values.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Input feature matrix, or None when similarity_matrix is provided in kwargs.
+        y : np.ndarray
+            Label vector.
+        kwargs : Any
+            Parameters forwarded to compute_approximations.
+        
+        Returns
+        -------
+        np.ndarray
+            Upper approximation array.
+        
     """
     return compute_approximations(X, y, **kwargs).upper
 
 
 def compute_boundary_region(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
-    """
-    @brief Compute only the boundary-region values.
-
-    @param X: Input feature matrix, or None when similarity_matrix is provided in kwargs.
-    @param y: Label vector.
-    @param kwargs: Parameters forwarded to compute_approximations.
-    @return: Boundary-region array.
+    """Compute only the boundary-region values.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Input feature matrix, or None when similarity_matrix is provided in kwargs.
+        y : np.ndarray
+            Label vector.
+        kwargs : Any
+            Parameters forwarded to compute_approximations.
+        
+        Returns
+        -------
+        np.ndarray
+            Boundary-region array.
+        
     """
     return compute_approximations(X, y, **kwargs).boundary
 
 
 def compute_positive_region(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
-    """
-    @brief Compute only the positive-region values.
-
-    @param X: Input feature matrix, or None when similarity_matrix is provided in kwargs.
-    @param y: Label vector.
-    @param kwargs: Parameters forwarded to compute_approximations.
-    @return: Positive-region score array.
+    """Compute only the positive-region values.
+        
+        Parameters
+        ----------
+        X : Optional[np.ndarray]
+            Input feature matrix, or None when similarity_matrix is provided in kwargs.
+        y : np.ndarray
+            Label vector.
+        kwargs : Any
+            Parameters forwarded to compute_approximations.
+        
+        Returns
+        -------
+        np.ndarray
+            Positive-region score array.
+        
     """
     return compute_approximations(X, y, **kwargs).positive_region
 

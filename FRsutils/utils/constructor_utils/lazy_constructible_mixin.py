@@ -8,11 +8,13 @@ from enum import Enum, auto
 from abc import ABC, abstractmethod
 
 class LifecycleState(Enum):
+    """LifecycleState component for FRsutils fuzzy-rough computations."""
     UNCONFIGURED = auto()
     CONFIGURED = auto()
     BUILT = auto()
 
 class LazyConstructibleMixin(ABC):
+    """LazyConstructibleMixin component for FRsutils fuzzy-rough computations."""
     _ALLOWED_TRANSITIONS = {
         LifecycleState.UNCONFIGURED: [LifecycleState.CONFIGURED],
         LifecycleState.CONFIGURED: [LifecycleState.CONFIGURED, LifecycleState.BUILT],
@@ -26,9 +28,7 @@ class LazyConstructibleMixin(ABC):
         self._state = new_state
 
     def _validate_config(self, *, model_registry=None, **config):
-        """
-        @brief Generic, lightweight validation for clone-friendly config.
-        """
+        """Generic, lightweight validation for clone-friendly config."""
         if model_registry is None:
             return
 
@@ -49,6 +49,7 @@ class LazyConstructibleMixin(ABC):
             ) from exc
 
     def configure(self, *, model_registry=None, **config):
+        """Configure."""
         if not config:
             raise ValueError("No configuration was provided to `configure()`. The config cannot be empty.")
 
@@ -62,6 +63,7 @@ class LazyConstructibleMixin(ABC):
         self._set_state(LifecycleState.CONFIGURED)
 
     def build(self, *args):
+        """Build."""
         if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.CONFIGURED:
             raise RuntimeError("Either Object is not configured or is already built.")
 
@@ -89,18 +91,22 @@ class LazyConstructibleMixin(ABC):
 
     @property
     def is_built(self) -> bool:
+        """Is built."""
         return getattr(self, "_state", LifecycleState.UNCONFIGURED) == LifecycleState.BUILT
 
     @property
     def state_str(self) -> str:
+        """State str."""
         return getattr(self, "_state", LifecycleState.UNCONFIGURED).name
 
     @property
     def state_enum(self) -> LifecycleState:
+        """State enum."""
         return getattr(self, "_state", LifecycleState.UNCONFIGURED)
 
     @property
     def lazy_object(self):
+        """Lazy object."""
         if getattr(self, "_state", LifecycleState.UNCONFIGURED) != LifecycleState.BUILT:
             raise RuntimeError("Object has not been built yet. Call build() first.")
         return self._lazy_object

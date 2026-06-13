@@ -11,18 +11,15 @@ from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFact
 
 
 class Implicator(RegistryFactoryMixin):
-    """
-    @brief Abstract base class for fuzzy implicators.
-
+    """Abstract base class for fuzzy implicators.
+    
     Dense public calls remain NumPy-compatible. `compute_backend` exposes the
     same formulas as vectorized backend operations so approximation engines do
     not need to mirror implicator logic.
     """
 
     def __call__(self, a: Union[float, np.ndarray], b: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-        """
-        @brief Apply the implicator to scalar or NumPy array inputs.
-        """
+        """Apply the implicator to scalar or NumPy array inputs."""
         a_arr = np.asarray(a)
         b_arr = np.asarray(b)
 
@@ -35,9 +32,7 @@ class Implicator(RegistryFactoryMixin):
         return self.compute_backend(a_arr, b_arr, xp=np, validate_inputs=True)
 
     def _validate_backend_pair(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True) -> None:
-        """
-        @brief Validate backend array pair shape and optionally value range.
-        """
+        """Validate backend array pair shape and optionally value range."""
         if getattr(a, "shape", None) != getattr(b, "shape", None):
             raise ValueError(f"Incompatible shapes: {getattr(a, 'shape', None)} and {getattr(b, 'shape', None)}")
         if not validate_inputs:
@@ -53,38 +48,36 @@ class Implicator(RegistryFactoryMixin):
 
     @abstractmethod
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
-        """
-        @brief Apply the implicator to two backend arrays element-wise.
-        """
+        """Apply the implicator to two backend arrays element-wise."""
         raise NotImplementedError("all subclasses must implement compute_backend")
 
     @abstractmethod
     def _compute_scalar(self, a: float, b: float) -> float:
-        """
-        @brief Perform implicator operation on a pair of scalars.
-        """
+        """Perform implicator operation on a pair of scalars."""
         raise NotImplementedError("all subclasses must implement _compute_scalar")
 
     @classmethod
     @abstractmethod
     def validate_params(cls, **kwargs):
-        """@brief Optional parameter validation hook for subclasses."""
+        """Optional parameter validation hook for subclasses."""
         raise NotImplementedError("all subclasses must implement validate_params")
 
     @abstractmethod
     def _get_params(self) -> dict:
-        """@brief Returns a dictionary of the implicator's parameters."""
+        """Returns a dictionary of the implicator's parameters."""
         raise NotImplementedError("all derived classes need to implement _get_params")
 
 
 @Implicator.register("lukasiewicz", "luk")
 class LukasiewiczImplicator(Implicator):
-    """@brief Lukasiewicz implicator: I(a, b) = min(1, 1 - a + b)."""
+    """Lukasiewicz implicator: I(a, b) = min(1, 1 - a + b)."""
 
     def __init__(self):
+        """Initialize the LukasiewiczImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.minimum(1.0, 1.0 - a + b)
 
@@ -93,6 +86,7 @@ class LukasiewiczImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -101,12 +95,14 @@ class LukasiewiczImplicator(Implicator):
 
 @Implicator.register("goedel")
 class GoedelImplicator(Implicator):
-    """@brief Gödel implicator: I(a, b) = 1 if a <= b; else b."""
+    """Gödel implicator: I(a, b) = 1 if a <= b; else b."""
 
     def __init__(self):
+        """Initialize the GoedelImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.where(a <= b, 1.0, b)
 
@@ -115,6 +111,7 @@ class GoedelImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -123,12 +120,14 @@ class GoedelImplicator(Implicator):
 
 @Implicator.register("kleenedienes", "kleene", "kd")
 class KleeneDienesImplicator(Implicator):
-    """@brief Kleene-Dienes implicator: I(a, b) = max(1 - a, b)."""
+    """Kleene-Dienes implicator: I(a, b) = max(1 - a, b)."""
 
     def __init__(self):
+        """Initialize the KleeneDienesImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.maximum(1.0 - a, b)
 
@@ -137,6 +136,7 @@ class KleeneDienesImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -145,12 +145,14 @@ class KleeneDienesImplicator(Implicator):
 
 @Implicator.register("reichenbach")
 class ReichenbachImplicator(Implicator):
-    """@brief Reichenbach implicator: I(a, b) = 1 - a + (a * b)."""
+    """Reichenbach implicator: I(a, b) = 1 - a + (a * b)."""
 
     def __init__(self):
+        """Initialize the ReichenbachImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return 1.0 - a + a * b
 
@@ -159,6 +161,7 @@ class ReichenbachImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -167,12 +170,14 @@ class ReichenbachImplicator(Implicator):
 
 @Implicator.register("goguen", "product")
 class GoguenImplicator(Implicator):
-    """@brief Goguen implicator: I(a, b) = 1 if a <= b; b / a otherwise."""
+    """Goguen implicator: I(a, b) = 1 if a <= b; b / a otherwise."""
 
     def __init__(self):
+        """Initialize the GoguenImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         safe_a = xp.where(a > 0.0, a, 1.0)
         ratio = b / safe_a
@@ -183,6 +188,7 @@ class GoguenImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -191,12 +197,14 @@ class GoguenImplicator(Implicator):
 
 @Implicator.register("rescher")
 class RescherImplicator(Implicator):
-    """@brief Rescher implicator: I(a, b) = 1 if a <= b; 0 otherwise."""
+    """Rescher implicator: I(a, b) = 1 if a <= b; 0 otherwise."""
 
     def __init__(self):
+        """Initialize the RescherImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.where(a <= b, 1.0, 0.0)
 
@@ -205,6 +213,7 @@ class RescherImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -213,12 +222,14 @@ class RescherImplicator(Implicator):
 
 @Implicator.register("yager")
 class YagerImplicator(Implicator):
-    """@brief Yager implicator: I(a, b) = b^a if a > 0 or b > 0; 1 otherwise."""
+    """Yager implicator: I(a, b) = b^a if a > 0 or b > 0; 1 otherwise."""
 
     def __init__(self):
+        """Initialize the YagerImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.where((a == 0.0) & (b == 0.0), 1.0, b ** a)
 
@@ -227,6 +238,7 @@ class YagerImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -235,12 +247,14 @@ class YagerImplicator(Implicator):
 
 @Implicator.register("weber")
 class WeberImplicator(Implicator):
-    """@brief Weber implicator: I(a, b) = b if a == 1; 1 if a < 1."""
+    """Weber implicator: I(a, b) = b if a == 1; 1 if a < 1."""
 
     def __init__(self):
+        """Initialize the WeberImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.where(a == 1.0, b, 1.0)
 
@@ -249,6 +263,7 @@ class WeberImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:
@@ -257,12 +272,14 @@ class WeberImplicator(Implicator):
 
 @Implicator.register("fodor")
 class FodorImplicator(Implicator):
-    """@brief Fodor implicator: I(a, b) = max(1 - a, b) if a > b; 1 otherwise."""
+    """Fodor implicator: I(a, b) = max(1 - a, b) if a > b; 1 otherwise."""
 
     def __init__(self):
+        """Initialize the FodorImplicator instance."""
         self.validate_params()
 
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
+        """Compute the component formula using the provided array backend."""
         self._validate_backend_pair(a, b, xp=xp, validate_inputs=validate_inputs)
         return xp.where(a <= b, 1.0, xp.maximum(1.0 - a, b))
 
@@ -271,6 +288,7 @@ class FodorImplicator(Implicator):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def _get_params(self) -> dict:

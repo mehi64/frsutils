@@ -12,13 +12,18 @@ import numpy as np
 
 @FuzzyRoughModel.register("itfrs")
 class ITFRS(FuzzyRoughModel):
-    """
-    @brief Implicator-TNorm Fuzzy Rough Set approximation model.
-
-    @param similarity_matrix: Precomputed similarity matrix (n x n)
-    @param labels: Array of class labels for each instance
-    @param tnorm: T-norm operator (object from TNorm)
-    @param implicator: Fuzzy implicator operator (object from Implicator)
+    """Implicator-TNorm Fuzzy Rough Set approximation model.
+    
+    Parameters
+    ----------
+    similarity_matrix : object
+        Precomputed similarity matrix (n x n)
+    labels : object
+        Array of class labels for each instance
+    tnorm : object
+        T-norm operator (object from TNorm)
+    implicator : object
+        Fuzzy implicator operator (object from Implicator)
     """
     def __init__(self, 
                  similarity_matrix: np.ndarray, 
@@ -26,6 +31,7 @@ class ITFRS(FuzzyRoughModel):
                  ub_tnorm: tn.TNorm, 
                  lb_implicator: imp.Implicator,
                  logger=None):
+        """Initialize the ITFRS instance."""
         super().__init__(similarity_matrix,
                           labels,
                           logger=logger)
@@ -40,10 +46,13 @@ class ITFRS(FuzzyRoughModel):
 
 
     def lower_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the lower approximation using the implicator.
-
-        @return: Lower approximation array (n,)
+        """Compute the lower approximation using the implicator.
+                
+                Returns
+                -------
+                np.ndarray
+                    Lower approximation array (n,)
+                
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         implication_vals = self.lb_implicator(self.similarity_matrix, label_mask)
@@ -51,10 +60,13 @@ class ITFRS(FuzzyRoughModel):
         return np.min(implication_vals, axis=1)
 
     def upper_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the upper approximation using the T-norm.
-
-        @return: Upper approximation array (n,)
+        """Compute the upper approximation using the T-norm.
+                
+                Returns
+                -------
+                np.ndarray
+                    Upper approximation array (n,)
+                
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.ub_tnorm(self.similarity_matrix, label_mask)
@@ -62,12 +74,18 @@ class ITFRS(FuzzyRoughModel):
         return np.max(tnorm_vals, axis=1)
 
     def to_dict(self, include_data: bool = False) -> dict:
-        """
-        @brief Serialize the ITFRS model to a dictionary.
-
-        @param include_data: If True, include similarity_matrix and labels in the output.
-
-        @return: Dictionary representation of the model.
+        """Serialize the ITFRS model to a dictionary.
+                
+                Parameters
+                ----------
+                include_data : bool
+                    If True, include similarity_matrix and labels in the output.
+                
+                Returns
+                -------
+                dict
+                    Dictionary representation of the model.
+                
         """
         data = {
             "type": "itfrs",
@@ -84,15 +102,24 @@ class ITFRS(FuzzyRoughModel):
 
     @classmethod
     def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "ITFRS":
-        """
-        @brief Reconstruct an ITFRS model from a serialized dictionary.
-
-        @param data: Serialized dictionary (from to_dict)
-        @param similarity_matrix: Optional matrix to override or fill in if not in data
-        @param labels: Optional label vector to override or fill in if not in data
-        @param logger: Optional logger
-
-        @return: ITFRS instance
+        """Reconstruct an ITFRS model from a serialized dictionary.
+                
+                Parameters
+                ----------
+                data : dict
+                    Serialized dictionary (from to_dict)
+                similarity_matrix : object
+                    Optional matrix to override or fill in if not in data
+                labels : object
+                    Optional label vector to override or fill in if not in data
+                logger : object
+                    Optional logger
+                
+                Returns
+                -------
+                'ITFRS'
+                    ITFRS instance
+                
         """
         
         # Rebuild operators
@@ -109,10 +136,13 @@ class ITFRS(FuzzyRoughModel):
         return cls(sim, lbl, tnorm, implicator, logger=logger)
 
     def describe_params_detailed(self) -> dict:
-        """
-        @brief Describe internal T-norm and implicator parameters.
-
-        @return: Dictionary describing parameters of components.
+        """Describe internal T-norm and implicator parameters.
+                
+                Returns
+                -------
+                dict
+                    Dictionary describing parameters of components.
+                
         """
         return {
             "ub_tnorm": self.ub_tnorm.describe_params_detailed(),
@@ -120,10 +150,13 @@ class ITFRS(FuzzyRoughModel):
         }
     
     def _get_params(self) -> dict:
-        """
-        @brief Describe internal T-norm and implicator parameters.
-
-        @return: Dictionary containing T-norm and implicator used in itfrs.
+        """Describe internal T-norm and implicator parameters.
+                
+                Returns
+                -------
+                dict
+                    Dictionary containing T-norm and implicator used in itfrs.
+                
         """
         return {
             "ub_tnorm": self.ub_tnorm,
@@ -134,10 +167,12 @@ class ITFRS(FuzzyRoughModel):
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief validation hook.
-
-        @param kwargs
+        """validation hook.
+        
+        Parameters
+        ----------
+        kwargs : object
+            Parameter value.
         """
         
         tnrm = kwargs.get("ub_tnorm")
@@ -151,13 +186,22 @@ class ITFRS(FuzzyRoughModel):
 
     @classmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict) -> "ITFRS":
-        """
-        @brief Create an ITFRS instance from a configuration dictionary.
-
-        @param config: Serialized config dict (can include tnorm, implicator, and optionally data)
-        @param similarity_matrix: Optional override for similarity matrix
-        @param labels: Optional override for label vector
-        @return: ITFRS instance
+        """Create an ITFRS instance from a configuration dictionary.
+                
+                Parameters
+                ----------
+                config : dict
+                    Serialized config dict (can include tnorm, implicator, and optionally data)
+                similarity_matrix : object
+                    Optional override for similarity matrix
+                labels : object
+                    Optional override for label vector
+                
+                Returns
+                -------
+                'ITFRS'
+                    ITFRS instance
+                
         """
         nested = config.pop("_nested_config", None)
 

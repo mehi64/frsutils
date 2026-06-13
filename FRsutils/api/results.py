@@ -14,23 +14,38 @@ import numpy as np
 
 @dataclass(frozen=True)
 class FuzzyRoughApproximationResult:
-    """
-    @brief Immutable public result object for fuzzy-rough approximations.
-
-    @param lower: Lower approximation score for each sample.
-    @param upper: Upper approximation score for each sample.
-    @param boundary: Boundary-region score for each sample, usually upper - lower.
-    @param positive_region: Positive-region score for each sample.
-    @param model: Public fuzzy-rough model alias used to compute the result.
-    @param similarity: Public similarity alias used to build the matrix, if known.
-    @param similarity_matrix: Optional pairwise similarity matrix.
-    @param config: Optional effective flat/nested configuration snapshot.
-    @param engine: Canonical execution engine used by compute_approximations.
-    @param backend: Canonical resolved backend used for similarity-block execution.
-    @param block_size: Block size used when engine="blockwise"; None for dense execution.
-    @param used_blockwise: True when the blockwise approximation path was used.
-    @param used_gpu_similarity_blocks: True when similarity blocks were computed through CuPy.
-    @param used_gpu_approximation_accumulators: True when approximation reductions used CuPy accumulators.
+    """Immutable public result object for fuzzy-rough approximations.
+    
+    Parameters
+    ----------
+    lower : object
+        Lower approximation score for each sample.
+    upper : object
+        Upper approximation score for each sample.
+    boundary : object
+        Boundary-region score for each sample, usually upper - lower.
+    positive_region : object
+        Positive-region score for each sample.
+    model : object
+        Public fuzzy-rough model alias used to compute the result.
+    similarity : object
+        Public similarity alias used to build the matrix, if known.
+    similarity_matrix : object
+        Optional pairwise similarity matrix.
+    config : object
+        Optional effective flat/nested configuration snapshot.
+    engine : object
+        Canonical execution engine used by compute_approximations.
+    backend : object
+        Canonical resolved backend used for similarity-block execution.
+    block_size : object
+        Block size used when engine="blockwise"; None for dense execution.
+    used_blockwise : object
+        True when the blockwise approximation path was used.
+    used_gpu_similarity_blocks : object
+        True when similarity blocks were computed through CuPy.
+    used_gpu_approximation_accumulators : object
+        True when approximation reductions used CuPy accumulators.
     """
 
     lower: np.ndarray
@@ -49,11 +64,18 @@ class FuzzyRoughApproximationResult:
     used_gpu_approximation_accumulators: bool = False
 
     def as_dict(self, *, include_similarity_matrix: bool = False) -> Dict[str, Any]:
-        """
-        @brief Convert this result into a plain dictionary.
-
-        @param include_similarity_matrix: If True, include the optional similarity matrix.
-        @return: Dictionary representation of the result.
+        """Convert this result into a plain dictionary.
+                
+                Parameters
+                ----------
+                include_similarity_matrix : bool
+                    If True, include the optional similarity matrix.
+                
+                Returns
+                -------
+                Dict[str, Any]
+                    Dictionary representation of the result.
+                
         """
         data: Dict[str, Any] = {
             "lower": self.lower,

@@ -23,7 +23,7 @@ Y_BLOCKWISE = np.array([0, 0, 0, 1, 1, 1])
 
 @pytest.mark.parametrize("block_size", [1, 2, 4, 20])
 def test_blockwise_owafrs_matches_dense_owafrs_for_multiple_block_sizes(block_size):
-    """@brief Exact blockwise OWAFRS must match dense OWAFRS for all result fields."""
+    """Exact blockwise OWAFRS must match dense OWAFRS for all result fields."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -50,7 +50,7 @@ def test_blockwise_owafrs_matches_dense_owafrs_for_multiple_block_sizes(block_si
 
 
 def test_blockwise_owafrs_matches_dense_with_custom_components():
-    """@brief Blockwise OWAFRS must reuse T-norm, implicator, and OWA settings."""
+    """Blockwise OWAFRS must reuse T-norm, implicator, and OWA settings."""
     kwargs = dict(
         model="owafrs",
         similarity="gaussian",
@@ -78,7 +78,7 @@ def test_blockwise_owafrs_matches_dense_with_custom_components():
 
 
 def test_blockwise_owafrs_can_materialize_similarity_matrix_when_requested():
-    """@brief return_similarity_matrix=True remains available for debugging/contract checks."""
+    """return_similarity_matrix=True remains available for debugging/contract checks."""
     expected_matrix = build_similarity_matrix(X_BLOCKWISE, similarity="linear")
     blockwise = compute_approximations(
         X_BLOCKWISE,
@@ -94,7 +94,7 @@ def test_blockwise_owafrs_can_materialize_similarity_matrix_when_requested():
 
 
 def test_compute_positive_region_wrapper_supports_blockwise_owafrs():
-    """@brief Convenience wrappers pass the OWAFRS blockwise execution options through."""
+    """Convenience wrappers pass the OWAFRS blockwise execution options through."""
     dense_scores = compute_positive_region(X_BLOCKWISE, Y_BLOCKWISE, model="owafrs", similarity="linear")
     blockwise_scores = compute_positive_region(
         X_BLOCKWISE,

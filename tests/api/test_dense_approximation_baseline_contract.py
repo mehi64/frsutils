@@ -42,7 +42,7 @@ EXPECTED_BY_MODEL = {
 
 @pytest.mark.parametrize("model_name", ["itfrs", "vqrs", "owafrs"])
 def test_dense_approximation_baseline_exact_values(model_name):
-    """@brief Public dense approximation output stays fixed for the small Phase 0 fixture."""
+    """Public dense approximation output stays fixed for the small Phase 0 fixture."""
     result = compute_approximations(
         X_BASELINE,
         Y_BASELINE,
@@ -63,7 +63,7 @@ def test_dense_approximation_baseline_exact_values(model_name):
 
 @pytest.mark.parametrize("model_name", ["itfrs", "vqrs", "owafrs"])
 def test_precomputed_similarity_path_matches_x_path_for_dense_baseline(model_name):
-    """@brief Reusing a dense similarity matrix must match the X-driven public path."""
+    """Reusing a dense similarity matrix must match the X-driven public path."""
     similarity_matrix = build_similarity_matrix(X_BASELINE, similarity="linear")
 
     from_x = compute_approximations(X_BASELINE, Y_BASELINE, model=model_name, similarity="linear")
@@ -81,7 +81,7 @@ def test_precomputed_similarity_path_matches_x_path_for_dense_baseline(model_nam
 
 
 def test_convenience_wrappers_match_dense_full_result():
-    """@brief Public wrapper functions must remain aliases for the full dense result fields."""
+    """Public wrapper functions must remain aliases for the full dense result fields."""
     result = compute_approximations(X_BASELINE, Y_BASELINE, model="itfrs", similarity="linear")
 
     np.testing.assert_allclose(
@@ -107,7 +107,7 @@ def test_convenience_wrappers_match_dense_full_result():
 
 
 def test_dense_result_as_dict_excludes_similarity_matrix_by_default():
-    """@brief Result serialization keeps the optional dense matrix out unless requested."""
+    """Result serialization keeps the optional dense matrix out unless requested."""
     result = compute_approximations(
         X_BASELINE,
         Y_BASELINE,

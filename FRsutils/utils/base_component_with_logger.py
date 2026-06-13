@@ -7,35 +7,37 @@ This module provides shared utility behavior used by FRsutils components.
 from FRsutils.utils.logger.logger_util import get_logger
 
 class BaseComponentWithLogger:
-    """
-    @brief Base class to provide logger injection and access.
-
+    """Base class to provide logger injection and access.
+    
     Use this in any class that requires a logger. You can inject a logger explicitly
     or default to the framework's standard TinyLogger.
     """
 
     def __init__(self, logger=None):
+        """Initialize the BaseComponentWithLogger instance."""
         self._logger = logger or get_logger()
 
     @property
     def logger(self):
-        """
-        @brief Property accessor for the logger.
-
-        @return: A logger instance (either injected or default).
+        """Property accessor for the logger.
+        
+        Returns
+        -------
+        object
+            A logger instance (either injected or default).
         """
         return self._logger
     
     @classmethod
     def get_logger(cls):
+        """Return the logger associated with this component."""
         from FRsutils.utils.logger.logger_util import get_logger
         return get_logger()
 
     @staticmethod
     def get_silent_logger():
-        """
-        @brief Returns a silent logger that discards all messages.
-
+        """Returns a silent logger that discards all messages.
+        
         Useful in unit tests or when logging needs to be suppressed.
         """
         class SilentLogger:

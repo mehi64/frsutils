@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_phase7_public_api_quickstart_runs_from_source_checkout():
-    """@brief Public API quickstart example should run successfully."""
+    """Public API quickstart example should run successfully."""
     repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "examples" / "phase7_public_api_quickstart.py"
 
@@ -25,7 +25,7 @@ def test_phase7_public_api_quickstart_runs_from_source_checkout():
 
 
 def test_phase7_benchmark_smoke_example_writes_outputs(tmp_path):
-    """@brief Benchmark smoke example should write JSON/CSV artifacts."""
+    """Benchmark smoke example should write JSON/CSV artifacts."""
     repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "examples" / "phase7_benchmark_smoke.py"
     output_dir = tmp_path / "phase7_benchmark_smoke"

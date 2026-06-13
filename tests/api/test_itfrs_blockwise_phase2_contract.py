@@ -23,7 +23,7 @@ Y_BLOCKWISE = np.array([0, 0, 0, 1, 1, 1])
 
 @pytest.mark.parametrize("block_size", [1, 2, 4, 20])
 def test_blockwise_itfrs_matches_dense_itfrs_for_multiple_block_sizes(block_size):
-    """@brief Exact blockwise ITFRS must match dense ITFRS for all accumulator fields."""
+    """Exact blockwise ITFRS must match dense ITFRS for all accumulator fields."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -50,7 +50,7 @@ def test_blockwise_itfrs_matches_dense_itfrs_for_multiple_block_sizes(block_size
 
 
 def test_blockwise_itfrs_matches_dense_with_gaussian_similarity():
-    """@brief Blockwise ITFRS must reuse the same similarity params as dense construction."""
+    """Blockwise ITFRS must reuse the same similarity params as dense construction."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -77,7 +77,7 @@ def test_blockwise_itfrs_matches_dense_with_gaussian_similarity():
 
 
 def test_blockwise_itfrs_can_materialize_similarity_matrix_when_requested():
-    """@brief return_similarity_matrix=True remains available for debugging/contract checks."""
+    """return_similarity_matrix=True remains available for debugging/contract checks."""
     expected_matrix = build_similarity_matrix(X_BLOCKWISE, similarity="linear")
     blockwise = compute_approximations(
         X_BLOCKWISE,
@@ -93,7 +93,7 @@ def test_blockwise_itfrs_can_materialize_similarity_matrix_when_requested():
 
 
 def test_compute_positive_region_wrapper_supports_blockwise_itfrs():
-    """@brief Convenience wrappers pass the blockwise execution options through."""
+    """Convenience wrappers pass the blockwise execution options through."""
     dense_scores = compute_positive_region(X_BLOCKWISE, Y_BLOCKWISE, model="itfrs", similarity="linear")
     blockwise_scores = compute_positive_region(
         X_BLOCKWISE,
@@ -108,7 +108,7 @@ def test_compute_positive_region_wrapper_supports_blockwise_itfrs():
 
 
 def test_phase5_blockwise_now_supports_owafrs_after_row_buffer_accumulator_was_added():
-    """@brief Phase 5 replaces the old OWAFRS guardrail with exact blockwise support."""
+    """Phase 5 replaces the old OWAFRS guardrail with exact blockwise support."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -129,7 +129,7 @@ def test_phase5_blockwise_now_supports_owafrs_after_row_buffer_accumulator_was_a
 
 
 def test_phase2_blockwise_requires_x_not_precomputed_similarity_matrix():
-    """@brief Blockwise execution generates blocks from X and rejects precomputed matrices."""
+    """Blockwise execution generates blocks from X and rejects precomputed matrices."""
     sim = build_similarity_matrix(X_BLOCKWISE, similarity="linear")
 
     with pytest.raises(ValueError, match="does not accept precomputed similarity_matrix"):

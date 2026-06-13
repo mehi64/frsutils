@@ -10,19 +10,26 @@ from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFact
 
 
 class OWAWeights(RegistryFactoryMixin):
-    """
-    @brief Abstract base class for OWA weight strategies.
-
+    """Abstract base class for OWA weight strategies.
+    
     Subclasses must implement `_raw_weights(n)` that generates unnormalized weights.
     This class handles normalization and sorting.
     """
     def weights(self, n: int, order: str = 'asc') -> np.ndarray:
-        """
-        @brief Unified method to retrieve OWA weights in specified order.
-
-        @param n: Number of weights to compute.
-        @param order: 'asc' for increasing weights, 'desc' for decreasing weights.
-        @return: Normalized OWA weight vector.
+        """Unified method to retrieve OWA weights in specified order.
+                
+                Parameters
+                ----------
+                n : int
+                    Number of weights to compute.
+                order : str
+                    'asc' for increasing weights, 'desc' for decreasing weights.
+                
+                Returns
+                -------
+                np.ndarray
+                    Normalized OWA weight vector.
+                
         """
         if order is None:
             raise ValueError("order must be a string; either 'asc' or 'desc'. You entered a None value.")
@@ -45,25 +52,38 @@ class OWAWeights(RegistryFactoryMixin):
 
     @abstractmethod
     def _raw_weights(self, n: int) -> np.ndarray:
-        """
-        @brief Generate unnormalized, unsorted weight values.
-
-        @param n: Number of weights
-        @return: Raw weights (to be normalized and sorted)
+        """Generate unnormalized, unsorted weight values.
+                
+                Parameters
+                ----------
+                n : int
+                    Number of weights
+                
+                Returns
+                -------
+                np.ndarray
+                    Raw weights (to be normalized and sorted)
+                
         """
         raise NotImplementedError("Subclasses must implement _raw_weights(n)")
 
     def _validate_n(self, n: int):
-        """
-        @brief Validates the number of weights.
-
-        @details
-        Raises ValueError if:
-        - n is not a positive integer
-        - n > 20 for ExponentialOWAWeightStrategy due to potential weight overflow
-
-        @param n: Number of weights
-        @raise ValueError: On invalid or unsafe values
+        """Validates the number of weights.
+                
+                Raises ValueError if:
+                - n is not a positive integer
+                - n > 20 for ExponentialOWAWeightStrategy due to potential weight overflow
+                
+                Parameters
+                ----------
+                n : int
+                    Number of weights
+                
+                Raises
+                ------
+                ValueError
+                    On invalid or unsafe values
+                
         """
         if not isinstance(n, int) or n <= 0:
             raise ValueError("n must be a positive integer")
@@ -74,13 +94,25 @@ class OWAWeights(RegistryFactoryMixin):
 
 
     def _normalize(self, weights: np.ndarray) -> np.ndarray:
-        """
-        @brief Normalizes weights.
-
-        @param weights: Unnormalized weights
-        @param order: 'asc' or 'desc'
-        @return: Normalized and ordered weights
-        @raise ValueError: If weights are not valid or order is invalid
+        """Normalizes weights.
+                
+                Parameters
+                ----------
+                weights : np.ndarray
+                    Unnormalized weights
+                order : object
+                    'asc' or 'desc'
+                
+                Returns
+                -------
+                np.ndarray
+                    Normalized and ordered weights
+                
+                Raises
+                ------
+                ValueError
+                    If weights are not valid or order is invalid
+                
         """
         total = weights.sum()
         if total == 0 or not np.isfinite(total):
@@ -93,8 +125,8 @@ class OWAWeights(RegistryFactoryMixin):
 
 @OWAWeights.register("linear")
 class LinearOWAWeights(OWAWeights):
-    """
-    @brief Linear OWA weighting strategy.
+    """Linear OWA weighting strategy.
+    
     Generates linearly increasing weights.
     """
     def _raw_weights(self, n: int) -> np.ndarray:
@@ -105,19 +137,22 @@ class LinearOWAWeights(OWAWeights):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def to_dict(self) -> dict:
+        """Serialize the component configuration to a dictionary."""
         return {"type": self.__class__.__name__, "name": "linear", "params": self._get_params()}
 
 
 @OWAWeights.register("exponential", "exp")
 class ExponentialOWAWeights(OWAWeights):
-    """
-    @brief Exponential OWA weighting strategy.
+    """Exponential OWA weighting strategy.
+    
     Generates exponentially increasing weights controlled by a base.
     """
     def __init__(self, base: float = 2.0):
+        """Initialize the ExponentialOWAWeights instance."""
         self.validate_params(base=base)
         self.base = base
 
@@ -128,10 +163,12 @@ class ExponentialOWAWeights(OWAWeights):
         return {"base": self.base}
 
     def to_dict(self) -> dict:
+        """Serialize the component configuration to a dictionary."""
         return {"type": self.__class__.__name__, "name": "exponential", "params": self._get_params()}
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         base = kwargs.get("base")
         if base is None or not isinstance(base, (int, float)) or base <= 1:
             raise ValueError("Parameter 'base' must be > 1")
@@ -139,8 +176,8 @@ class ExponentialOWAWeights(OWAWeights):
 
 @OWAWeights.register("harmonic", "harm")
 class HarmonicOWAWeights(OWAWeights):
-    """
-    @brief Harmonic OWA weighting strategy.
+    """Harmonic OWA weighting strategy.
+    
     Generates weights inversely proportional to index (1/i).
     """
     def _raw_weights(self, n: int) -> np.ndarray:
@@ -151,16 +188,18 @@ class HarmonicOWAWeights(OWAWeights):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def to_dict(self) -> dict:
+        """Serialize the component configuration to a dictionary."""
         return {"type": self.__class__.__name__, "name": "harmonic", "params": self._get_params()}
 
 
 @OWAWeights.register("logarithmic", "log")
 class LogarithmicOWAWeights(OWAWeights):
-    """
-    @brief Logarithmic OWA weighting strategy.
+    """Logarithmic OWA weighting strategy.
+    
     Uses log(i + 1) as raw weights.
     """
     def _raw_weights(self, n: int) -> np.ndarray:
@@ -171,7 +210,9 @@ class LogarithmicOWAWeights(OWAWeights):
 
     @classmethod
     def validate_params(cls, **kwargs):
+        """Validate constructor parameters for this component."""
         pass
 
     def to_dict(self) -> dict:
+        """Serialize the component configuration to a dictionary."""
         return {"type": self.__class__.__name__, "name": "logarithmic", "params": self._get_params()}

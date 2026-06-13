@@ -32,9 +32,8 @@ def test_scalar_call_valid(implicator_name):
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
 def test_scalar_call_matches_vectorized_outputs(implicator_name, testset):
-    """
-    @brief Validates that scalar __call__(a, b) matches vectorized results for each test pair.
-
+    """Validates that scalar __call__(a, b) matches vectorized results for each test pair.
+    
     This ensures implicator logic is consistent when called per-element.
     """
 
@@ -69,9 +68,8 @@ def test_implicator_call_vector_output(implicator_name, testset):
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_exhaustive_grid_no_exception(implicator_name):
-    """
-    @brief Tests whether implicator handles full [0,1] grid without exceptions.
-
+    """Tests whether implicator handles full [0,1] grid without exceptions.
+    
     Uses meshgrid of 0.0 to 1.0 with 101 values for each axis (step=0.01).
     Applies implicator elementwise on all combinations.
     """
@@ -92,9 +90,8 @@ def test_implicator_exhaustive_grid_no_exception(implicator_name):
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
 def test_equivalence_of_constructor_create_fromdict_with_synthetic_data(implicator_name, testset):
-    """
-    @brief Verifies that explicitly constructed, factory-created, and deserialized implicators yield the same outputs.
-
+    """Verifies that explicitly constructed, factory-created, and deserialized implicators yield the same outputs.
+    
     For each implicator:
     - Instantiate explicitly using the class
     - Instantiate via mixin's .create()
@@ -138,10 +135,9 @@ def test_equivalence_of_constructor_create_fromdict_with_synthetic_data(implicat
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_equivalence_of_constructor_create_fromdict_with_random_data(implicator_name):
-    """
-    @brief Ensures that direct instantiation, mixin-based creation, and from_dict deserialization
-           produce consistent results for random input data in [0, 1].
-
+    """Ensures that direct instantiation, mixin-based creation, and from_dict deserialization
+    
+    produce consistent results for random input data in [0, 1].
     For each implicator:
     - Instantiate directly using the class
     - Instantiate using the create() factory
@@ -177,10 +173,9 @@ def test_equivalence_of_constructor_create_fromdict_with_random_data(implicator_
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_matrix_consistency_with_scalar_application(implicator_name):
-    """
-    @brief Ensures that applying implicator to A and B matrices is the same as
-           applying scalar implicator to A[i,j], B[i,j] for each element.
-
+    """Ensures that applying implicator to A and B matrices is the same as
+    
+    applying scalar implicator to A[i,j], B[i,j] for each element.
     This verifies consistency between vectorized and scalar logic.
     """
     rng = np.random.default_rng(seed=42)
@@ -215,9 +210,9 @@ def test_implicator_matrix_consistency_with_scalar_application(implicator_name):
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_instances_are_distinct(implicator_name):
-    """
-    @brief Ensures that implicator1 (direct), implicator2 (create), and implicator3 (from_dict)
-           are separate instances in memory.
+    """Ensures that implicator1 (direct), implicator2 (create), and implicator3 (from_dict)
+    
+    are separate instances in memory.
     """
     cls = Implicator.get_class(implicator_name)
     implicator1 = cls()

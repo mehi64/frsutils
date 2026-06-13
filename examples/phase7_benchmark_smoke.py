@@ -24,10 +24,13 @@ from benchmarks.benchmark_fuzzy_rough_execution import (  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """
-    @brief Build the command-line parser for the smoke example.
-
-    @return: Configured argument parser.
+    """Build the command-line parser for the smoke example.
+        
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser.
+        
     """
     parser = argparse.ArgumentParser(description="Run a tiny FRsutils benchmark smoke example.")
     parser.add_argument(
@@ -39,11 +42,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """
-    @brief Run the tiny benchmark and write JSON/CSV outputs.
-
-    @param argv: Optional command-line arguments for tests.
-    @return: Process exit code.
+    """Run the tiny benchmark and write JSON/CSV outputs.
+        
+        Parameters
+        ----------
+        argv : Sequence[str] | None
+            Optional command-line arguments for tests.
+        
+        Returns
+        -------
+        int
+            Process exit code.
+        
     """
     args = build_parser().parse_args(argv)
     output_dir = Path(args.output_dir)

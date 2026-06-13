@@ -19,14 +19,20 @@ from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 @dataclass(frozen=True)
 class SimilarityBlock:
-    """
-    @brief Immutable pairwise similarity block produced by a similarity engine.
-
-    @param row_slice: Row sample slice represented by this block.
-    @param col_slice: Column sample slice represented by this block.
-    @param values: Similarity values with shape `(len(row_slice), len(col_slice))`.
-    @param values_backend: Name of the array backend that owns `values`.
-    @param values_are_backend_resident: True when `values` may be a non-NumPy backend array.
+    """Immutable pairwise similarity block produced by a similarity engine.
+    
+    Parameters
+    ----------
+    row_slice : object
+        Row sample slice represented by this block.
+    col_slice : object
+        Column sample slice represented by this block.
+    values : object
+        Similarity values with shape `(len(row_slice), len(col_slice))`.
+    values_backend : object
+        Name of the array backend that owns `values`.
+    values_are_backend_resident : object
+        True when `values` may be a non-NumPy backend array.
     """
 
     row_slice: slice
@@ -38,12 +44,23 @@ class SimilarityBlock:
 
 
 def _as_2d_feature_matrix(X: Any) -> np.ndarray:
-    """
-    @brief Convert and validate feature matrix input for similarity engines.
-
-    @param X: Candidate feature matrix.
-    @return: Two-dimensional NumPy array.
-    @raises ValueError: If X is missing or not two-dimensional.
+    """Convert and validate feature matrix input for similarity engines.
+        
+        Parameters
+        ----------
+        X : Any
+            Candidate feature matrix.
+        
+        Returns
+        -------
+        np.ndarray
+            Two-dimensional NumPy array.
+        
+        Raises
+        ------
+        ValueError
+            If X is missing or not two-dimensional.
+        
     """
     if X is None:
         raise ValueError("X must be provided when building a similarity engine.")
@@ -56,13 +73,25 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
 
 
 def _validate_block_size(block_size: int) -> int:
-    """
-    @brief Validate and normalize a block size.
-
-    @param block_size: Candidate positive integer block size.
-    @return: Normalized block size.
-    @raises TypeError: If block_size is not an integer.
-    @raises ValueError: If block_size is less than one.
+    """Validate and normalize a block size.
+        
+        Parameters
+        ----------
+        block_size : int
+            Candidate positive integer block size.
+        
+        Returns
+        -------
+        int
+            Normalized block size.
+        
+        Raises
+        ------
+        TypeError
+            If block_size is not an integer.
+        ValueError
+            If block_size is less than one.
+        
     """
     if not isinstance(block_size, int):
         raise TypeError("block_size must be an integer.")
@@ -73,11 +102,18 @@ def _validate_block_size(block_size: int) -> int:
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """
-    @brief Return True when config already looks like a nested FRsutils config.
-
-    @param config: Candidate configuration mapping.
-    @return: True if nested similarity sections are present.
+    """Return True when config already looks like a nested FRsutils config.
+        
+        Parameters
+        ----------
+        config : Mapping[str, Any]
+            Candidate configuration mapping.
+        
+        Returns
+        -------
+        bool
+            True if nested similarity sections are present.
+        
     """
     return isinstance(config.get("similarity"), Mapping) or isinstance(config.get("similarity_tnorm"), Mapping)
 
@@ -87,14 +123,27 @@ def _prepare_similarity_config(
     config: Optional[Mapping[str, Any]],
     flat_config: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    """
-    @brief Prepare an effective flat or nested similarity config.
-
-    @param config: Optional flat or nested mapping.
-    @param flat_config: Additional flat keyword parameters.
-    @return: Defensive configuration dictionary.
-    @raises TypeError: If config is not mapping-like.
-    @raises ValueError: If nested config is mixed with extra flat kwargs.
+    """Prepare an effective flat or nested similarity config.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested mapping.
+        flat_config : Mapping[str, Any]
+            Additional flat keyword parameters.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Defensive configuration dictionary.
+        
+        Raises
+        ------
+        TypeError
+            If config is not mapping-like.
+        ValueError
+            If nested config is mixed with extra flat kwargs.
+        
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -114,15 +163,23 @@ def build_similarity_components(
     config: Optional[Mapping[str, Any]] = None,
     **flat_config: Any,
 ) -> Tuple[Similarity, TNorm, Dict[str, Any]]:
-    """
-    @brief Build similarity and T-norm components from flat or nested config.
-
-    This mirrors `FRsutils.core.similarities.build_similarity_matrix` component
-    resolution so Phase 1 engines remain equivalent to the existing dense path.
-
-    @param config: Optional flat or nested configuration mapping.
-    @param flat_config: Additional flat config values.
-    @return: Tuple of `(similarity_func, tnorm_func, effective_config)`.
+    """Build similarity and T-norm components from flat or nested config.
+        
+        This mirrors `FRsutils.core.similarities.build_similarity_matrix` component
+        resolution so Phase 1 engines remain equivalent to the existing dense path.
+        
+        Parameters
+        ----------
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested configuration mapping.
+        flat_config : Any
+            Additional flat config values.
+        
+        Returns
+        -------
+        Tuple[Similarity, TNorm, Dict[str, Any]]
+            Tuple of `(similarity_func, tnorm_func, effective_config)`.
+        
     """
     effective_config = _prepare_similarity_config(config, flat_config)
     nested = effective_config if _is_nested_frs_config(effective_config) else normalize_flat_config_to_nested(effective_config)
@@ -146,12 +203,20 @@ def build_similarity_components(
 
 
 def _registered_component_name(registry_cls: Any, component: Any) -> str:
-    """
-    @brief Return the primary registered alias for a pluggable component.
-
-    @param registry_cls: Registry base class such as Similarity or TNorm.
-    @param component: Concrete component instance.
-    @return: Registered alias or the component's fallback `name` property.
+    """Return the primary registered alias for a pluggable component.
+        
+        Parameters
+        ----------
+        registry_cls : Any
+            Registry base class such as Similarity or TNorm.
+        component : Any
+            Concrete component instance.
+        
+        Returns
+        -------
+        str
+            Registered alias or the component's fallback `name` property.
+        
     """
     try:
         return registry_cls.get_registered_name(component)
@@ -160,17 +225,30 @@ def _registered_component_name(registry_cls: Any, component: Any) -> str:
 
 
 def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backend: ArrayBackend):
-    """
-    @brief Compute feature-level similarity on a backend array.
-
-    Phase 1 moved backend-specific formulas into the Similarity components, so
-    this helper now acts only as a small engine-to-component adapter.
-
-    @param diff: Pairwise backend-array difference matrix.
-    @param similarity_func: Built similarity component.
-    @param backend: Resolved array backend.
-    @return: Backend-array similarity matrix.
-    @raises NotImplementedError: If a similarity has no backend formula yet.
+    """Compute feature-level similarity on a backend array.
+        
+        Phase 1 moved backend-specific formulas into the Similarity components, so
+        this helper now acts only as a small engine-to-component adapter.
+        
+        Parameters
+        ----------
+        diff : Any
+            Pairwise backend-array difference matrix.
+        similarity_func : Similarity
+            Built similarity component.
+        backend : ArrayBackend
+            Resolved array backend.
+        
+        Returns
+        -------
+        object
+            Backend-array similarity matrix.
+        
+        Raises
+        ------
+        NotImplementedError
+            If a similarity has no backend formula yet.
+        
     """
     try:
         return similarity_func.compute_backend(diff, xp=backend.xp)
@@ -183,18 +261,32 @@ def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backen
 
 
 def _apply_tnorm_backend(a: Any, b: Any, tnorm: TNorm, backend: ArrayBackend):
-    """
-    @brief Apply a T-norm component on backend arrays.
-
-    Phase 1 moved backend-specific T-norm formulas into the TNorm components, so
-    this helper now acts only as a small engine-to-component adapter.
-
-    @param a: First backend array.
-    @param b: Second backend array.
-    @param tnorm: Built T-norm component.
-    @param backend: Resolved array backend.
-    @return: Backend-array T-norm result.
-    @raises NotImplementedError: If a T-norm has no backend formula yet.
+    """Apply a T-norm component on backend arrays.
+        
+        Phase 1 moved backend-specific T-norm formulas into the TNorm components, so
+        this helper now acts only as a small engine-to-component adapter.
+        
+        Parameters
+        ----------
+        a : Any
+            First backend array.
+        b : Any
+            Second backend array.
+        tnorm : TNorm
+            Built T-norm component.
+        backend : ArrayBackend
+            Resolved array backend.
+        
+        Returns
+        -------
+        object
+            Backend-array T-norm result.
+        
+        Raises
+        ------
+        NotImplementedError
+            If a T-norm has no backend formula yet.
+        
     """
     try:
         return tnorm.compute_backend(a, b, xp=backend.xp)
@@ -215,17 +307,33 @@ def calculate_similarity_block(
     backend: Optional[ArrayBackend] = None,
     return_backend_array: bool = False,
 ) -> Any:
-    """
-    @brief Compute an exact pairwise similarity block between two feature matrices.
-
-    @param X_rows: Row-side feature matrix with shape `(n_rows, n_features)`.
-    @param X_cols: Column-side feature matrix with shape `(n_cols, n_features)`.
-    @param similarity_func: Built similarity component.
-    @param tnorm: Built binary T-norm component/callable.
-    @param backend: Optional ArrayBackend. NumPy is used when omitted.
-    @param return_backend_array: If True, keep CuPy values on GPU instead of converting to NumPy.
-    @return: Similarity block with shape `(n_rows, n_cols)` as NumPy or backend array.
-    @raises ValueError: If feature dimensions do not match.
+    """Compute an exact pairwise similarity block between two feature matrices.
+        
+        Parameters
+        ----------
+        X_rows : Any
+            Row-side feature matrix with shape `(n_rows, n_features)`.
+        X_cols : Any
+            Column-side feature matrix with shape `(n_cols, n_features)`.
+        similarity_func : Similarity
+            Built similarity component.
+        tnorm : object
+            Built binary T-norm component/callable.
+        backend : Optional[ArrayBackend]
+            Optional ArrayBackend. NumPy is used when omitted.
+        return_backend_array : bool
+            If True, keep CuPy values on GPU instead of converting to NumPy.
+        
+        Returns
+        -------
+        Any
+            Similarity block with shape `(n_rows, n_cols)` as NumPy or backend array.
+        
+        Raises
+        ------
+        ValueError
+            If feature dimensions do not match.
+        
     """
     X_rows_array = _as_2d_feature_matrix(X_rows)
     X_cols_array = _as_2d_feature_matrix(X_cols)
@@ -265,13 +373,18 @@ def calculate_similarity_block(
 
 
 class BaseSimilarityEngine:
-    """
-    @brief Base class shared by concrete similarity-engine strategies.
-
-    @param X: Feature matrix used to compute pairwise similarities.
-    @param config: Optional flat or nested similarity configuration.
-    @param backend: Array backend alias: "numpy", "auto", or explicit "cupy".
-    @param flat_config: Additional flat sklearn-style config values.
+    """Base class shared by concrete similarity-engine strategies.
+    
+    Parameters
+    ----------
+    X : object
+        Feature matrix used to compute pairwise similarities.
+    config : object
+        Optional flat or nested similarity configuration.
+    backend : object
+        Array backend alias: "numpy", "auto", or explicit "cupy".
+    flat_config : object
+        Additional flat sklearn-style config values.
     """
 
     engine_name = "base"
@@ -284,54 +397,70 @@ class BaseSimilarityEngine:
         backend: str = "numpy",
         **flat_config: Any,
     ) -> None:
+        """Initialize the BaseSimilarityEngine instance."""
         self.X = _as_2d_feature_matrix(X)
         self.backend: ArrayBackend = build_array_backend(backend)
         self.similarity_func, self.tnorm_func, self.config = build_similarity_components(config, **flat_config)
 
     @property
     def n_samples(self) -> int:
-        """
-        @brief Number of samples in the engine feature matrix.
-
-        @return: Number of rows in X.
+        """Number of samples in the engine feature matrix.
+                
+                Returns
+                -------
+                int
+                    Number of rows in X.
+                
         """
         return self.X.shape[0]
 
     @property
     def n_features(self) -> int:
-        """
-        @brief Number of features in the engine feature matrix.
-
-        @return: Number of columns in X.
+        """Number of features in the engine feature matrix.
+                
+                Returns
+                -------
+                int
+                    Number of columns in X.
+                
         """
         return self.X.shape[1]
 
     def iter_blocks(self) -> Iterator[SimilarityBlock]:
-        """
-        @brief Yield exact similarity blocks as NumPy arrays.
-
-        @return: Iterator over NumPy-backed SimilarityBlock values.
+        """Yield exact similarity blocks as NumPy arrays.
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator over NumPy-backed SimilarityBlock values.
+                
         """
         raise NotImplementedError("Concrete similarity engines must implement iter_blocks().")
 
     def iter_backend_blocks(self) -> Iterator[SimilarityBlock]:
-        """
-        @brief Yield exact similarity blocks in the engine backend when supported.
-
-        The default implementation preserves compatibility by delegating to
-        iter_blocks(), which yields NumPy-backed values. Blockwise engines can
-        override this to keep CuPy block values resident for GPU-aware
-        approximation accumulators.
-
-        @return: Iterator over SimilarityBlock values.
+        """Yield exact similarity blocks in the engine backend when supported.
+                
+                The default implementation preserves compatibility by delegating to
+                iter_blocks(), which yields NumPy-backed values. Blockwise engines can
+                override this to keep CuPy block values resident for GPU-aware
+                approximation accumulators.
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator over SimilarityBlock values.
+                
         """
         yield from self.iter_blocks()
 
     def to_dense(self) -> np.ndarray:
-        """
-        @brief Materialize this engine as a dense pairwise similarity matrix.
-
-        @return: Dense `(n_samples, n_samples)` similarity matrix.
+        """Materialize this engine as a dense pairwise similarity matrix.
+                
+                Returns
+                -------
+                np.ndarray
+                    Dense `(n_samples, n_samples)` similarity matrix.
+                
         """
         dense = np.zeros((self.n_samples, self.n_samples), dtype=np.float64)
         for block in self.iter_blocks():
@@ -342,9 +471,8 @@ class BaseSimilarityEngine:
 
 
 class DenseSimilarityEngine(BaseSimilarityEngine):
-    """
-    @brief Compatibility engine that materializes the existing dense matrix path.
-
+    """Compatibility engine that materializes the existing dense matrix path.
+    
     DenseSimilarityEngine intentionally delegates `to_dense()` to the current
     `build_similarity_matrix` implementation so Phase 1 does not alter dense
     behavior. Its `iter_blocks()` yields the full matrix as a single block.
@@ -353,20 +481,26 @@ class DenseSimilarityEngine(BaseSimilarityEngine):
     engine_name = "dense"
 
     def to_dense(self) -> np.ndarray:
-        """
-        @brief Build the dense similarity matrix using the existing legacy path.
-
-        @return: Dense `(n_samples, n_samples)` similarity matrix.
+        """Build the dense similarity matrix using the existing legacy path.
+                
+                Returns
+                -------
+                np.ndarray
+                    Dense `(n_samples, n_samples)` similarity matrix.
+                
         """
         if _is_nested_frs_config(self.config):
             return build_similarity_matrix(self.X, config=self.config)
         return build_similarity_matrix(self.X, **self.config)
 
     def iter_blocks(self) -> Iterator[SimilarityBlock]:
-        """
-        @brief Yield the full dense matrix as a single similarity block.
-
-        @return: Iterator with one SimilarityBlock.
+        """Yield the full dense matrix as a single similarity block.
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator with one SimilarityBlock.
+                
         """
         yield SimilarityBlock(
             row_slice=slice(0, self.n_samples),
@@ -378,18 +512,24 @@ class DenseSimilarityEngine(BaseSimilarityEngine):
 
 
 class BlockwiseSimilarityEngine(BaseSimilarityEngine):
-    """
-    @brief Exact blockwise similarity engine for future streaming approximations.
-
+    """Exact blockwise similarity engine for future streaming approximations.
+    
     Phase 1 uses this engine only for equivalence tests and dense materialization.
     Future phases can consume `iter_blocks()` directly in ITFRS/VQRS/OWAFRS
     accumulators without allocating the full pairwise matrix.
-
-    @param X: Feature matrix used to compute pairwise similarities.
-    @param block_size: Positive row/column block size.
-    @param config: Optional flat or nested similarity configuration.
-    @param backend: Array backend alias: "numpy", "auto", or explicit "cupy".
-    @param flat_config: Additional flat sklearn-style config values.
+    
+    Parameters
+    ----------
+    X : object
+        Feature matrix used to compute pairwise similarities.
+    block_size : object
+        Positive row/column block size.
+    config : object
+        Optional flat or nested similarity configuration.
+    backend : object
+        Array backend alias: "numpy", "auto", or explicit "cupy".
+    flat_config : object
+        Additional flat sklearn-style config values.
     """
 
     engine_name = "blockwise"
@@ -403,15 +543,23 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
         backend: str = "numpy",
         **flat_config: Any,
     ) -> None:
+        """Initialize the BlockwiseSimilarityEngine instance."""
         super().__init__(X, config=config, backend=backend, **flat_config)
         self.block_size = _validate_block_size(block_size)
 
     def _iter_blocks_impl(self, *, return_backend_array: bool) -> Iterator[SimilarityBlock]:
-        """
-        @brief Shared row-major block iterator for NumPy and backend-resident values.
-
-        @param return_backend_array: If True, keep CuPy values resident when backend='cupy'.
-        @return: Iterator over SimilarityBlock values.
+        """Shared row-major block iterator for NumPy and backend-resident values.
+                
+                Parameters
+                ----------
+                return_backend_array : bool
+                    If True, keep CuPy values resident when backend='cupy'.
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator over SimilarityBlock values.
+                
         """
         n = self.n_samples
         for row_start in range(0, n, self.block_size):
@@ -451,10 +599,13 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
                 )
 
     def iter_blocks(self) -> Iterator[SimilarityBlock]:
-        """
-        @brief Yield exact pairwise similarity blocks as NumPy arrays.
-
-        @return: Iterator over NumPy-backed SimilarityBlock values.
+        """Yield exact pairwise similarity blocks as NumPy arrays.
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator over NumPy-backed SimilarityBlock values.
+                
         """
         for block in self._iter_blocks_impl(return_backend_array=False):
             if block.values_are_backend_resident:
@@ -469,14 +620,17 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
                 yield block
 
     def iter_backend_blocks(self) -> Iterator[SimilarityBlock]:
-        """
-        @brief Yield exact pairwise blocks using the resolved backend when possible.
-
-        For backend='cupy', block values remain on GPU so GPU-aware approximation
-        engines can apply implicator/T-norm reductions without an immediate
-        CPU round-trip. For NumPy, this is equivalent to iter_blocks().
-
-        @return: Iterator over SimilarityBlock values.
+        """Yield exact pairwise blocks using the resolved backend when possible.
+                
+                For backend='cupy', block values remain on GPU so GPU-aware approximation
+                engines can apply implicator/T-norm reductions without an immediate
+                CPU round-trip. For NumPy, this is equivalent to iter_blocks().
+                
+                Returns
+                -------
+                Iterator[SimilarityBlock]
+                    Iterator over SimilarityBlock values.
+                
         """
         yield from self._iter_blocks_impl(return_backend_array=True)
 
@@ -490,18 +644,35 @@ def build_similarity_engine(
     backend: str = "numpy",
     **flat_config: Any,
 ) -> BaseSimilarityEngine:
-    """
-    @brief Build a similarity engine by alias.
-
-    @param X: Feature matrix used to compute pairwise similarities.
-    @param engine: Engine alias, currently "dense" or "blockwise".
-    @param block_size: Positive block size for blockwise engines.
-    @param config: Optional flat or nested similarity configuration.
-    @param backend: Array backend alias: "numpy", "auto", or explicit "cupy".
-    @param flat_config: Additional flat sklearn-style config values.
-    @return: Concrete similarity engine instance.
-    @raises TypeError: If engine is not a string.
-    @raises ValueError: If engine is unknown.
+    """Build a similarity engine by alias.
+        
+        Parameters
+        ----------
+        X : Any
+            Feature matrix used to compute pairwise similarities.
+        engine : str
+            Engine alias, currently "dense" or "blockwise".
+        block_size : int
+            Positive block size for blockwise engines.
+        config : Optional[Mapping[str, Any]]
+            Optional flat or nested similarity configuration.
+        backend : str
+            Array backend alias: "numpy", "auto", or explicit "cupy".
+        flat_config : Any
+            Additional flat sklearn-style config values.
+        
+        Returns
+        -------
+        BaseSimilarityEngine
+            Concrete similarity engine instance.
+        
+        Raises
+        ------
+        TypeError
+            If engine is not a string.
+        ValueError
+            If engine is unknown.
+        
     """
     if not isinstance(engine, str) or not engine.strip():
         raise TypeError("engine must be a non-empty string.")

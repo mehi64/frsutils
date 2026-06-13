@@ -52,7 +52,7 @@ EXPECTED_GAUSSIAN_ONE_FEATURE_SIGMA_05 = np.array(
 
 
 def test_dense_linear_similarity_baseline_exact_one_feature():
-    """@brief Dense linear similarity with one feature returns the locked baseline matrix."""
+    """Dense linear similarity with one feature returns the locked baseline matrix."""
     sim = build_similarity_matrix(
         X_ONE_FEATURE,
         similarity="linear",
@@ -65,7 +65,7 @@ def test_dense_linear_similarity_baseline_exact_one_feature():
 
 
 def test_dense_linear_similarity_baseline_exact_two_features_minimum_tnorm():
-    """@brief Dense linear similarity across two features uses the minimum T-norm baseline."""
+    """Dense linear similarity across two features uses the minimum T-norm baseline."""
     sim = build_similarity_matrix(
         X_TWO_FEATURES,
         similarity="linear",
@@ -78,7 +78,7 @@ def test_dense_linear_similarity_baseline_exact_two_features_minimum_tnorm():
 
 
 def test_dense_gaussian_similarity_baseline_exact_one_feature():
-    """@brief Dense Gaussian similarity keeps the current sigma parameter contract."""
+    """Dense Gaussian similarity keeps the current sigma parameter contract."""
     sim = build_similarity_matrix(
         X_ONE_FEATURE,
         similarity="gaussian",
@@ -92,7 +92,7 @@ def test_dense_gaussian_similarity_baseline_exact_one_feature():
 
 
 def test_dense_similarity_nested_config_matches_flat_config():
-    """@brief Normalized nested config must produce the same dense matrix as flat params."""
+    """Normalized nested config must produce the same dense matrix as flat params."""
     flat_config = {
         "type": "itfrs",
         "similarity": "linear",
@@ -109,7 +109,7 @@ def test_dense_similarity_nested_config_matches_flat_config():
 
 
 def test_dense_similarity_does_not_mutate_input_matrix():
-    """@brief Dense similarity construction must not modify the caller's feature matrix."""
+    """Dense similarity construction must not modify the caller's feature matrix."""
     X = X_TWO_FEATURES.copy()
     before = X.copy()
 

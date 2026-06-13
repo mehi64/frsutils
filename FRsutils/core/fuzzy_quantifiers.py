@@ -12,6 +12,7 @@ from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFact
 
 def validate_range_0_1(x, name="name_value"):
     
+    """Validate that scalar or array values are in the closed interval [0, 1]."""
     if isinstance(x, float):
         if not (0.0 <= x <= 1.0):
             raise ValueError(f"{name} must be in range [0.0, 1.0], but got {x}")
@@ -27,25 +28,19 @@ def validate_range_0_1(x, name="name_value"):
 
 
 class FuzzyQuantifier(RegistryFactoryMixin):
-    """@brief Abstract base class for fuzzy quantifiers."""
+    """Abstract base class for fuzzy quantifiers."""
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        """
-        @brief Compute fuzzy membership value(s) for NumPy input.
-        """
+        """Compute fuzzy membership value(s) for NumPy input."""
         return self.compute_backend(np.asarray(x), xp=np, validate_inputs=self.validate_inputs)
 
     @abstractmethod
     def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
-        """
-        @brief Compute fuzzy membership value(s) using a backend array namespace.
-        """
+        """Compute fuzzy membership value(s) using a backend array namespace."""
         raise NotImplementedError("all subclasses must implement compute_backend")
 
     def _validate_backend_input(self, x: Any, *, xp: Any = np, validate_inputs: bool = True) -> None:
-        """
-        @brief Validate quantifier input range for NumPy/CuPy-like arrays.
-        """
+        """Validate quantifier input range for NumPy/CuPy-like arrays."""
         if not validate_inputs:
             return
         if xp is np:
@@ -57,9 +52,7 @@ class FuzzyQuantifier(RegistryFactoryMixin):
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief Validate alpha and beta parameters.
-        """
+        """Validate alpha and beta parameters."""
         alpha = kwargs.get("alpha")
         beta = kwargs.get("beta")
 
@@ -71,16 +64,12 @@ class FuzzyQuantifier(RegistryFactoryMixin):
             raise ValueError("Require 0 <= alpha < beta <= 1")
 
     def _get_params(self) -> dict:
-        """
-        @brief Returns parameters for serialization.
-        """
+        """Returns parameters for serialization."""
         return {"alpha": self.alpha, "beta": self.beta, "validate_inputs": self.validate_inputs}
 
     @classmethod
     def from_dict(cls, data: dict) -> "FuzzyQuantifier":
-        """
-        @brief Instantiate a quantifier from dictionary config.
-        """
+        """Instantiate a quantifier from dictionary config."""
         if not isinstance(data, dict):
             raise TypeError("data must be a dict")
 
@@ -110,16 +99,17 @@ class FuzzyQuantifier(RegistryFactoryMixin):
 
 @FuzzyQuantifier.register("linear")
 class LinearFuzzyQuantifier(FuzzyQuantifier):
-    """@brief Linear piecewise fuzzy quantifier."""
+    """Linear piecewise fuzzy quantifier."""
 
     def __init__(self, alpha: float, beta: float, validate_inputs: bool = True):
+        """Initialize the LinearFuzzyQuantifier instance."""
         self.validate_params(alpha=alpha, beta=beta)
         self.alpha = alpha
         self.beta = beta
         self.validate_inputs = validate_inputs
 
     def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
-        """@brief Backend-aware linear fuzzy quantifier formula."""
+        """Backend-aware linear fuzzy quantifier formula."""
         self._validate_backend_input(x, xp=xp, validate_inputs=validate_inputs)
         return xp.where(
             x <= self.alpha,
@@ -128,22 +118,23 @@ class LinearFuzzyQuantifier(FuzzyQuantifier):
         )
 
     def to_dict(self) -> dict:
-        """@brief Serialize instance to a standardized dict."""
+        """Serialize instance to a standardized dict."""
         return {"type": self.name, "name": self.name, "params": self._get_params(), "alpha": self.alpha, "beta": self.beta}
 
 
 @FuzzyQuantifier.register("quadratic", "quad")
 class QuadraticFuzzyQuantifier(FuzzyQuantifier):
-    """@brief Quadratic smooth fuzzy quantifier."""
+    """Quadratic smooth fuzzy quantifier."""
 
     def __init__(self, alpha: float, beta: float, validate_inputs: bool = True):
+        """Initialize the QuadraticFuzzyQuantifier instance."""
         self.validate_params(alpha=alpha, beta=beta)
         self.alpha = alpha
         self.beta = beta
         self.validate_inputs = validate_inputs
 
     def compute_backend(self, x: Any, *, xp: Any = np, validate_inputs: bool = True):
-        """@brief Backend-aware quadratic fuzzy quantifier formula."""
+        """Backend-aware quadratic fuzzy quantifier formula."""
         self._validate_backend_input(x, xp=xp, validate_inputs=validate_inputs)
         mid = (self.alpha + self.beta) / 2.0
         denom = (self.beta - self.alpha) ** 2.0
@@ -156,5 +147,5 @@ class QuadraticFuzzyQuantifier(FuzzyQuantifier):
         )
 
     def to_dict(self) -> dict:
-        """@brief Serialize instance to dict."""
+        """Serialize instance to dict."""
         return {"type": "quadratic", "name": self.name, "params": self._get_params(), "alpha": self.alpha, "beta": self.beta}
