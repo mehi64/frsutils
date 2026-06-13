@@ -30,22 +30,7 @@ Some T-norms also satisfy additional properties such as **nilpotency**, **strict
 
 ---
 
-## 3. Notes
-
-* Some t-norms are not suitable for numerical optimization due to non-differentiability (e.g., Minimum).
-* There are some extensions to tnorms, like
-  - Hamacher t-norms
-  - Frank t-norms
-  - Yager t-norms
-  - Aczél–Alsina t-norms
-  - Dombi t-norms
-  - Sugeno–Weber t-norms
-
-We have not implemented yet. For those, see [[wikipedia_link]](https://en.wikipedia.org/wiki/Construction_of_t-norms#Hamacher_t-norms)
-
----
-
-## 4. References
+## 3. References
 
 1. **I. Silambarasan , S. Sriram** - HAMACHER OPERATIONS ON PYTHAGOREAN FUZZY MATRICES
 2. **IMEKO TC18 2018** - Claudio De Capua and Emilia Romeo, A Comparative Analysis of Fuzzy t-Norm Approaches to the Measurement Uncertainty Evaluation. See formulas (4), (5), (6), Yager.
