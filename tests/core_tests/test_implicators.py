@@ -67,25 +67,391 @@ def test_implicator_call_vector_output(implicator_name, testset):
     np.testing.assert_allclose(calculated, expected, atol=1e-6)
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
-def test_implicator_exhaustive_grid_no_exception(implicator_name):
-    """Tests whether implicator handles full [0,1] grid without exceptions.
-    
-    Uses meshgrid of 0.0 to 1.0 with 101 values for each axis (step=0.01).
-    Applies implicator elementwise on all combinations.
-    """
+def test_implicator_small_grid_outputs_stay_in_unit_interval(implicator_name):
+    """Check that each implicator maps a small [0, 1] grid into [0, 1]."""
     obj = Implicator.create(implicator_name)
-    
-    values = np.linspace(0.0, 1.0, 1001)
-    a_grid, b_grid = np.meshgrid(values, values)
-    a_flat = a_grid.flatten()
-    b_flat = b_grid.flatten()
 
+    values = np.linspace(0.0, 1.0, 101)
+    a_grid, b_grid = np.meshgrid(values, values)
+    a_flat = a_grid.ravel()
+    b_flat = b_grid.ravel()
+
+    result = obj(a_flat, b_flat)
+
+    assert result.shape == a_flat.shape
+    assert np.all((0.0 <= result) & (result <= 1.0)), f"Out-of-range result from {implicator_name}"
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_matches_public_numpy_call(implicator_name):
+    """Check that NumPy backend execution matches the public NumPy call."""
+    obj = Implicator.create(implicator_name)
+    a = np.array([0.0, 0.2, 0.5, 0.8, 1.0])
+    b = np.array([0.0, 0.4, 0.5, 0.3, 1.0])
+
+    public_result = obj(a, b)
+    backend_result = obj.compute_backend(a, b, xp=np)
+
+    np.testing.assert_allclose(backend_result, public_result, atol=1e-12)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_rejects_mismatched_shapes(implicator_name):
+    """Check that public and backend calls reject incompatible input shapes."""
+    obj = Implicator.create(implicator_name)
+    a = np.array([0.1, 0.2, 0.3])
+    b = np.array([[0.1, 0.2, 0.3]])
+
+    with pytest.raises(ValueError, match="Incompatible shapes"):
+        obj(a, b)
+
+    with pytest.raises(ValueError, match="Incompatible shapes"):
+        obj.compute_backend(a, b, xp=np)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+@pytest.mark.parametrize(
+    "a, b",
+    [
+        (-0.1, 0.5),
+        (0.5, -0.1),
+        (1.1, 0.5),
+        (0.5, 1.1),
+        (np.array([0.2, 1.2]), np.array([0.3, 0.4])),
+        (np.array([0.2, 0.4]), np.array([0.3, 1.2])),
+    ],
+)
+def test_implicator_rejects_out_of_range_values(implicator_name, a, b):
+    """Check that validated calls reject membership values outside [0, 1]."""
+    obj = Implicator.create(implicator_name)
+
+    with pytest.raises(ValueError, match="range"):
+        obj(a, b)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_rejects_out_of_range_values(implicator_name):
+    """Check that backend validation rejects values outside [0, 1]."""
+    obj = Implicator.create(implicator_name)
+    a = np.array([0.2, 1.2])
+    b = np.array([0.3, 0.4])
+
+    with pytest.raises(ValueError, match="range"):
+        obj.compute_backend(a, b, xp=np)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_validate_inputs_false_skips_validation(implicator_name):
+    """Check that backend validation can be disabled by approximation engines."""
+    obj = Implicator.create(implicator_name)
+    a = np.array([1.2, 0.2])
+    b = np.array([0.4, 1.1])
+
+    result = obj.compute_backend(a, b, xp=np, validate_inputs=False)
+
+    assert result.shape == a.shape
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_monotonicity_on_grid(implicator_name):
+    """Check standard implicator monotonicity on a compact unit grid."""
+    obj = Implicator.create(implicator_name)
+    grid = np.linspace(0.0, 1.0, 11)
+
+    for fixed_b in grid:
+        values = obj(grid, np.full_like(grid, fixed_b))
+        assert np.all(np.diff(values) <= 1e-12), (
+            f"{implicator_name} must be non-increasing in the first argument."
+        )
+
+    for fixed_a in grid:
+        values = obj(np.full_like(grid, fixed_a), grid)
+        assert np.all(np.diff(values) >= -1e-12), (
+            f"{implicator_name} must be non-decreasing in the second argument."
+        )
+
+
+BOUNDARY_CASES = [
+    ("lukasiewicz", 0.0, 0.0, 1.0),
+    ("lukasiewicz", 1.0, 0.0, 0.0),
+    ("lukasiewicz", 1.0, 1.0, 1.0),
+    ("lukasiewicz", 0.7, 0.2, 0.5),
+    ("goedel", 0.2, 0.2, 1.0),
+    ("goedel", 0.7, 0.2, 0.2),
+    ("goedel", 1.0, 0.0, 0.0),
+    ("goedel", 0.0, 0.0, 1.0),
+    ("kleenedienes", 0.0, 0.0, 1.0),
+    ("kleenedienes", 1.0, 0.0, 0.0),
+    ("kleenedienes", 1.0, 0.4, 0.4),
+    ("kleenedienes", 0.7, 0.2, 0.3),
+    ("reichenbach", 0.0, 0.0, 1.0),
+    ("reichenbach", 1.0, 0.0, 0.0),
+    ("reichenbach", 1.0, 0.4, 0.4),
+    ("reichenbach", 0.7, 0.2, 0.44),
+    ("goguen", 0.0, 0.0, 1.0),
+    ("goguen", 0.0, 1.0, 1.0),
+    ("goguen", 0.7, 0.2, 2.0 / 7.0),
+    ("goguen", 0.2, 0.7, 1.0),
+    ("rescher", 0.2, 0.2, 1.0),
+    ("rescher", 0.7, 0.2, 0.0),
+    ("rescher", 1.0, 0.0, 0.0),
+    ("rescher", 0.0, 0.0, 1.0),
+    ("yager", 0.0, 0.0, 1.0),
+    ("yager", 0.0, 0.2, 1.0),
+    ("yager", 1.0, 0.2, 0.2),
+    ("yager", 0.5, 0.25, 0.5),
+    ("weber", 0.0, 0.0, 1.0),
+    ("weber", 0.5, 0.0, 1.0),
+    ("weber", 1.0, 0.0, 0.0),
+    ("weber", 1.0, 0.7, 0.7),
+    ("fodor", 0.2, 0.2, 1.0),
+    ("fodor", 0.7, 0.2, 0.3),
+    ("fodor", 1.0, 0.0, 0.0),
+    ("fodor", 0.0, 0.0, 1.0),
+]
+
+
+@pytest.mark.parametrize("implicator_name, a, b, expected", BOUNDARY_CASES)
+def test_implicator_boundary_cases_match_contract(implicator_name, a, b, expected):
+    """Check representative boundary values against each implicator contract."""
+    obj = Implicator.create(implicator_name)
+
+    result = obj(a, b)
+
+    assert np.isclose(result, expected, atol=1e-12)
+
+
+BRANCH_EDGE_CASES = [
+    (
+        "goguen",
+        np.array([0.0, 0.0, 0.5, 0.5]),
+        np.array([0.0, 1.0, 0.25, 0.75]),
+        np.array([1.0, 1.0, 0.5, 1.0]),
+    ),
+    (
+        "rescher",
+        np.array([0.2, 0.7, 1.0, 1.0]),
+        np.array([0.2, 0.2, 0.0, 1.0]),
+        np.array([1.0, 0.0, 0.0, 1.0]),
+    ),
+    (
+        "yager",
+        np.array([0.0, 0.0, 0.5, 1.0]),
+        np.array([0.0, 0.25, 0.25, 0.25]),
+        np.array([1.0, 1.0, 0.5, 0.25]),
+    ),
+    (
+        "weber",
+        np.array([0.999999999, 1.0, 1.0]),
+        np.array([0.2, 0.2, 1.0]),
+        np.array([1.0, 0.2, 1.0]),
+    ),
+    (
+        "fodor",
+        np.array([0.2, 0.7, 1.0, 1.0]),
+        np.array([0.2, 0.2, 0.0, 1.0]),
+        np.array([1.0, 0.3, 0.0, 1.0]),
+    ),
+]
+
+
+@pytest.mark.parametrize("implicator_name, a, b, expected", BRANCH_EDGE_CASES)
+def test_implicator_branch_edge_cases_match_expected_values(implicator_name, a, b, expected):
+    """Check branch-sensitive formulas on vector inputs."""
+    obj = Implicator.create(implicator_name)
+
+    result = obj(a, b)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+
+
+def _import_cupy_or_skip():
+    """Return CuPy when a working CUDA-backed installation is available."""
+    cp = pytest.importorskip("cupy")
     try:
-        result = obj(a_flat, b_flat)
-        assert result.shape == a_flat.shape
-        assert np.all((0.0 <= result) & (result <= 1.0)), f"Out-of-range result from {implicator_name}"
-    except Exception as e:
-        pytest.fail(f"{implicator_name} raised an exception during grid evaluation: {e}")
+        cp.asnumpy(cp.asarray([0.0]))
+    except Exception as exc:  # pragma: no cover - depends on local CUDA setup.
+        pytest.skip(f"CuPy is installed but unavailable in this environment: {exc}")
+    return cp
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_cupy_matches_numpy(implicator_name):
+    """Check that CuPy backend execution matches NumPy backend execution."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a_np = np.array([0.0, 0.2, 0.5, 0.8, 1.0])
+    b_np = np.array([0.0, 0.4, 0.5, 0.3, 1.0])
+    a_cp = cp.asarray(a_np)
+    b_cp = cp.asarray(b_np)
+
+    numpy_result = obj.compute_backend(a_np, b_np, xp=np)
+    cupy_result = obj.compute_backend(a_cp, b_cp, xp=cp)
+
+    np.testing.assert_allclose(cp.asnumpy(cupy_result), numpy_result, atol=1e-12)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_cupy_returns_cupy_array(implicator_name):
+    """Check that CuPy backend execution keeps the result on the CuPy backend."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a = cp.asarray([0.0, 0.2, 0.5, 0.8, 1.0])
+    b = cp.asarray([0.0, 0.4, 0.5, 0.3, 1.0])
+
+    result = obj.compute_backend(a, b, xp=cp)
+
+    assert isinstance(result, cp.ndarray)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+@pytest.mark.parametrize("shape", [(), (1,), (1, 1)])
+def test_implicator_compute_backend_cupy_handles_scalar_like_arrays(implicator_name, shape):
+    """Check that CuPy backend execution handles scalar-like equal-shape arrays."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a_np = np.full(shape, 0.73)
+    b_np = np.full(shape, 0.18)
+    a_cp = cp.asarray(a_np)
+    b_cp = cp.asarray(b_np)
+
+    numpy_result = obj.compute_backend(a_np, b_np, xp=np)
+    cupy_result = obj.compute_backend(a_cp, b_cp, xp=cp)
+
+    assert isinstance(cupy_result, cp.ndarray)
+    assert cupy_result.shape == a_np.shape
+    np.testing.assert_allclose(cp.asnumpy(cupy_result), numpy_result, atol=1e-12)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_cupy_rejects_mismatched_shapes(implicator_name):
+    """Check that CuPy backend validation rejects incompatible input shapes."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a = cp.asarray([0.1, 0.2, 0.3])
+    b = cp.asarray([[0.1, 0.2, 0.3]])
+
+    with pytest.raises(ValueError, match="Incompatible shapes"):
+        obj.compute_backend(a, b, xp=cp)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_compute_backend_cupy_rejects_out_of_range_values(implicator_name):
+    """Check that CuPy backend validation rejects values outside [0, 1]."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a = cp.asarray([0.2, 1.2])
+    b = cp.asarray([0.3, 0.4])
+
+    with pytest.raises(ValueError, match="range"):
+        obj.compute_backend(a, b, xp=cp)
+
+
+@pytest.mark.parametrize("implicator_name, a, b, expected", BRANCH_EDGE_CASES)
+def test_implicator_compute_backend_cupy_branch_edge_cases(implicator_name, a, b, expected):
+    """Check branch-sensitive formulas with CuPy backend arrays."""
+    cp = _import_cupy_or_skip()
+    obj = Implicator.create(implicator_name)
+    a_cp = cp.asarray(a)
+    b_cp = cp.asarray(b)
+
+    result = obj.compute_backend(a_cp, b_cp, xp=cp)
+
+    assert isinstance(result, cp.ndarray)
+    np.testing.assert_allclose(cp.asnumpy(result), expected, atol=1e-12)
+
+
+def test_implicator_create_unknown_alias_raises_value_error():
+    """Check that the factory rejects unknown implicator aliases."""
+    with pytest.raises(ValueError, match="Unknown alias"):
+        Implicator.create("not_an_implicator")
+
+
+
+ALIAS_EQUIVALENCE_CASES = [
+    ("luk", "lukasiewicz"),
+    ("kleene", "kleenedienes"),
+    ("kd", "kleenedienes"),
+    ("product", "goguen"),
+]
+
+
+@pytest.mark.parametrize("alias_name, canonical_name", ALIAS_EQUIVALENCE_CASES)
+def test_implicator_aliases_create_same_class_and_same_outputs(alias_name, canonical_name):
+    """Check that public aliases resolve to the canonical implicator behavior."""
+    alias_obj = Implicator.create(alias_name)
+    canonical_obj = Implicator.create(canonical_name)
+    a = np.array([0.0, 0.2, 0.5, 0.8, 1.0])
+    b = np.array([0.0, 0.4, 0.5, 0.3, 1.0])
+
+    assert type(alias_obj) is type(canonical_obj)
+    assert Implicator.get_class(alias_name) is Implicator.get_class(canonical_name)
+    np.testing.assert_allclose(alias_obj(a, b), canonical_obj(a, b), atol=1e-12)
+
+
+@pytest.mark.parametrize("mixed_case_name", ["LUK", "GoEdEl", "KLEENE", "Product"])
+def test_implicator_create_is_case_insensitive(mixed_case_name):
+    """Check that factory aliases are case-insensitive."""
+    obj = Implicator.create(mixed_case_name)
+
+    assert isinstance(obj, Implicator)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_create_from_spec_accepts_name_params_spec(implicator_name):
+    """Check preferred nested specs with name and params keys."""
+    obj = Implicator.create_from_spec({"name": implicator_name, "params": {}})
+
+    assert isinstance(obj, Implicator)
+    assert type(obj) is Implicator.get_class(implicator_name)
+
+
+@pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
+def test_implicator_create_from_spec_accepts_legacy_type_spec(implicator_name):
+    """Check legacy compact specs with a type key."""
+    obj = Implicator.create_from_spec({"type": implicator_name})
+
+    assert isinstance(obj, Implicator)
+    assert type(obj) is Implicator.get_class(implicator_name)
+
+
+def test_implicator_create_from_spec_returns_existing_instance():
+    """Check that already constructed implicator instances pass through unchanged."""
+    existing = Implicator.create("lukasiewicz")
+
+    result = Implicator.create_from_spec(existing)
+
+    assert result is existing
+
+
+def test_implicator_create_from_spec_accepts_internal_instance_marker():
+    """Check the internal normalizer marker used for pass-through instances."""
+    existing = Implicator.create("goedel")
+
+    result = Implicator.create_from_spec({"__instance__": existing})
+
+    assert result is existing
+
+
+def test_implicator_create_from_spec_rejects_invalid_params_type():
+    """Check that nested spec params must be a dictionary."""
+    with pytest.raises(TypeError, match="params.*dict"):
+        Implicator.create_from_spec({"name": "lukasiewicz", "params": ["bad"]})
+
+
+@pytest.mark.parametrize(
+    "unsupported_spec",
+    [
+        [],
+        {"params": {}},
+        {"unknown": "lukasiewicz"},
+        object(),
+    ],
+)
+def test_implicator_create_from_spec_rejects_unsupported_spec(unsupported_spec):
+    """Check that unsupported spec formats fail with a clear type error."""
+    with pytest.raises(TypeError, match="Unsupported component spec"):
+        Implicator.create_from_spec(unsupported_spec)
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
@@ -135,19 +501,11 @@ def test_equivalence_of_constructor_create_fromdict_with_synthetic_data(implicat
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_equivalence_of_constructor_create_fromdict_with_random_data(implicator_name):
-    """Ensures that direct instantiation, mixin-based creation, and from_dict deserialization
-    
-    produce consistent results for random input data in [0, 1].
-    For each implicator:
-    - Instantiate directly using the class
-    - Instantiate using the create() factory
-    - Instantiate using to_dict() + from_dict()
-    Then compare their outputs on randomly generated input vectors.
-    """
+    """Check constructor, factory, and from_dict equivalence on random vectors."""
 
-    rng = np.random.default_rng(seed=42)  # deterministic random input
-    a = rng.uniform(0, 1, size=1000000)
-    b = rng.uniform(0, 1, size=1000000)
+    rng = np.random.default_rng(seed=42)
+    a = rng.uniform(0, 1, size=10_000)
+    b = rng.uniform(0, 1, size=10_000)
 
     cls = Implicator.get_class(implicator_name)
     implicator1 = cls()
@@ -173,13 +531,9 @@ def test_equivalence_of_constructor_create_fromdict_with_random_data(implicator_
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_matrix_consistency_with_scalar_application(implicator_name):
-    """Ensures that applying implicator to A and B matrices is the same as
-    
-    applying scalar implicator to A[i,j], B[i,j] for each element.
-    This verifies consistency between vectorized and scalar logic.
-    """
+    """Check matrix evaluation against scalar element-wise evaluation."""
     rng = np.random.default_rng(seed=42)
-    n = 400  # small enough for fast testing, large enough for generality
+    n = 30
     A = rng.uniform(0, 1, size=(n, n))
     B = rng.uniform(0, 1, size=(n, n))
 

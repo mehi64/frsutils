@@ -93,7 +93,7 @@ def _validate_block_size(block_size: int) -> int:
             If block_size is less than one.
         
     """
-    if not isinstance(block_size, int):
+    if isinstance(block_size, bool) or not isinstance(block_size, int):
         raise TypeError("block_size must be an integer.")
     if block_size < 1:
         raise ValueError("block_size must be positive.")
@@ -582,7 +582,10 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
                 )
 
                 if row_start == col_start and row_stop == col_stop and getattr(values, "size", 0):
-                    self.backend.xp.fill_diagonal(values, 1.0)
+                    if return_backend_array and is_cupy_backend(self.backend):
+                        self.backend.xp.fill_diagonal(values, 1.0)
+                    else:
+                        np.fill_diagonal(values, 1.0)
 
                 values_are_backend_resident = bool(return_backend_array and is_cupy_backend(self.backend))
                 if not return_backend_array and is_cupy_backend(self.backend):

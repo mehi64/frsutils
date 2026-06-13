@@ -210,9 +210,11 @@ def calculate_similarity_matrix(
     """
     if not isinstance(X, np.ndarray) or X.ndim != 2:
         raise ValueError("X must be a 2D NumPy array")
-    if X.size == 0:
-        return np.zeros((0, 0))
+
     n_samples, n_features = X.shape
+    if n_samples == 0:
+        return np.zeros((0, 0))
+
     sim_matrix = np.ones((n_samples, n_samples), dtype=np.float64)
 
     for k in range(n_features):

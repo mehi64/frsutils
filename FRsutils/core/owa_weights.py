@@ -4,6 +4,8 @@
 This module belongs to the core fuzzy-rough computation layer.
 """
 
+import numbers
+
 import numpy as np
 from abc import abstractmethod
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
@@ -31,9 +33,9 @@ class OWAWeights(RegistryFactoryMixin):
                     Normalized OWA weight vector.
                 
         """
-        if order is None:
-            raise ValueError("order must be a string; either 'asc' or 'desc'. You entered a None value.")
-        
+        if not isinstance(order, str):
+            raise ValueError("order must be a string; either 'asc' or 'desc'.")
+
         order = order.lower()
         if order not in ('asc', 'desc'):
             raise ValueError("order must be a string; either 'asc' or 'desc'")
@@ -85,7 +87,7 @@ class OWAWeights(RegistryFactoryMixin):
                     On invalid or unsafe values
                 
         """
-        if not isinstance(n, int) or n <= 0:
+        if isinstance(n, bool) or not isinstance(n, numbers.Integral) or n <= 0:
             raise ValueError("n must be a positive integer")
 
         # Exponential strategy has numerical stability risks for large n
@@ -170,7 +172,13 @@ class ExponentialOWAWeights(OWAWeights):
     def validate_params(cls, **kwargs):
         """Validate constructor parameters for this component."""
         base = kwargs.get("base")
-        if base is None or not isinstance(base, (int, float)) or base <= 1:
+        if (
+            base is None
+            or isinstance(base, bool)
+            or not isinstance(base, numbers.Real)
+            or not np.isfinite(base)
+            or base <= 1
+        ):
             raise ValueError("Parameter 'base' must be > 1")
 
 

@@ -11,16 +11,15 @@ from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFact
 
 
 def validate_range_0_1(x, name="name_value"):
-    
-    """Validate that scalar or array values are in the closed interval [0, 1]."""
+    """Validate that scalar or array values are finite values in [0, 1]."""
     if isinstance(x, float):
-        if not (0.0 <= x <= 1.0):
-            raise ValueError(f"{name} must be in range [0.0, 1.0], but got {x}")
+        if not np.isfinite(x) or not (0.0 <= x <= 1.0):
+            raise ValueError(f"{name} must be a finite value in range [0.0, 1.0], but got {x}")
     elif isinstance(x, np.ndarray):
         if not np.issubdtype(x.dtype, np.floating):
             raise TypeError(f"{name} must be an array of floats")
-        if np.any(x < 0.0) or np.any(x > 1.0):
-            raise ValueError(f"All elements of {name} must be in range [0.0, 1.0]")
+        if np.any(~np.isfinite(x)) or np.any(x < 0.0) or np.any(x > 1.0):
+            raise ValueError(f"All elements of {name} must be finite values in range [0.0, 1.0]")
     else:
         raise TypeError(f"{name} must be a float or a numpy.ndarray, but got {type(x).__name__}")
 
@@ -46,9 +45,9 @@ class FuzzyQuantifier(RegistryFactoryMixin):
         if xp is np:
             validate_range_0_1(np.asarray(x))
             return
-        out_of_range = xp.any((x < 0.0) | (x > 1.0))
-        if bool(xp.asnumpy(out_of_range)):
-            raise ValueError("Fuzzy quantifier inputs must be in range [0.0, 1.0].")
+        invalid = xp.any((~xp.isfinite(x)) | (x < 0.0) | (x > 1.0))
+        if bool(xp.asnumpy(invalid)):
+            raise ValueError("Fuzzy quantifier inputs must be finite values in range [0.0, 1.0].")
 
     @classmethod
     def validate_params(cls, **kwargs):
