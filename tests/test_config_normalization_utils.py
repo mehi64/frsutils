@@ -3,8 +3,7 @@
 
 import pytest
 
-from FRsutils.utils.constructor_utils.init_helpers import normalize_flat_config_to_nested
-
+from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 def test_normalize_supports_legacy_gaussian_similarity_sigma_alias():
     flat = {

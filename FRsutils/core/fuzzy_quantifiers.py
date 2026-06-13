@@ -8,7 +8,22 @@ from typing import Any
 import numpy as np
 from abc import abstractmethod
 from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
-from FRsutils.utils.validation_utils.validation_utils import validate_range_0_1
+
+
+def validate_range_0_1(x, name="name_value"):
+    
+    if isinstance(x, float):
+        if not (0.0 <= x <= 1.0):
+            raise ValueError(f"{name} must be in range [0.0, 1.0], but got {x}")
+    elif isinstance(x, np.ndarray):
+        if not np.issubdtype(x.dtype, np.floating):
+            raise TypeError(f"{name} must be an array of floats")
+        if np.any(x < 0.0) or np.any(x > 1.0):
+            raise ValueError(f"All elements of {name} must be in range [0.0, 1.0]")
+    else:
+        raise TypeError(f"{name} must be a float or a numpy.ndarray, but got {type(x).__name__}")
+
+    return x
 
 
 class FuzzyQuantifier(RegistryFactoryMixin):
