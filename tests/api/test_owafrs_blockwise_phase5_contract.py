@@ -1,28 +1,5 @@
-"""
-@file test_owafrs_blockwise_phase5_contract.py
-@brief Phase 5 contract tests for exact blockwise OWAFRS approximation.
-
-These tests prove that the OWAFRS row-buffer blockwise path is mathematically
-equivalent to the existing dense public approximation path. OWAFRS needs a
-row-wise sort before OWA aggregation, so Phase 5 verifies several block sizes,
-custom OWA strategies, optional dense matrix materialization, and public wrapper
-pass-through behavior.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_blockwise_owafrs...             Dense/blockwise equivalence for several block sizes
-# test_blockwise_owafrs_custom...      Equivalence with non-default OWA/FR components
-# test_blockwise_owafrs_return_matrix  Optional materialized matrix matches dense output
-# test_compute_positive_region...      Wrapper API forwards blockwise options
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: locks exact equivalence against the existing dense path
-# - Regression Testing: protects public compute_approximations behavior
-# - Row-Buffer Testing: exercises small block sizes where rows span many column blocks
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 5 contract tests for exact blockwise OWAFRS approximation."""
 
 import numpy as np
 import pytest

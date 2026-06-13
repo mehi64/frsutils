@@ -1,31 +1,7 @@
-"""
-@file similarities.py
-@brief Extensible similarity functions and similarity matrix generation.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Similarity functions and dense similarity-matrix construction utilities.
 
-Defines a pluggable architecture for similarity functions with dynamic
-registration, creation, serialization, dense matrix computation, and backend-aware
-component formulas for blockwise NumPy/CuPy execution.
-
-##############################################
-# ✅ Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# register(*names)                     Register similarity functions with aliases
-# create(name, **kwargs)               Instantiate from registered names
-# list_available()                     List of all similarity types and aliases
-# to_dict() / from_dict()              Serialization and deserialization
-# validate_params()                    Input validation hook
-# compute_backend(diff, xp=...)        Backend-aware formula evaluation
-# calculate_similarity_matrix          Dense NumPy similarity matrix construction
-# build_similarity_matrix              Flat/nested config public bridge
-
-# ✅ Design Patterns & Clean Code Notes
-# - Registry Pattern: similarity aliases resolve through Similarity.create(...)
-# - Strategy Pattern: every similarity is a pluggable formula object
-# - Adapter Pattern: build_similarity_matrix accepts flat or nested config
-# - Backend Boundary: formulas can run with NumPy or CuPy-like namespaces
-# - Conservative Refactor: dense public behavior remains NumPy-compatible
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from typing import Callable, Optional, Dict, Any

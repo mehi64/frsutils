@@ -1,11 +1,7 @@
-"""
-@file validate_gridsearch_results.py
-@brief Utility to validate and analyze GridSearchCV results for FRSMOTE pipelines.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Validation helpers for FRSMOTE grid-search experiment results.
 
-Provides:
-- Re-ranking results by different metrics
-- Filtering by hyperparameters
-- Comparing top-k settings
+This module provides shared utility behavior used by FRsutils components.
 """
 
 import pandas as pd

@@ -1,7 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Debug runner for local test execution."""
 
-
-#######################################################################
-# # t-norms
 import tests.core_tests.test_tnorms as tt
 
 tt.test_tn_minimum_scalar_values()

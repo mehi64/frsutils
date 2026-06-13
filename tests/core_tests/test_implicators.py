@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for fuzzy implicator operators."""
+
 import numpy as np
 import pytest
 from FRsutils.core.implicators import Implicator

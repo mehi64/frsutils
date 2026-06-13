@@ -1,26 +1,5 @@
-"""
-@file test_itfrs_blockwise_phase2_contract.py
-@brief Phase 2 contract tests for exact blockwise ITFRS approximation.
-
-These tests prove that the new blockwise ITFRS path is mathematically equivalent
-to the existing dense public approximation path while avoiding a required dense
-similarity matrix allocation during computation.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_blockwise_itfrs...              Dense/blockwise equivalence for small fixtures
-# test_blockwise_itfrs_gaussian...     Equivalence with non-default similarity params
-# test_blockwise_return_matrix...      Optional materialized matrix matches dense output
-# test_blockwise_rejects...            Phase 2 guardrails for unsupported model/input paths
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: locks exact equivalence against the existing dense path
-# - Regression Testing: protects public compute_approximations behavior
-# - Boundary Testing: verifies unsupported Phase 2 paths fail explicitly
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 2 contract tests for exact blockwise ITFRS approximation."""
 
 import numpy as np
 import pytest

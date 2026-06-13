@@ -1,38 +1,7 @@
-"""
-@file tnorms.py
-@brief Fuzzy T-norm framework with NumPy-compatible and backend-aware formulas.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Backend-aware fuzzy T-norm operators for fuzzy-rough computations.
 
-Provides a pluggable architecture for defining T-norm operators used in fuzzy
-rough set theory. Implements factory registration, serialization, validation,
-multi-input reduction, and formula-level backend hooks for blockwise NumPy/CuPy
-execution.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# register(*names)                     Register T-norm with aliases
-# create(name, **kwargs)               Instantiate T-norm from registry
-# list_available()                     Returns registered T-norms
-# to_dict() / from_dict()              Serialization / deserialization
-# validate_params()                    Validates constructor parameters
-# __call__()                           NumPy-compatible element-wise application
-# compute_backend(a, b, xp=...)        Backend-aware element-wise formula
-# reduce()                             NumPy-compatible aggregation operation
-# reduce_backend(arr, xp=...)          Backend-aware aggregation operation
-
-# ✅ Summary Table of Design Patterns
-# Category              Name                Usage & Where Applied
-# ----------------------------------------------------------------------------------
-# Design Pattern        Factory Method      TNorm.create(name, **kwargs)
-# Design Pattern        Registry Pattern    TNorm._registry and register()
-# Design Pattern        Template Method     Defines shared compute/reduce hooks
-# Design Pattern        Strategy Pattern    Each subclass defines its logic
-# Design Pattern        Decorator           @TNorm.register(...)
-# Architecture          Pluggable           New T-norms extend base class via registration
-# Clean Code            SRP, DRY, LSP, Fail-Fast, Reflection
-# Backend Boundary      NumPy/CuPy formulas are owned by components, not engines
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from typing import Any

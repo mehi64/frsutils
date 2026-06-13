@@ -1,55 +1,7 @@
-"""
-@file KEEL_Audit_Utility.py
-@brief Single-file KEEL dataset auditor with class-based logical grouping.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Audit utilities for KEEL benchmark datasets.
 
-This module intentionally keeps the current KEEL audit system in one file, but its
-internal structure is organized as if it were already split into multiple layers.
-The main goal is to make the file understandable, navigable, and ready for a future
-migration into separate repositories or modules.
-
-Internal architectural layers in this file:
-1. Infrastructure helpers
-   - optional project-bridge imports
-   - JSON artifact persistence
-   - path and layout utilities
-
-2. Parsing helpers
-   - KEEL header parsing
-   - KEEL data loading
-   - fold-name and split parsing
-
-3. Analyzer/helper groups
-   - numeric/distribution helpers
-   - oversampling diagnostics
-   - feature-quality checks
-   - label and record integrity checks
-   - split/shift/leakage checks
-   - decision-support helpers
-
-4. Workflow and summary builders
-   - file-level audit workflow
-   - folder-level audit workflow
-   - root-level audit workflow
-   - executive summary builders
-   - error payload builders
-
-5. Conceptual architecture metadata
-   - categories
-   - profiles
-   - families
-   - registry
-   - facade
-
-Public API remains intentionally small:
-- audit_keel_file(...)
-- audit_keel_folder(...)
-- audit_keel_root(...)
-- list_supported_audit_families()
-- describe_active_audit_categories(...)
-
-Important design note:
-This file does not preserve backward compatibility with older monolithic utilities.
-Instead, it prioritizes logical grouping, readability, and future migration safety.
+This module provides shared utility behavior used by FRsutils components.
 """
 
 from __future__ import annotations

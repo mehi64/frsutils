@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for imbalanced-learn pipeline integration.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.model_selection import cross_val_score

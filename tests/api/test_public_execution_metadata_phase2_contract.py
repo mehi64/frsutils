@@ -1,12 +1,5 @@
-"""
-@file test_public_execution_metadata_phase2_contract.py
-@brief Phase 2 contract tests for public execution metadata and scorer engine params.
-
-These tests freeze the public API contract added after backend-aware component
-formulas: approximation result objects now expose execution provenance, and the
-positive-region scorer can forward dense/blockwise/backend controls without
-importing FRsutils internals.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 2 contract tests for public execution metadata and scorer engine params."""
 
 import numpy as np
 from sklearn.base import clone

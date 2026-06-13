@@ -1,32 +1,7 @@
-"""
-@file KEEL_Audit_Utility.py
-@brief KEEL Dataset Auditor Utility with logically grouped class-based helpers.
+# SPDX-License-Identifier: BSD-3-Clause
+"""KEEL Dataset Auditor Utility with logically grouped class-based helpers.
 
-This module keeps the current KEEL audit workflow in one file, but reorganizes the
-implementation so that almost all previously free helper functions now live inside
-coherent helper classes. The goal is to make the file easier to understand,
-maintain, and later split into multiple repositories if needed.
-
-Current logical grouping of helper classes:
-- ProjectHelperImportBridge
-- JsonArtifactIO
-- PathLayoutHelper
-- KEELParsingHelper
-- NumericStatisticsHelper
-- OversamplingAnalysisHelper
-- FeatureQualityHelper
-- SplitAuditHelper
-- DecisionSupportHelper
-- DatasetExecutiveSummaryBuilder
-- ErrorAuditPayloadBuilder
-- FileAuditWorkflow / FolderAuditWorkflow / RootAuditWorkflow
-
-Public API remains intentionally small:
-- audit_keel_file(...)
-- audit_keel_folder(...)
-- audit_keel_root(...)
-- list_supported_audit_families()
-- describe_active_audit_categories(...)
+This archived module is retained for historical reference and is not part of the stable public API.
 """
 
 from __future__ import annotations

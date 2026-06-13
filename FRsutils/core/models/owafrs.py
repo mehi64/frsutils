@@ -1,23 +1,7 @@
-"""
-@file owafrs.py
-@brief OWAFRS (Ordered Weighted Averaging Fuzzy Rough Set) model implementation.
+# SPDX-License-Identifier: BSD-3-Clause
+"""OWAFRS model implementation for OWA-based fuzzy-rough approximations.
 
-Extends fuzzy rough approximation using OWA weights for more flexible decision regions.
-
-##############################################
-# ✅ Quick Summary of Features
-# - OWA-based lower and upper approximations
-# - Linear weighting strategy for aggregation
-# - Support for vectorized similarity and label matrices
-# - Pluggable architecture for T-norms and implicators
-# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
-
-# ✅ Design Patterns & Principles Used
-# - Strategy: Delegates to provided T-norm and Implicator strategies
-# - Template Method: Extends abstract base for fuzzy rough models
-# - Adapter: `to_dict()` / `from_dict()` for serialization
-# - Clean Code: SRP, fail-fast checks, structured docs, LSP
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel

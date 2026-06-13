@@ -1,30 +1,5 @@
-"""
-@file test_owa_weights.py
-@brief Pytest unit tests for OWAWeights and its subclasses.
-
-This test suite verifies:
-- Output correctness of each weighting strategy
-- Param validation for parameterized strategies
-- Consistency across scalar, vector, and matrix inputs
-- Registry-based instantiation
-- to_dict / from_dict serialization
-- Reflection metadata and docstring availability
-
-##############################################
-# ✅ Summary of Test Coverage
-# - Scalar output shape, sum to 1.0
-# - Correct ascending and descending order
-# - create() and from_dict() correctness
-# - Parameter validation triggers
-# - Distinct instances from different construction paths
-# - describe_params_detailed and help()
-##############################################
-
-@example
->>> strategy = OWAWeights.create("linear")
->>> weights = strategy.weights(5, order='asc')
->>> assert np.isclose(weights.sum(), 1.0)
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Pytest unit tests for OWAWeights and its subclasses."""
 
 import pytest
 import numpy as np

@@ -1,33 +1,7 @@
-"""
-@file implicators.py
-@brief Fuzzy implicators framework with backend-aware vectorized formulas.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Fuzzy implicator operators for fuzzy-rough lower approximations.
 
-Provides an extensible, class-based system for computing fuzzy logic implicators.
-Supports registration, creation, serialization, parameter validation, NumPy public
-calls, and formula-level backend hooks for future NumPy/CuPy approximation paths.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# register(*names)                     Register implicator with aliases
-# create(name, **kwargs)               Instantiate implicator from registry
-# list_available()                     Returns registered implicators
-# to_dict() / from_dict()              Serialization / deserialization
-# validate_params()                    Validates constructor parameters
-# __call__()                           NumPy-compatible scalar/vector/matrix call
-# compute_backend(a, b, xp=...)        Backend-aware element-wise formula
-
-# ✅ Summary Table of Design Patterns
-# Category              Name                Usage & Where Applied
-# ----------------------------------------------------------------------------------
-# Design Pattern        Factory Method      Implicator.create(name, **kwargs)
-# Design Pattern        Registry Pattern    Implicator._registry and register()
-# Design Pattern        Template Method     Base class defines call/validation flow
-# Design Pattern        Strategy Pattern    Each subclass defines its own formula
-# Design Pattern        Decorator           @Implicator.register('name', ...)
-# Backend Boundary      NumPy/CuPy formulas are owned by components, not engines
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from typing import Any, Union

@@ -1,28 +1,5 @@
-"""
-@file test_similarity_engine_phase1_contract.py
-@brief Phase 1 contract tests for the similarity-engine abstraction.
-
-These tests verify that the new dense/blockwise engine layer is behaviorally
-identical to the existing dense `build_similarity_matrix` path on small exact
-fixtures. They intentionally do not test fuzzy-rough approximation blockwise
-execution because that belongs to Phase 2.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_dense_engine...                 DenseSimilarityEngine mirrors legacy dense builder
-# test_blockwise_engine...             BlockwiseSimilarityEngine materializes same matrix
-# test_blockwise_engine_blocks...      Block iterator exposes correct slices and shapes
-# test_nested_config...                Engine config handling matches public dense API
-# test_invalid_engine...               Construction boundary validation is explicit
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: freezes Phase 1 abstraction behavior before Phase 2 accumulators
-# - Facade Testing: validates the public `FRsutils.api` engine entry point
-# - Regression Testing: ensures dense matrix behavior is not changed by the refactor
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 1 contract tests for the similarity-engine abstraction."""
 
 import numpy as np
 import pytest

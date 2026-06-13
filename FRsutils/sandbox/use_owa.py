@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for OWA weight generation.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 from FRsutils.core.owa_weights import OWAWeights
 import numpy as np
 

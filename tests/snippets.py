@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Local testing snippets used during development."""
+
 import numpy as np
 
 # a = np.array([ 

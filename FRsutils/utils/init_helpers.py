@@ -1,54 +1,7 @@
-"""
-@file init_helpers.py
-@brief Helper utilities for initializing FRsutils components.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Flat-to-nested configuration normalization helpers for FRsutils components.
 
-This module provides two small-but-critical helpers used across the project:
-
-1) **assign_allowed_kwargs**
-   - A lightweight schema-based assignment helper (legacy utility).
-
-2) **normalize_flat_config_to_nested**
-   - Converts a *scikit-learn friendly* flat parameter dictionary into an **internal nested config**.
-   - The nested config isolates parameters by component (similarity, t-norm, implicator, etc.)
-     to prevent collisions and to simplify object construction.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# assign_allowed_kwargs                Assign & validate kwargs via a small schema
-# normalize_flat_config_to_nested      Flat -> nested config normalization
-# apply_config_aliases                 Backward-compatible alias mapping
-# extract_prefixed_params              Extract component params by prefix
-
-# ✅ Design Patterns & Clean Code Notes
-# - Adapter: Flat sklearn params -> internal nested config
-# - SRP: This module contains only init/config helpers
-# - Fail-fast: Input validation and safe defaults
-# - Backward compatibility: Optional alias mapping for legacy configs
-
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# External (flat) config for sklearn / GridSearchCV
-# config = {
-#     "type": "owafrs",
-#     "similarity": "gaussian",
-#     "similarity_sigma": 0.5,
-#     "similarity_tnorm": "minimum",
-#     "ub_tnorm_name": "product",
-#     "lb_implicator_name": "lukasiewicz",
-#     "ub_owa_method_name": "linear",
-#     "lb_owa_method_name": "linear",
-#     "k_neighbors": 3,
-# }
-# nested = normalize_flat_config_to_nested(config)
-#
-# nested["similarity"] == {"name": "gaussian", "params": {"sigma": 0.5}}
-
+This module provides shared utility behavior used by FRsutils components.
 """
 
 from __future__ import annotations

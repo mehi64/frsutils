@@ -1,30 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Lazy construction mixin for configurable FRsutils components.
+
+This module provides shared utility behavior used by FRsutils components.
 """
-@file lazy_constructible_mixin.py
-@brief Lifecycle mixin for lazily-constructed, config-driven components.
 
-This mixin implements a small, explicit lifecycle:
-`UNCONFIGURED -> CONFIGURED -> BUILT`, enabling:
-- scikit-learn friendly cloning (store configuration; delay heavy build)
-- reproducible reconstruction via `from_config`
-
-In FRsutils, estimators keep their **flat** config in `_object_config` for
-Pipeline/GridSearch compatibility, while an optional internal `_nested_config`
-may be attached to avoid parameter-name collisions during subcomponent builds.
-
-##############################################
-# ✅ Quick Summary of Features
-# - configure(**config) stores configuration and validates
-# - build(*args) constructs the internal object (via model_registry)
-# - lifecycle enforcement via LifecycleState
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# mixin_user.configure(model_registry=FuzzyRoughModel, **flat_config)
-# mixin_user.build(similarity_matrix, y)
-"""
 from enum import Enum, auto
 from abc import ABC, abstractmethod
 

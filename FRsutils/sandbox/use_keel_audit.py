@@ -1,37 +1,7 @@
-"""
-@file use_keel_audit.py
-@brief Config-driven runner for KEEL_Audit_Utility aligned with the current class-based architecture.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Config-driven runner for KEELAuditUtility aligned with the current class-based architecture.
 
-This script is intentionally kept lightweight and configuration-driven. It is designed
-for direct use during development: edit the CONFIG dictionary in this file and run it.
-
-It is aligned with the current KEEL_Audit_Utility public API and its architectural
-metadata, including dataset families and category descriptions.
-
-##############################################
-# ✅ Quick Summary of Features
-# - Run file/folder/root KEEL audits without CLI parsing
-# - Select the active dataset family through CONFIG
-# - Print compact summaries for file/folder/root runs
-# - Optionally print supported families and active category metadata
-# - Prefer local KEEL_Audit_Utility import, with FRsutils fallback
-#
-# ✅ Summary Table of Design Patterns
-# Category                Name                     Usage & Where Applied
-# ------------------------------------------------------------------------------------
-# Design Pattern          Facade                   Uses the public API exposed by KEEL_Audit_Utility
-# Design Pattern          Strategy-like Config     Runtime behavior controlled by CONFIG
-# Design Pattern          Adapter-style Import     Local import first, project import fallback
-# Clean Code              SRP, Fail-Fast           Validation, running, and printing are separated
-#
-##############################################
-# ✅ How to Use - Examples
-##############################################
-# 1) Edit CONFIG["LEVEL"] and CONFIG["TARGET_PATH"].
-# 2) Optionally set CONFIG["DATASET_FAMILY"] to one of the supported families.
-# 3) Run: python use_keel_audit.py
-# 4) Read the saved JSON path and printed executive summary.
-##############################################
+This module is an exploratory usage script and is not part of the stable public API.
 """
 
 from __future__ import annotations

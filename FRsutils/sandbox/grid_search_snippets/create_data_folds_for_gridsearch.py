@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory script for creating data folds used in grid-search experiments.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 from sklearn.model_selection import StratifiedKFold
 import joblib
 import numpy as np

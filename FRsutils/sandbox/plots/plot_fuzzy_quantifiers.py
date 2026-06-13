@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Plotting script for fuzzy quantifier functions.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 

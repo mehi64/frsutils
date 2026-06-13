@@ -1,24 +1,5 @@
-"""
-@file test_phase6_benchmark_suite_contract.py
-@brief Phase 6 contract tests for the benchmark suite.
-
-The tests keep the benchmark lightweight and deterministic. They verify that the
-script can be imported, produce JSON/CSV artifacts, and compare blockwise output
-against the dense reference without requiring CuPy.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_phase6_benchmark_suite...       Runs a tiny benchmark matrix
-# test_phase6_benchmark_cli...         Exercises the CLI output path
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: benchmark artifacts must be machine-readable
-# - Optional Dependency Boundary: CPU-only tests avoid requiring CuPy
-# - Reproducibility: fixed random seed and tiny synthetic dataset
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 6 contract tests for the benchmark suite."""
 
 import csv
 import json

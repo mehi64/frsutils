@@ -400,7 +400,7 @@ For more information on test procedures, please refer to
 
 ## License
 
-This project is licensed under the AGPL-3.0 License. See the [LICENSE](./LICENSE)
+This project is licensed under the BSD-3-Clause License. See the [LICENSE](./LICENSE)
 file for details.
 
 ## How to cite us in your research papers

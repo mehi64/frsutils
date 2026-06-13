@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for the VQRS fuzzy-rough model."""
+
 import pytest
 import numpy as np
 from FRsutils.core.models.vqrs import VQRS

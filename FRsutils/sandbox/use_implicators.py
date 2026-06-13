@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for fuzzy implicator usage.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 from FRsutils.core.implicators import Implicator
 import tests.synthetic_data_store as sds
 import numpy as np

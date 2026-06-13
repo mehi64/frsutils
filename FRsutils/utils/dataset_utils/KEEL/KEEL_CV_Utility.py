@@ -1,11 +1,7 @@
-"""
-@file
-@brief KEEL Cross-Validation Dataset Utilities
+# SPDX-License-Identifier: BSD-3-Clause
+"""Cross-validation helpers for KEEL benchmark datasets.
 
-This module provides tools to:
-1. Discover and pair KEEL dataset CV folds.
-2. Parse KEEL .dat files into pandas DataFrames.
-3. Integrate with scikit-learn as a custom cross-validation splitter.
+This module provides shared utility behavior used by FRsutils components.
 """
 
 import os

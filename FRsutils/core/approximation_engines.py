@@ -1,54 +1,7 @@
-"""
-@file approximation_engines.py
-@brief Exact blockwise fuzzy-rough approximation engines.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exact approximation engines for fuzzy-rough computations.
 
-This module contains execution helpers that consume SimilarityEngine blocks
-without requiring callers to materialize a full pairwise similarity matrix.
-Phase 2 introduced an exact ITFRS blockwise accumulator. Phase 4 extends the
-same exact blockwise execution contract to VQRS. Phase 5 adds exact OWAFRS
-row-buffer execution for the sort/OWA case. Phase 3 of the backend roadmap keeps
-ITFRS similarity blocks, implicator/T-norm application, and min/max reductions
-resident on CuPy when backend='cupy'. Phase 4 applies the same GPU-resident
-accumulator boundary to VQRS sum/reduction execution, while public outputs
-remain NumPy arrays.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# ITFRSBlockwiseApproximation          Value object for exact ITFRS blockwise outputs
-# VQRSBlockwiseApproximation           Value object for exact VQRS blockwise outputs
-# OWAFRSBlockwiseApproximation         Value object for exact OWAFRS blockwise outputs
-# compute_itfrs_blockwise              Exact ITFRS lower/upper/boundary/positive-region computation
-# GPU-resident ITFRS path              Keeps CuPy blocks/reductions on GPU until final output conversion
-# GPU-resident VQRS path               Keeps CuPy sum accumulators/quantifiers on GPU until final conversion
-# compute_vqrs_blockwise               Exact VQRS lower/upper/boundary/positive-region computation
-# compute_owafrs_blockwise             Exact OWAFRS row-buffer lower/upper computation
-# build_itfrs_components_from_config   Resolve ITFRS T-norm/implicator components
-# build_vqrs_components_from_config    Resolve VQRS fuzzy-quantifier components
-# build_owafrs_components_from_config  Resolve OWAFRS T-norm/implicator/OWA components
-
-# ✅ Design Patterns & Clean Code Notes
-# - Strategy Pattern: separates blockwise model execution from dense model classes
-# - Adapter Pattern: accepts flat or nested FRsutils configs
-# - Streaming Accumulator: keeps only row-level accumulators, not an n x n matrix
-# - GPU Residency Boundary: ITFRS/VQRS can consume backend-resident blocks and return NumPy outputs
-# - Row-Buffer Execution: OWAFRS stores one row block at a time for exact sorting
-# - Conservative Extension: blockwise support is added without changing dense behavior
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.core.similarity_engine import build_similarity_engine
-# from FRsutils.core.approximation_engines import compute_itfrs_blockwise, compute_vqrs_blockwise
-#
-# engine = build_similarity_engine(X, engine="blockwise", similarity="linear")
-# itfrs_result = compute_itfrs_blockwise(engine, y, config={"type": "itfrs"})
-# vqrs_result = compute_vqrs_blockwise(engine, y, config={"type": "vqrs"})
-# owafrs_result = compute_owafrs_blockwise(engine, y, config={"type": "owafrs"})
-# positive_region = owafrs_result.positive_region
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from __future__ import annotations

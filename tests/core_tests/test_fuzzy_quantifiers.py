@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for fuzzy quantifier functions."""
+
 import pytest
 import numpy as np
 from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier

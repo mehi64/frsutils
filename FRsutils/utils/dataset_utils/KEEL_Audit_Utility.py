@@ -1,10 +1,7 @@
-"""
-@file KEEL_Audit_Utility.py
-@brief Backward-compatible import shim for the canonical KEEL audit utility.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Compatibility wrapper for KEEL dataset audit utilities.
 
-The canonical implementation lives in
-`FRsutils.utils.dataset_utils.KEEL.KEEL_Audit_Utility`. This module preserves
-older imports used by legacy tests/examples.
+This module provides shared utility behavior used by FRsutils components.
 """
 
 from FRsutils.utils.dataset_utils.KEEL.KEEL_Audit_Utility import *  # noqa: F401,F403

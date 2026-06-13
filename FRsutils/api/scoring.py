@@ -1,42 +1,7 @@
-"""
-@file scoring.py
-@brief Scikit-learn-friendly public scorers for fuzzy-rough approximation outputs.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Scoring helpers for fuzzy-rough approximation outputs.
 
-This module exposes lightweight estimator-style helpers above the task-oriented
-approximation API. The first public scorer focuses on positive-region scores,
-which are useful for downstream packages such as standalone fuzzy-rough sampling
-libraries and for end users who want a reusable fitted object.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# FuzzyRoughPositiveRegionScorer       Fit/reuse positive-region approximation scores
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: consumes only FRsutils.api task-level approximation helpers
-# - Adapter Pattern: keeps flat public params and forwards them to compute_approximations
-# - Estimator Pattern: follows sklearn-style fit/get_params/set_params behavior
-# - Boundary Validation: validates scorer usage at the public API edge
-# - Dependency Inversion: downstream packages can depend on this scorer, not internals
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.api import FuzzyRoughPositiveRegionScorer
-#
-# scorer = FuzzyRoughPositiveRegionScorer(
-#     model="itfrs",
-#     similarity="linear",
-#     engine="blockwise",
-#     backend="numpy",
-#     block_size=512,
-# )
-# scores = scorer.fit_score(X, y)
-# result = scorer.as_result()
-# result.engine
+This module belongs to the stable public API layer.
 """
 
 from __future__ import annotations

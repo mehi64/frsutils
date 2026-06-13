@@ -1,43 +1,7 @@
-"""
-@file benchmark_fuzzy_rough_execution.py
-@brief Phase 6 benchmark suite for dense/blockwise/GPU fuzzy-rough execution.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 6 benchmark suite for dense/blockwise/GPU fuzzy-rough execution.
 
-This script benchmarks FRsutils public approximation APIs without depending on
-private runtime internals. It compares dense NumPy, exact blockwise NumPy, and
-optional CuPy-backed blockwise execution. The CuPy path is skipped cleanly when
-CuPy/CUDA is unavailable, so the benchmark suite is safe to run in CPU-only CI.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# run_benchmark_suite                  Execute all requested model/size/scenario cases
-# benchmark_one_case                   Time one execution case and collect metadata
-# make_synthetic_dataset               Build deterministic numeric benchmark data
-# write_json_report                    Save machine-readable benchmark results
-# write_csv_report                     Save flat CSV rows for plotting/analysis
-# CLI                                  Run benchmarks from the command line
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: depends only on FRsutils.api public functions
-# - Strategy Pattern: benchmark scenarios are declared as execution configs
-# - Reproducibility: deterministic dataset generation through NumPy RNG seeds
-# - Optional Dependency Boundary: CuPy failures become skipped rows, not crashes
-# - Paper Artifact Readiness: JSON/CSV outputs include execution metadata
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# python benchmarks/benchmark_fuzzy_rough_execution.py \
-#     --models itfrs,vqrs,owafrs \
-#     --sample-sizes 128,256,512 \
-#     --block-sizes 64,128 \
-#     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy \
-#     --repeats 3 \
-#     --output-json benchmark_results.json \
-#     --output-csv benchmark_results.csv
+This module supports performance measurement and is not part of the stable public API.
 """
 
 from __future__ import annotations

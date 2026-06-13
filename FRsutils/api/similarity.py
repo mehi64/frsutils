@@ -1,42 +1,7 @@
-"""
-@file similarity.py
-@brief Public similarity API for downstream FRsutils consumers.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Public similarity-matrix construction API for FRsutils.
 
-This module exposes stable similarity-matrix entry points that external
-packages should use. It intentionally hides lower-level implementation details
-and keeps downstream packages independent from internal module organization.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# Similarity                           Public registry base for similarity functions
-# list_similarities                    Inspect registered similarity aliases
-# calculate_similarity_matrix          Low-level pairwise matrix calculation helper
-# build_similarity_matrix              Validated public similarity matrix builder
-# build_similarity_engine              Build dense/blockwise similarity engines
-# backend="cupy"                       Optional GPU block computation for blockwise engines
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: stable import path for public similarity operations
-# - Strategy Pattern: similarity functions and t-norms remain pluggable internally
-# - Registry Pattern: similarity aliases are still resolved by the core registry
-# - Boundary Validation: validates user/downstream inputs at the public API edge
-# - Conservative Extension: engine support is additive and keeps dense behavior stable
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.api.similarity import build_similarity_matrix
-#
-# sim = build_similarity_matrix(
-#     X,
-#     similarity="gaussian",
-#     similarity_sigma=0.5,
-#     similarity_tnorm="minimum",
-# )
+This module belongs to the stable public API layer.
 """
 
 from __future__ import annotations

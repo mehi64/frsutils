@@ -1,11 +1,5 @@
-"""
-@file test_public_api_approximations.py
-@brief Tests for FRsutils public approximation API.
-
-These tests verify Phase 1 public API behavior after FRSMOTE moved to a
-downstream package. FRsutils should provide direct approximation and
-positive-region utilities without forcing users to import internal model paths.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for FRsutils public approximation API."""
 
 import numpy as np
 

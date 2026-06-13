@@ -1,28 +1,5 @@
-"""
-@file test_vqrs_blockwise_phase4_contract.py
-@brief Phase 4 contract tests for exact blockwise VQRS approximation.
-
-These tests prove that the VQRS blockwise accumulator is mathematically
-equivalent to the existing dense public approximation path. The tests cover
-multiple block sizes, custom fuzzy-quantifier parameters, optional dense matrix
-materialization, and public wrapper pass-through behavior.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_blockwise_vqrs...               Dense/blockwise equivalence for several block sizes
-# test_blockwise_vqrs_custom...        Equivalence with non-default fuzzy quantifiers
-# test_blockwise_vqrs_return_matrix    Optional materialized matrix matches dense output
-# test_compute_positive_region...      Wrapper API forwards blockwise options
-# fake CuPy VQRS path                  Confirms VQRS can keep sum accumulators backend-resident
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: locks exact equivalence against the existing dense path
-# - Regression Testing: protects public compute_approximations behavior
-# - Boundary Testing: keeps unsupported OWAFRS blockwise behavior explicit elsewhere
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 4 contract tests for exact blockwise VQRS approximation."""
 
 import sys
 import types

@@ -1,69 +1,7 @@
-"""
-@file KEEL_Audit_Utility.py
-@brief KEEL Dataset Auditor Utility with oversampling-oriented suitability analysis.
+# SPDX-License-Identifier: BSD-3-Clause
+"""KEEL Dataset Auditor Utility with oversampling-oriented suitability analysis.
 
-Provides a layered auditing utility for KEEL .dat datasets before they are used in
-FRsutils benchmarking pipelines. The module combines general data-quality checks with
-oversampling-specific diagnostics so that a dataset can be judged not only as clean or
-unclean, but also as suitable, fragile, shifted, leakage-prone, or risky for neighbor-based oversampling.
-
-##############################################
-# ✅ Quick Summary of Features
-# - audit_keel_file(...)         -> Full single-file audit with data quality + oversampling diagnostics
-# - audit_keel_folder(...)       -> Folder/fold audit with leakage, schema drift, shift, and partition stability
-# - audit_keel_root(...)         -> Root-level executive summary + offender ranking + redundancy/similarity view
-#
-# General quality checks:
-# - Header/schema parsing, encoding checks, duplicate rows, missingness, label conflicts
-# - Class-conditional missingness, constant / near-constant / redundant features
-# - High-cardinality nominal features, numeric sanity checks, target-leakage suspicion
-# - Train/test leakage, near-duplicate leakage, class-presence mismatches, schema drift across predefined folds
-# - Feature-level train/test shift and unseen-category risk across folds
-#
-# Oversampling-oriented checks:
-# - kNN / SMOTE feasibility profile for k in {3, 5, 7}
-# - Minority topology summary (safe / borderline / rare / outlier)
-# - Minority fragmentation and small-disjunct proxy
-# - Overlap, separability, instance-hardness, and local noise suspicion proxies (minority + majority)
-# - Synthetic interpolation risk analysis and oversampling-specific recommendation layer
-# - Metric-readiness analysis and fold-stability analysis for IR, minority count, topology, overlap, hardness, and risk
-#
-# Level-3 additions:
-# - Per-dataset severity score (0..100) with dominant drivers
-# - Per-dataset run readiness + oversampling recommendation
-# - Global issue counters, top offenders, near-duplicate/shift summaries, and dataset-profile similarity hints
-#
-##############################################
-# ✅ Summary Table of Design Patterns
-# Category                Name                    Usage & Where Applied
-# ----------------------------------------------------------------------------------
-# Design Pattern          Facade                  3 public entry-points (file/folder/root)
-# Design Pattern          Adapter                 Optional reuse of existing KEEL helpers
-# Design Pattern          Strategy                Rule-based readiness, severity, and recommendation layer
-# Architecture            Layered Auditing        File -> folder -> root composition
-# Architecture            Data-Centric Diagnostics Quality, topology, overlap, noise, stability, shift, recommendation
-# Clean Code              SRP, DRY, Fail-Safe     Parsing/checking/summarizing separated; robust fallbacks
-# Clean Code              Explainability          Severity drivers + explicit risky/blocked reasons + metric readiness
-# Clean Code              Configurability         Audit profiles (strict/balanced/lenient) + threshold overrides
-#
-##############################################
-# ✅ How to Use - Examples
-##############################################
-# 1) Audit a single file:
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_file
-# res = audit_keel_file(".../iris0-5-1tra.dat", out_dir="out_audit", audit_profile="balanced")
-# print(res["oversampling_audit"]["oversampling_recommendation"])
-#
-# 2) Audit a dataset folder with predefined folds:
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_folder
-# folder_res = audit_keel_folder(".../iris0_folds", out_dir="out_audit", audit_profile="strict")
-# print(folder_res["executive_dataset_summaries"][0]["train_test_shift_summary"])
-#
-# 3) Audit a root folder containing many dataset folders:
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_root
-# root_res = audit_keel_root(".../KEEL_root", out_dir="out_audit", audit_profile="balanced")
-# print(root_res["executive_summary"]["top_offenders"])
-##############################################
+This archived module is retained for historical reference and is not part of the stable public API.
 """
 
 from __future__ import annotations

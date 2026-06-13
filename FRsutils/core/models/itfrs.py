@@ -1,25 +1,7 @@
-"""
-@file itfrs.py
-@brief Implementation of the IT2 Fuzzy Rough Set (ITFRS) approximation model.
+# SPDX-License-Identifier: BSD-3-Clause
+"""ITFRS model implementation for fuzzy-rough approximations.
 
-Provides a concrete implementation of the lower and upper approximations
-using a fuzzy implicator and a T-norm operator over a similarity matrix.
-
-##############################################
-# ✅ Quick Summary of Features
-# - ITFRS model for fuzzy rough approximation
-# - Pluggable architecture for T-norm and Implicator
-# - Lower and upper approximation computation
-# - Class introspection and serialization support
-# - Logger injection via BaseComponentWithLogger
-# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
-
-# ✅ Summary Table of Design Principles
-# - Strategy Pattern: Uses user-defined T-norm and Implicator strategies
-# - Template Method: Inherits abstract methods from BaseFuzzyRoughModel
-# - Adapter Pattern: Provides to_dict/from_dict for serialization
-# - Clean Code: SRP, DRY, LSP, docstring documentation, fail-fast checks
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel

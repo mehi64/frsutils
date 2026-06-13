@@ -1,11 +1,5 @@
-"""
-@file test_public_api_builder_contracts.py
-@brief Phase 2 contract tests for downstream-oriented public builders.
-
-These tests verify that external packages can rely on `FRsutils.api` builders
-without importing deep internal modules. Phase 2 strengthens the public boundary
-around similarity-matrix construction and fuzzy-rough model construction.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 2 contract tests for downstream-oriented public builders."""
 
 import numpy as np
 import pytest

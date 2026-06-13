@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 description = "A Python library for fuzzy-rough set utility functions."
 authors = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
 readme = "README.md"
-license = {text = " AGPL-3.0"}
+license = {text = "BSD-3-Clause"}
 keywords = ["fuzzy-rough sets", "mathematics", "data science"]
 dependencies = [
     "numpy>=1.21.0",

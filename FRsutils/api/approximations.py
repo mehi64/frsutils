@@ -1,75 +1,7 @@
-"""
-@file approximations.py
-@brief Task-oriented public APIs for fuzzy-rough approximations.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Task-oriented public APIs for fuzzy-rough approximations.
 
-This module provides the user-facing approximation API that sits above the
-lower-level public model and similarity builders. It is intended for two user
-classes:
-
-1) End users who want direct lower/upper/boundary/positive-region outputs.
-2) Downstream packages that need a stable API but may precompute similarity
-   matrices or pass model-specific flat parameters.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# compute_approximations               Compute lower/upper/boundary/positive region outputs
-# compute_lower_approximation          Convenience wrapper for lower approximation
-# compute_upper_approximation          Convenience wrapper for upper approximation
-# compute_boundary_region              Convenience wrapper for boundary region
-# compute_positive_region              Convenience wrapper for positive-region scores
-# engine="dense"                      Preserve existing dense matrix-backed behavior
-# engine="blockwise"                  Exact ITFRS/VQRS/OWAFRS blockwise accumulators
-# backend="cupy"                    Optional GPU similarity-block computation
-# result metadata                    engine/backend/block-size provenance in result objects
-# used_gpu_approximation_accumulators Marks Phase 3 GPU-resident ITFRS accumulator path
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: stable task API above internal model/similarity builders
-# - Adapter Pattern: accepts flat sklearn-style params or nested config
-# - Strategy Pattern: dispatches between dense and blockwise execution engines
-# - Dependency Inversion: downstream packages depend on FRsutils.api only
-# - DRY: single compute_approximations implementation powers all wrappers
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.api import compute_approximations, compute_positive_region
-#
-# result = compute_approximations(
-#     X,
-#     y,
-#     model="itfrs",
-#     similarity="linear",
-#     ub_tnorm_name="minimum",
-#     lb_implicator_name="lukasiewicz",
-# )
-# positive_scores = compute_positive_region(X, y, model="itfrs")
-#
-# blockwise = compute_approximations(
-#     X,
-#     y,
-#     model="itfrs",
-#     similarity="linear",
-#     engine="blockwise",
-#     block_size=512,
-# )
-#
-# gpu_blockwise = compute_approximations(
-#     X,
-#     y,
-#     model="itfrs",
-#     similarity="linear",
-#     engine="blockwise",
-#     backend="cupy",
-# )
-# gpu_blockwise.engine
-# gpu_blockwise.backend
-# gpu_blockwise.used_gpu_similarity_blocks
-# gpu_blockwise.used_gpu_approximation_accumulators
+This module belongs to the stable public API layer.
 """
 
 from __future__ import annotations

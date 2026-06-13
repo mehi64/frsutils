@@ -1,7 +1,7 @@
-"""
-@file validate_gridsearch_from_saved_splits.py
-@brief Re-evaluates GridSearch configurations manually using saved StratifiedKFold splits.
-       Adds per-fold scores and saves results in Excel and JSON.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Re-evaluates GridSearch configurations manually using saved StratifiedKFold splits.
+
+This module is an exploratory usage script and is not part of the stable public API.
 """
 
 import numpy as np

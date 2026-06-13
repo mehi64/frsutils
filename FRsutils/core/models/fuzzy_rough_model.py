@@ -1,17 +1,7 @@
-"""
-@file base_fuzzy_rough_model.py
-@brief Base class for fuzzy rough set approximation models.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Base abstractions for fuzzy-rough approximation models.
 
-Defines the abstract contract that all fuzzy rough models must implement,
-including lower and upper approximations, boundary and positive regions.
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Template Method Pattern: abstract lower_approximation() and upper_approximation()
-# - SRP: Handles only shape/format validation and contract definition
-# - LSP: All subclasses can safely extend this without changing client behavior
-# - Fail-Fast Validation: Input validation at init
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from abc import abstractmethod

@@ -1,6 +1,5 @@
-# This is the core submodule
-# This lets users do:
-# from frsutils.core import tnorms, similarities, similarity_engine, approximation_engines, itfrs
+# SPDX-License-Identifier: BSD-3-Clause
+"""Core fuzzy-rough components exposed by FRsutils."""
 
 from . import tnorms, implicators, similarities, similarity_engine, approximation_engines, backends
 from .models import itfrs

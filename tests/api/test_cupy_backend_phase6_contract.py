@@ -1,25 +1,5 @@
-"""
-@file test_cupy_backend_phase6_contract.py
-@brief Phase 6 contract tests for optional CuPy similarity-block backend.
-
-These tests keep CuPy optional. CPU-only environments still exercise the clean
-optional-dependency boundary, while GPU-enabled environments also verify exact
-numerical equivalence against the NumPy blockwise/dense paths.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_cupy_backend_optional...        CuPy missing gives a clear ImportError
-# test_cupy_similarity_engine...       CuPy blockwise matrix equals dense NumPy matrix
-# test_cupy_blockwise_approximations   CuPy blockwise outputs equal dense outputs
-
-# ✅ Design Patterns & Clean Code Notes
-# - Optional Dependency Testing: does not require CuPy for normal CI
-# - Contract Testing: GPU block results must equal the dense CPU reference
-# - Boundary Testing: missing optional dependency fails clearly when requested
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 6 contract tests for optional CuPy similarity-block backend."""
 
 import numpy as np
 import pytest

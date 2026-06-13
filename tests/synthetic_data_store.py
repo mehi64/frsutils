@@ -1,8 +1,5 @@
-"""
-Synthetic Test Datasets for Fuzzy Components
-
-Provides structured test datasets for verifying T-norms, Implicators, and other fuzzy components.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Synthetic datasets and expected values for fuzzy component tests."""
 
 import numpy as np
 

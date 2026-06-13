@@ -1,44 +1,7 @@
-"""
-@file models.py
-@brief Public fuzzy-rough model API for downstream FRsutils consumers.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Public builders for fuzzy-rough model objects.
 
-This module exposes model construction and registry lookup through a stable API.
-External packages such as a standalone `frsampling` package should use this
-module instead of importing directly from deep internal model paths.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# FuzzyRoughModel                      Public model registry base class
-# ITFRS / OWAFRS / VQRS                Registered fuzzy-rough model classes
-# get_fuzzy_rough_model_class          Resolve a registered model class by alias
-# list_fuzzy_rough_models              List registered model aliases
-# build_fuzzy_rough_model              Build a model from flat or nested config
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: stable public surface for model construction
-# - Registry Pattern: resolves fuzzy-rough model implementations by alias
-# - Factory Method: build_fuzzy_rough_model constructs model instances
-# - Adapter Pattern: accepts flat sklearn-style config or nested internal config
-# - Boundary Validation: validates matrix/labels/config at the public API edge
-# - Dependency Inversion: downstream packages depend on this API, not internals
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.api.models import build_fuzzy_rough_model
-#
-# model = build_fuzzy_rough_model(
-#     "itfrs",
-#     similarity_matrix=sim,
-#     labels=y,
-#     ub_tnorm_name="minimum",
-#     lb_implicator_name="lukasiewicz",
-# )
-# pos = model.positive_region()
+This module belongs to the stable public API layer.
 """
 
 from __future__ import annotations

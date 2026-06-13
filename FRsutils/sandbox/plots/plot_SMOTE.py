@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Plotting script for SMOTE-related experiment results.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 from imblearn.over_sampling import SMOTE
 from sklearn.datasets import make_classification
 from collections import Counter

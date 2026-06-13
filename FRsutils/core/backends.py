@@ -1,39 +1,7 @@
-"""
-@file backends.py
-@brief Lightweight array-backend helpers for similarity-engine execution modes.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Backend resolution utilities for NumPy and optional GPU execution.
 
-This module resolves array execution backends for FRsutils blockwise similarity
-computation. NumPy remains the default and dependency-free path. CuPy is an
-optional GPU backend used only when explicitly requested, so normal FRsutils
-imports and NumPy workflows do not require CUDA/CuPy to be installed.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# ArrayBackend                         Small value object describing an array backend
-# build_array_backend                  Resolve and validate a backend alias
-# is_numpy_backend                     Predicate for NumPy-backed execution
-# is_cupy_backend                      Predicate for CuPy-backed execution
-# to_numpy                             Convert backend arrays back to NumPy arrays
-
-# ✅ Design Patterns & Clean Code Notes
-# - Adapter Pattern: hides concrete NumPy/CuPy namespaces behind a small object
-# - Boundary Validation: validates backend names at construction boundaries
-# - Optional Dependency Boundary: imports CuPy only when explicitly requested
-# - Conservative Extension: backend='numpy' and backend='auto' remain CPU-stable
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.core.backends import build_array_backend
-#
-# backend = build_array_backend("numpy")
-# X = backend.asarray([[0.0], [1.0]], dtype=float)
-#
-# gpu_backend = build_array_backend("cupy")  # requires optional CuPy install
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from __future__ import annotations

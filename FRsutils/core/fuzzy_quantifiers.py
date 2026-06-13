@@ -1,26 +1,7 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Fuzzy quantifier functions used by variable-precision and OWA models.
 
-"""
-@file fuzzy_quantifiers.py
-@brief Framework for parameterized fuzzy quantifiers used in fuzzy logic systems.
-
-Supports registration, instantiation via alias, computation of linear and
-quadratic fuzzy quantifiers, and backend-aware formula hooks for NumPy/CuPy-like
-array namespaces.
-
-##############################################
-# ✅ Summary of Design Principles & Clean Code
-# - Registry Pattern: supports alias-based instantiation via decorators
-# - Factory Method: `create()` builds objects from name + params
-# - Strategy Pattern: each subclass defines a specific quantifier formula
-# - Adapter Pattern: `to_dict()` / `from_dict()` for serialization
-# - Fail-Fast Validation: type and range checks in validate_params
-# - Backend Boundary: component owns its NumPy/CuPy formula
-##############################################
-
-@example
->>> fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.6)
->>> fq(np.array([0.1, 0.3, 0.7]))
-array([0. , 0.25, 1. ])
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from typing import Any

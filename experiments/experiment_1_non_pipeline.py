@@ -1,6 +1,7 @@
-"""
-@file
-@brief Run multiple oversampling methods on KEEL 5-fold CV datasets and evaluate classifiers.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Run multiple oversampling methods on KEEL 5-fold CV datasets and evaluate classifiers.
+
+This module supports reproducible experiments and is not part of the stable public API.
 """
 
 import os

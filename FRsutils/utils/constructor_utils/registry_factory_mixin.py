@@ -1,23 +1,7 @@
-"""
-@file registry_factory_mixin.py
-@brief Provides registration, factory instantiation, and reflection support for pluggable components.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Registry-backed factory mixin for named component construction.
 
-This mixin is designed to be shared among base classes like TNorm, Implicator, and SimilarityFunction
-in the FRsutils framework. It encapsulates:
-- Registry management via @register
-- Factory instantiation with optional strict parameter checking
-- Introspection utilities: describe_params_detailed, help
-- Serialization support: to_dict / from_dict
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Registry Pattern: _registry / _aliases with dynamic alias support
-# - Factory Method: create(name, **kwargs) with param filtering and instantiation
-# - Reflection: Uses inspect to dynamically match __init__ parameters
-# - Adapter: to_dict / from_dict for serialization
-# - Open/Closed: Easily extendable without modifying the mixin
-# - DRY: Removes duplication from base classes like TNorm and Implicator
-##############################################
+This module provides shared utility behavior used by FRsutils components.
 """
 
 import inspect

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for KEEL dataset audit utilities."""
+
 import pytest
 
 from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import (

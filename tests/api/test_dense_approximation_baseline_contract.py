@@ -1,28 +1,5 @@
-"""
-@file test_dense_approximation_baseline_contract.py
-@brief Phase 0 baseline tests for dense fuzzy-rough approximation outputs.
-
-These tests lock the current public dense approximation behavior for ITFRS,
-VQRS, and OWAFRS before the similarity engine is refactored for blockwise/GPU
-execution. They deliberately call only `FRsutils.api` entry points so downstream
-packages can depend on the same contract.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_dense_itfrs...                  Locks ITFRS dense lower/upper/boundary/positive values
-# test_dense_vqrs...                   Locks VQRS dense lower/upper/boundary/positive values
-# test_dense_owafrs...                 Locks OWAFRS dense lower/upper/boundary/positive values
-# test_precomputed_similarity...       Ensures X-built and matrix-reused paths match
-# test_convenience_wrappers...         Ensures wrapper APIs mirror full result fields
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: defines exact dense baselines for future engine comparisons
-# - Facade Testing: tests the public API rather than model internals
-# - Regression Testing: protects downstream package expectations
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 0 baseline tests for dense fuzzy-rough approximation outputs."""
 
 import numpy as np
 import pytest

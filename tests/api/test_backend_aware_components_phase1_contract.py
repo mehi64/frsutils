@@ -1,12 +1,5 @@
-"""
-@file test_backend_aware_components_phase1_contract.py
-@brief Phase 1 contract tests for backend-aware component formulas.
-
-These tests ensure that Similarity, TNorm, Implicator, and FuzzyQuantifier
-components own their NumPy/CuPy-ready formulas through compute_backend-style
-hooks. The tests use NumPy as the available backend namespace so they remain
-stable in CPU-only CI while still protecting the backend boundary contract.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 1 contract tests for backend-aware component formulas."""
 
 import numpy as np
 

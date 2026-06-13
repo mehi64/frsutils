@@ -1,46 +1,7 @@
-"""
-@file similarity_engine.py
-@brief Similarity-engine abstraction for dense, blockwise, and optional GPU block computation.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Similarity-matrix execution engine with dense and blockwise computation paths.
 
-This module adds a non-invasive execution layer above the existing similarity
-functions. It does not change the current public dense similarity behavior;
-instead, it provides reusable engine objects that future approximation code can
-consume block by block.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# SimilarityBlock                      Immutable row/column block plus values
-# BaseSimilarityEngine                 Shared validation and component resolution
-# DenseSimilarityEngine                Compatibility wrapper around dense matrix building
-# BlockwiseSimilarityEngine            Exact block iterator for future streaming models
-# calculate_similarity_block           Compute one pairwise block from two feature matrices
-# iter_backend_blocks                  Yield backend-resident blocks for GPU-aware accumulators
-# build_similarity_engine              Factory for dense/blockwise engine construction
-# backend='cupy'                       Optional GPU acceleration for block similarity/ITFRS block execution
-
-# ✅ Design Patterns & Clean Code Notes
-# - Strategy Pattern: dense and blockwise engines share a common public contract
-# - Factory Method: build_similarity_engine resolves engine aliases
-# - Adapter Pattern: converts flat/nested config into concrete similarity components
-# - Conservative Refactor: current dense API remains untouched and regression-tested
-# - Optional Dependency Boundary: CuPy is imported only when backend='cupy' is requested
-# - DRY: block computation delegates backend formulas to Similarity/TNorm components
-# - GPU Residency Boundary: public iter_blocks() returns NumPy, while iter_backend_blocks() may keep CuPy values resident
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.core.similarity_engine import build_similarity_engine
-#
-# engine = build_similarity_engine(X, engine="blockwise", similarity="linear")
-# for block in engine.iter_blocks():
-#     print(block.row_slice, block.col_slice, block.values.shape)
-#
-# dense = engine.to_dense()
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from __future__ import annotations

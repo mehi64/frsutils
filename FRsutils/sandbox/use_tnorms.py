@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for fuzzy T-norm usage.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 import FRsutils.core.tnorms as tn
 import tests.synthetic_data_store as sds
 import numpy as np

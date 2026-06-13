@@ -1,10 +1,5 @@
-"""
-@file test_public_api_downstream_contract.py
-@brief Contract tests for downstream packages that depend on FRsutils.api.
-
-These tests model how a standalone sampling package such as frsampling should
-consume FRsutils after FRSMOTE has been moved out of the core package.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Contract tests for downstream packages that depend on FRsutils.api."""
 
 import numpy as np
 

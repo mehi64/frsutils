@@ -1,23 +1,5 @@
-"""
-@file test_phase7_examples_contract.py
-@brief Contract tests for Phase 7 release-ready examples.
-
-These tests ensure the public API and benchmark smoke examples remain executable
-from a source checkout. They are intentionally small and CPU-only.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_phase7_public_api...            Runs the public API quickstart example
-# test_phase7_benchmark...             Runs the benchmark smoke example
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: examples shown to users must execute
-# - Public API Boundary: examples import from FRsutils.api or benchmark facade
-# - Optional Dependency Boundary: no CuPy required for these tests
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Contract tests for Phase 7 release-ready examples."""
 
 import subprocess
 import sys

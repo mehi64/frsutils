@@ -1,37 +1,7 @@
-"""
-@file logger_util.py
-@brief A tiny logger for writing in console and file.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Project logger factory and logging-directory setup helpers.
 
-
-This module provides a single logger instance via `get_logger()`.
-Do not instantiate `_TinyLogger` directly.
-
-
-Provides:
-- Colorized terminal logging
-- Project-root logs directory creation before file logging
-- Structured CSV/JSON logging to a separate file (JSON is not tested)
-- Run ID & experiment tagging
-- Config, metrics, Git info, system info logging (commented in code and not tested)
-- Exception handling & timing utilities (commented in code and not tested)
-- Step decorator for automatic context logging (commented in code and not tested)
-
-@example
-logger = MLLogger(
-    name="MyExperiment",
-    log_to_console=True,
-    log_to_file=True,
-    file_path="experiment.log",
-    structured_output="json",
-    level=logging.INFO,
-    experiment_name="my_project"
-)
-
-logger.set_run(run_id="run_20250602") # this is optional
-logger.info("Training started")
-logger.error("Division by zero in evaluation.")
-logger.critical("Critical error in evaluation.")
-logger.warning("Validation data is imbalanced.")
+This module provides shared utility behavior used by FRsutils components.
 """
 
 # only get_logger is available for import, not _TinyLogger.

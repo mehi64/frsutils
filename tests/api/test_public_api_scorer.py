@@ -1,10 +1,5 @@
-"""
-@file test_public_api_scorer.py
-@brief Phase 3 tests for the public positive-region scorer.
-
-These tests verify that users and downstream packages can use a fitted scorer
-object through `FRsutils.api` without importing internal fuzzy-rough modules.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 3 tests for the public positive-region scorer."""
 
 import numpy as np
 import pytest

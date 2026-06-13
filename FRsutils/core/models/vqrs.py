@@ -1,48 +1,8 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""VQRS model implementation for variable-precision fuzzy-rough approximations.
+
+This module belongs to the core fuzzy-rough computation layer.
 """
-@file vqrs.py
-@brief VQRS (Vaguely Quantified Rough Set) model implementation.
-
-Supports both direct construction and lazy instantiation via config or dictionary.
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Strategy Pattern: Fuzzy quantifier is configurable
-# - Adapter Pattern: Implements to_dict/from_dict serialization
-# - Template Method: Inherits from FuzzyRoughModel abstract interface
-# - Logger Injection: Supports injected or default logger
-# - Fail-Fast Validation: Ensures correct quantifier types
-# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# Direct instantiation
-from FRsutils.core.models.vqrs import VQRS
-from FRsutils.core.fuzzy_quantifiers import LinearFuzzyQuantifier
-import numpy as np
-
-sim_matrix = np.array([[1.0, 0.5], [0.5, 1.0]])
-labels = np.array([1, 1])
-fq = LinearFuzzyQuantifier(alpha=0.1, beta=0.6)
-vqrs = VQRS(sim_matrix, labels, fq, fq)
-
-vqrs.lower_approximation()
-vqrs.upper_approximation()
-
-# From config
-config = {
-    "lb_fuzzy_quantifier": {"type": "linear", "alpha": 0.1, "beta": 0.6},
-    "ub_fuzzy_quantifier": {"type": "linear", "alpha": 0.2, "beta": 1.0}
-}
-vqrs2 = VQRS.from_config(config, similarity_matrix=sim_matrix, labels=labels)
-
-# Serialization
-model_dict = vqrs.to_dict(include_data=True)
-vqrs_restored = VQRS.from_dict(model_dict)
-"""
-
 
 import numpy as np
 import FRsutils.core.tnorms as tn

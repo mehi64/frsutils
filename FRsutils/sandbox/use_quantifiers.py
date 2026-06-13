@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for fuzzy quantifier usage.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier as fq
 import numpy as np
 

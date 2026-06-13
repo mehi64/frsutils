@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Synthetic data-matrix helpers generated from scalar component values."""
+
 import numpy as np
 import FRsutils.core.tnorms as tn
 

@@ -1,69 +1,7 @@
-"""
-@file benchmark_oversamplers_minmax.py
-@brief Benchmark FRSMOTE vs. selected baselines with incremental caching (resume across multiple runs).
+# SPDX-License-Identifier: BSD-3-Clause
+"""Benchmark FRSMOTE vs. selected baselines with incremental caching (resume across multiple runs).
 
-This module provides a modular, pipeline-friendly benchmarking framework for oversampling methods.
-It supports:
-- Single KEEL .dat files (StratifiedKFold)
-- Multiple KEEL .dat files from a directory (batch benchmark)
-- KEEL predefined folds (single dataset folder containing *_tra.dat / *_tst.dat)
-- Multiple KEEL fold-dataset folders from a root directory (batch benchmark)
-- Quick sanity checks via selected sklearn datasets (optional)
-
-##############################################
-# ✅ Quick Summary of Features
-# - imblearn Pipeline evaluation (scaler -> sampler -> classifier)
-# - Adapter for smote-variants to behave like an imblearn sampler (fit_resample)
-# - Batch benchmarking across many datasets
-# - Metrics commonly used in oversampling papers:
-#   Balanced Accuracy, Macro-F1, G-Mean, MCC, ROC-AUC, PR-AUC,
-#   Minority-class Precision/Recall/F1 (binary/multiclass), runtime breakdown
-# - Incremental execution:
-#   - Stores fold-level results into a SQLite cache so you can resume across multiple days
-#   - Re-aggregates final tables from cached results (no need to rerun completed folds)
-# - Clean outputs:
-#   (1) fold-level results CSV (exported from cache)
-#   (2) dataset-level aggregated results CSV
-#   (3) overall summary CSV (ranks + win/tie/loss vs FRSMOTE)
-#   (4) paper-ready markdown tables
-#   (5) Wilcoxon vs. FRSMOTE table
-# - Nonparametric stats utilities:
-#   Friedman test + Nemenyi Critical Difference (CD) for average ranks
-
-##############################################
-# ✅ Summary Table of Design Patterns
-# Category                Name                Usage & Where Applied
-# ----------------------------------------------------------------------------------
-# Design Pattern          Adapter             SmoteVariantsSamplerAdapter, TimedSamplerAdapter
-# Design Pattern          Factory-ish         build_samplers(), build_classifiers()
-# Design Pattern          Strategy            Metric functions are pluggable via MetricSpec
-# Architecture            Modular Pipelines   evaluate_fold(), evaluate_dataset(), summarize_*
-# Clean Code              SRP, DRY, Fail-Fast, Explicit configuration via BenchmarkConfig
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-# 1) Benchmark a single KEEL .dat file with StratifiedKFold:
-# python -m experiments.benchmark_oversamplers --keel-dat /path/to/dataset.dat --out-dir out/
-#
-# 2) Benchmark MANY KEEL .dat files in a directory (non-fold files):
-# python -m experiments.benchmark_oversamplers --keel-dat-dir /path/to/keel_datasets --out-dir out/
-#
-# 3) Benchmark a single KEEL predefined-folds dataset folder:
-# python -m experiments.benchmark_oversamplers --keel-cv-dir /path/to/dataset_folds --out-dir out/
-#
-# 4) Benchmark MANY KEEL predefined-folds dataset folders under a root:
-# python -m experiments.benchmark_oversamplers --keel-cv-root /path/to/cv_root --out-dir out/
-#
-# 5) Quick sklearn sanity check (binary reduced variants):
-# python -m experiments.benchmark_oversamplers --sklearn breast_cancer --out-dir out/
-#
-# Notes:
-# - Requires: numpy, pandas, scikit-learn, imbalanced-learn
-# - For smote-variants baselines: pip install smote-variants
-# - For stats (Friedman p-value + Nemenyi CD): scipy recommended
-##############################################
+This module supports reproducible experiments and is not part of the stable public API.
 """
 
 from __future__ import annotations

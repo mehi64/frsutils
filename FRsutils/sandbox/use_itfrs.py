@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Exploratory example script for ITFRS model usage.
+
+This module is an exploratory usage script and is not part of the stable public API.
+"""
+
 import numpy as np
 from FRsutils.core.similarities import Similarity, calculate_similarity_matrix
 from FRsutils.core.tnorms import TNorm

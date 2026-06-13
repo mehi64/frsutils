@@ -1,24 +1,7 @@
-"""
-@file owa_weights.py
-@brief OWA Weighting Strategies Framework
+# SPDX-License-Identifier: BSD-3-Clause
+"""OWA weight generators for ordered fuzzy-rough aggregation.
 
-Provides a pluggable, serializable, and validated system for defining OWA weight generation strategies.
-Supports dynamic registration, factory-based instantiation, and separate implementations for lower/upper weights.
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Registry Pattern: Subclass registration via @register(...)
-# - Factory Method: Strategy.create(name, **kwargs)
-# - Adapter Pattern: Serialization via to_dict / from_dict
-# - Strategy Pattern: Linear, Harmonic, Exponential, etc. each define a behavior
-# - Template Method: Abstract interface for raw weight generation
-# - Fail-Fast Validation: Param checks in validate_params
-##############################################
-
-@example
->>> w = OWAWeightStrategy.create("linear")
->>> w.lower_weights(5)
-array([0.06666667, 0.13333333, 0.2, 0.26666667, 0.33333333])
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 import numpy as np

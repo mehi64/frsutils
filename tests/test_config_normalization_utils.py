@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for flat-to-nested configuration normalization."""
+
 import pytest
 
 from FRsutils.utils.constructor_utils.init_helpers import normalize_flat_config_to_nested

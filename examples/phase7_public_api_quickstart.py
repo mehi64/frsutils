@@ -1,32 +1,7 @@
-"""
-@file phase7_public_api_quickstart.py
-@brief Phase 7 release-ready public API example for FRsutils.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 7 release-ready public API example for FRsutils.
 
-This example is intentionally small and deterministic. It demonstrates the
-public FRsutils approximation facade, dense vs exact blockwise execution,
-execution metadata, and the conservative GPU claim boundary. The example uses
-only `FRsutils.api`, so it is safe for README, paper artifact, and downstream
-package documentation.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# main                                 Run a small dense/blockwise approximation demo
-# make_demo_dataset                    Build normalized toy data
-# _format_array                        Create compact display strings
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: imports only from FRsutils.api
-# - Reproducibility: fixed toy data with deterministic labels
-# - Release Artifact Readiness: prints result metadata and equivalence checks
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# python examples/phase7_public_api_quickstart.py
+This module demonstrates FRsutils usage and is not part of the stable public API.
 """
 
 from __future__ import annotations

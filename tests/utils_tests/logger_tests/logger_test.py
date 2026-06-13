@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for project logger setup."""
+
 from FRsutils.utils.logger.logger_util import get_logger, _TinyLogger
 # import logging
 

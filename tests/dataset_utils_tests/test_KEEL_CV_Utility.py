@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for KEEL cross-validation utilities."""
+
 import os
 import tempfile
 import pytest

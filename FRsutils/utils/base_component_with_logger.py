@@ -1,24 +1,7 @@
-"""
-@file base_component_with_logger.py
-@brief Lightweight base class for optional logger injection.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Base component helper with logger initialization support.
 
-Provides a reusable logger interface via dependency injection or defaults.
-All logger-aware classes should inherit from this base to ensure a consistent
-logging API without mixin bloat.
-
-##############################################
-# ✅ Summary of Design Principles
-# - SRP: Handles only logging responsibility
-# - Composition: Enables consistent logger usage across components
-# - Clean Code: Optional dependency, safe fallback, centralized pattern
-##############################################
-# usage in different contexts:
-# - Inside instance methods: 
-#       self.logger.info("Instance log")
-# - Inside classmethods:
-#       cls.get_logger().debug("Validation started")
-# - Inside staticmethod:
-#       BaseComponentWithLogger.get_logger().debug("Static log")
+This module provides shared utility behavior used by FRsutils components.
 """
 
 from FRsutils.utils.logger.logger_util import get_logger

@@ -1,37 +1,5 @@
-"""
-@file test_lazy_constructible_mixin.py
-@brief Comprehensive pytest unit tests for LazyConstructibleMixin.
-
-This test suite validates the lifecycle/state-machine behavior and lazy construction contract:
-
-- Default state when `_state` attribute is missing (UNCONFIGURED)
-- Allowed/forbidden lifecycle transitions enforced by `_set_state`
-- `configure(...)`:
-  - rejects empty config
-  - stores config safely
-  - resets `_lazy_object`
-  - transitions to CONFIGURED
-  - prevents re-configure (CONFIGURED -> CONFIGURED is invalid)
-- `build(*args)`:
-  - requires CONFIGURED
-  - optionally resolves class via registry using config["type"]
-  - forwards runtime-only `*args` plus `**config` to `from_config`
-  - calls `_finalize_object()` exactly once
-  - transitions to BUILT
-  - prevents rebuild (BUILT -> BUILT not allowed by precondition)
-- `is_built`, `state_str`, `state_enum` properties
-- `lazy_object` property:
-  - raises before build
-  - returns built instance after build
-  - returns None if build did not create subcomponent (still valid when BUILT)
-
-How to run:
-    pytest -q
-
-Notes:
-- The tests include a robust import fallback so they can run both in the packaged
-  project layout and in a local/sandbox layout.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Comprehensive pytest unit tests for LazyConstructibleMixin."""
 
 from __future__ import annotations
 

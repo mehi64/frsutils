@@ -1,30 +1,7 @@
-"""
-@file phase7_benchmark_smoke.py
-@brief Release-ready smoke example for the Phase 6 benchmark suite.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Release-ready smoke example for the Phase 6 benchmark suite.
 
-This example runs a tiny CPU-only benchmark through the public benchmark module.
-It is intentionally small enough for documentation and CI smoke tests. Real
-paper numbers should be generated later on a stable benchmark machine.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# main                                 Run tiny dense/blockwise benchmark rows
-# write_json_report                    Persist a machine-readable JSON report
-# write_csv_report                     Persist a flat CSV report
-
-# ✅ Design Patterns & Clean Code Notes
-# - Facade Pattern: benchmark module itself depends only on FRsutils.api
-# - Reproducibility: fixed random seed and tiny sample size
-# - Artifact Readiness: writes JSON and CSV files for inspection
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# python examples/phase7_benchmark_smoke.py --output-dir .phase7_benchmark_smoke
+This module demonstrates FRsutils usage and is not part of the stable public API.
 """
 
 from __future__ import annotations

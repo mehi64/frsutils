@@ -1,23 +1,7 @@
-"""
-@file KEEL_DS_loader_utility.py
-@brief Utilities for working with KEEL datasets in FRsutils.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Dataset loader utilities for KEEL benchmark files.
 
-These helpers are used primarily in experiments and benchmarks to load
-KEEL .dat files and to generate consistent cross-validation folds.
-
-##############################################
-# ✅ Design Patterns & Clean Code Notes
-# - SRP: data loading / CV helper logic only
-# - Fail-fast: clear errors when files are malformed
-# - sklearn compatibility: returns NumPy/Pandas structures
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# metadata, df, in_cols, out_cols = parse_keel_file(path)
-# folds = build_keel_stratified_folds(df, label_col=out_cols[0], n_splits=5)
-
+This module provides shared utility behavior used by FRsutils components.
 """
 
 import pandas as pd

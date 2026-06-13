@@ -1,57 +1,7 @@
-"""
-@file KEEL_Audit_Utility.py
-@brief KEEL Dataset Auditor Utility (File/Folder/Root level) with Level-3 Executive Summary.
+# SPDX-License-Identifier: BSD-3-Clause
+"""KEEL Dataset Auditor Utility (File/Folder/Root level) with Level-3 Executive Summary.
 
-A utility module for auditing KEEL .dat datasets before feeding them into FRsutils pipelines.
-It generates structured metadata + data-quality diagnostics at 3 levels:
-
-- Level 1: Single file audit (one .dat file)
-- Level 2: Folder audit (a dataset folder with one or many .dat files and/or predefined folds)
-- Level 3: Root audit (root folder containing many dataset folders) with executive summaries.
-
-##############################################
-# ✅ Quick Summary of Features
-# - audit_keel_file(...)         -> Full audit of one .dat file + saves JSON
-# - audit_keel_folder(...)       -> Audits all .dat files in a folder + detects CV structure
-# - audit_keel_root(...)         -> Audits all dataset folders under a root + produces global summary
-#
-# High-ROI checks:
-# - Schema consistency across folds (header drift / column order drift + drift reasons)
-# - Duplicate rows within files
-# - Leakage between train/test files of the same fold (identical rows or identical inputs) + leakage rates
-# - Label conflicts: identical inputs mapped to multiple labels
-# - Low-quality features: constant/near-constant, high missingness, high-cardinality nominal
-# - Numeric sanity: parseability, integer integrity, out-of-range vs header, robust outlier-rate, heavy-tail flags
-#
-# Level-3 additions (executive):
-# - Per dataset summary: n_samples (min/mean/max), n_features, n_classes, IR, min_class_count, CV type/K
-# - Per dataset severity score (0..100) + breakdown + top offenders
-# - Per dataset run readiness: SAFE/RISKY/BLOCKED with reasons
-
-##############################################
-# ✅ Summary Table of Design Patterns
-# Category                Name                    Usage & Where Applied
-# ----------------------------------------------------------------------------------
-# Design Pattern          Facade                  3 public entry-points (file/folder/root)
-# Design Pattern          Adapter                 Optional reuse of parse_keel_file (sanity-check)
-# Architecture            Layered Auditing        Level 1 -> Level 2 -> Level 3 composition
-# Clean Code              SRP, DRY, Fail-Safe     Parsing/checking/summarizing split; folder/root catch errors
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-# 1) Audit a single file:
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_file
-# res = audit_keel_file(".../iris0-5-1tra.dat", out_dir="out_audit")
-#
-# 2) Audit a dataset folder (maybe predefined folds):
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_folder
-# folder_res = audit_keel_folder(".../iris0_folds", out_dir="out_audit")
-#
-# 3) Audit a root folder containing many dataset folders:
-# from FRsutils.utils.dataset_utils.KEEL_Audit_Utility import audit_keel_root
-# root_res = audit_keel_root(".../KEEL_root", out_dir="out_audit")
-##############################################
+This archived module is retained for historical reference and is not part of the stable public API.
 """
 
 from __future__ import annotations

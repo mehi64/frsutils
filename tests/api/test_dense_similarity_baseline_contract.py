@@ -1,26 +1,5 @@
-"""
-@file test_dense_similarity_baseline_contract.py
-@brief Phase 0 baseline tests for the current dense similarity-matrix contract.
-
-These tests intentionally protect the existing dense similarity behavior before
-introducing blockwise, GPU, or approximate similarity engines. Future engines can
-use this file as the reference contract for small exact computations.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# test_dense_linear_similarity...      Locks exact linear/minimum dense output
-# test_dense_gaussian_similarity...    Locks exact Gaussian dense output
-# test_dense_similarity_nested...      Ensures flat and nested config stay equivalent
-# test_dense_similarity_does_not...    Guards against accidental input mutation
-
-# ✅ Design Patterns & Clean Code Notes
-# - Contract Testing: freezes public dense behavior before engine refactoring
-# - Regression Testing: future blockwise/GPU paths can compare against these cases
-# - Boundary Testing: uses FRsutils.api instead of deep internal imports
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 0 baseline tests for the current dense similarity-matrix contract."""
 
 import numpy as np
 

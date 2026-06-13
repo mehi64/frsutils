@@ -1,38 +1,7 @@
-"""
-@file results.py
-@brief Public result containers for FRsutils approximation APIs.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Result containers returned by FRsutils public APIs.
 
-This module defines stable, typed return objects for the public FRsutils API.
-Returning named result objects instead of positional tuples keeps user code and
-external downstream packages resilient to future API growth.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# FuzzyRoughApproximationResult        Result object for lower/upper/boundary/positive region outputs
-# execution metadata                   Store engine/backend/block-size provenance
-# GPU accumulator metadata             Record when approximation accumulators used CuPy
-# as_dict                              Convert result fields into a serializable dictionary
-
-# ✅ Design Patterns & Clean Code Notes
-# - Value Object Pattern: immutable dataclass groups approximation outputs
-# - Facade Support: public APIs return this stable object instead of internal models
-# - Clean API: avoids fragile tuple-order dependencies for downstream packages
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# from FRsutils.api import compute_approximations
-#
-# result = compute_approximations(X, y, model="itfrs")
-# result.lower
-# result.upper
-# result.positive_region
-# result.engine
-# result.backend
+This module belongs to the stable public API layer.
 """
 
 from __future__ import annotations

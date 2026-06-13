@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for similarity functions and matrix construction."""
+
 import numpy as np
 import pytest
 from FRsutils.core.similarities import Similarity, calculate_similarity_matrix, build_similarity_matrix

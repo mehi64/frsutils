@@ -1,25 +1,5 @@
-"""
-@file test_itfrs_gpu_resident_phase3_contract.py
-@brief Phase 3 contract tests for GPU-resident ITFRS blockwise accumulators.
-
-These tests use a small fake CuPy namespace backed by NumPy so the Phase 3
-execution contract can be validated in CPU-only CI. The optional real-CUDA
-contract remains covered by test_cupy_backend_phase6_contract.py.
-
-##############################################
-# ✅ Quick Summary of Features
-# Feature                              Description
-# ----------------------------------------------------------------------------------
-# fake CuPy backend                    Exercises backend='cupy' without CUDA hardware
-# ITFRS GPU metadata                   Confirms ITFRS uses backend-resident accumulators
-# OWAFRS boundary                      Confirms OWAFRS is not falsely marked GPU-resident
-
-# ✅ Design Patterns & Clean Code Notes
-# - Optional Dependency Testing: avoids requiring CuPy in normal CI
-# - Contract Testing: public metadata must describe actual execution boundaries
-# - Regression Testing: CPU dense and fake-CuPy blockwise values remain equivalent
-##############################################
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Phase 3 contract tests for GPU-resident ITFRS blockwise accumulators."""
 
 import sys
 import types

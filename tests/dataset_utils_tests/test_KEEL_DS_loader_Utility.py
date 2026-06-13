@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for KEEL dataset loading utilities."""
+
 import pytest
 import pandas as pd
 import numpy as np
