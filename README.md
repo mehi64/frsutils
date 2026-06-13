@@ -1,4 +1,4 @@
-<img src="images/logo/logo4.png" alt="FRsutils Logo" width="250"/>
+<img title="" src="images/logo/logo.png" alt="FRsutils Logo" width="250">
 
 # FRsutils
 
@@ -79,7 +79,6 @@ research, e.g.:
 - upper approximation
 - positive region
 - boundary region
-
 
 ## Public API quickstart
 
@@ -247,7 +246,6 @@ result.used_gpu_approximation_accumulators # bool, true for CuPy blockwise ITFRS
 The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`,
 `backend`, and `block_size` parameters.
 
-
 ## Benchmark suite
 
 Phase 6 adds a reproducible benchmark harness for the public approximation API:
@@ -261,7 +259,6 @@ blockwise execution. It records runtime, lightweight Python allocator peak
 memory, dense-reference numerical-equivalence errors, and public execution
 metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
 [`docs/phase_6_benchmark_suite.md`](docs/phase_6_benchmark_suite.md).
-
 
 ## Release-ready examples and paper claim boundary
 
