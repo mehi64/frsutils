@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Task-oriented public APIs for fuzzy-rough approximations.
 
-This module belongs to the stable public API layer.
+This module is the stable public boundary for dense and blockwise
+approximation computation. Public result arrays are returned as NumPy arrays,
+even when optional backend-aware blockwise internals use CuPy.
 """
 
 from __future__ import annotations
@@ -400,7 +402,13 @@ def compute_approximations(
     **flat_config: Any,
 ) -> FuzzyRoughApproximationResult:
     """Compute fuzzy-rough lower, upper, boundary, and positive-region values.
-        
+
+        Dense execution uses the direct model path with a materialized similarity
+        matrix. Blockwise execution computes similarity blocks and model
+        reductions through the approximation-engine layer. Optional CuPy support
+        is internal to blockwise execution; returned public arrays are NumPy
+        arrays for downstream scientific Python compatibility.
+
         Parameters
         ----------
         X : Optional[np.ndarray]

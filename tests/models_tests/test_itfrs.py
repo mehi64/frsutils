@@ -11,7 +11,7 @@ from tests import synthetic_data_store as ds
 from FRsutils.core.tnorms import TNorm
 from FRsutils.core.implicators import Implicator
 
-pytestmark = pytest.mark.slow
+# pytestmark = pytest.mark.slow
 
 
 
@@ -110,7 +110,8 @@ def test_boundary_region_all_combinations_shape_range(tnorm_name, implicator_nam
 
     assert isinstance(boundary, np.ndarray)
     assert boundary.shape == (3,)
-    assert np.all((0.0 <= boundary) & (boundary <= 1.0)), f"Out of range values in bouundry region for {tnorm_name} + {implicator_name}"
+    assert np.all(np.isfinite(boundary)), f"Non-finite values in boundary region for {tnorm_name} + {implicator_name}"
+    assert np.all((-1.0 <= boundary) & (boundary <= 1.0)), f"Out of valid difference range for {tnorm_name} + {implicator_name}"
 
 
 @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))

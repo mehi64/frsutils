@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Exact approximation engines for fuzzy-rough computations.
 
-This module belongs to the core fuzzy-rough computation layer.
+This module contains dense-compatible blockwise approximation routines. The
+ITFRS and VQRS blockwise paths can use backend-resident accumulators when the
+similarity engine is configured with an optional CuPy backend.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from FRsutils.core.implicators import Implicator
 from FRsutils.core.owa_weights import OWAWeights
 from FRsutils.core.similarity_engine import BaseSimilarityEngine
 from FRsutils.core.tnorms import TNorm
+from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
 from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
@@ -31,9 +34,9 @@ class ITFRSBlockwiseApproximation:
     upper : object
         Upper approximation values.
     boundary : object
-        Boundary values computed as upper - lower.
+        Boundary values computed from the public NumPy upper/lower outputs.
     positive_region : object
-        Positive-region values, identical to lower for ITFRS.
+        Positive-region values copied from the public NumPy lower output.
     execution_backend : object
         Backend that owned the ITFRS accumulators.
     used_gpu_approximation_accumulators : object
@@ -192,41 +195,6 @@ def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type
     if not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
     return config if _is_nested_frs_config(config) else normalize_flat_config_to_nested(dict(config))
-
-
-def build_itfrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tuple[TNorm, Implicator]:
-    """Build ITFRS upper T-norm and lower implicator from flat or nested config.
-        
-        Parameters
-        ----------
-        config : Optional[Mapping[str, Any]]
-            Optional flat or nested FRsutils config mapping.
-        
-        Returns
-        -------
-        Tuple[TNorm, Implicator]
-            Tuple `(ub_tnorm, lb_implicator)`.
-        
-        Raises
-        ------
-        ValueError
-            If required component specs cannot be resolved.
-        
-    """
-    nested = _as_nested_config(config)
-    fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
-    if not isinstance(fr_cfg, Mapping):
-        raise TypeError("nested config section 'fr_model' must be a mapping.")
-
-    ub_tnorm = TNorm.create_from_spec(fr_cfg.get("ub_tnorm"))
-    lb_implicator = Implicator.create_from_spec(fr_cfg.get("lb_implicator"))
-
-    if ub_tnorm is None:
-        ub_tnorm = TNorm.create("minimum")
-    if lb_implicator is None:
-        lb_implicator = Implicator.create("lukasiewicz")
-
-    return ub_tnorm, lb_implicator
 
 
 def build_vqrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tuple[FuzzyQuantifier, FuzzyQuantifier, TNorm]:
@@ -433,13 +401,14 @@ def compute_itfrs_blockwise(
     config: Optional[Mapping[str, Any]] = None,
 ) -> ITFRSBlockwiseApproximation:
     """Compute exact ITFRS approximations from similarity blocks.
-        
-        This function is mathematically equivalent to the dense ITFRS implementation
-        but keeps only row-level lower/upper accumulators in memory. When the
-        similarity engine resolves backend='cupy' and exposes iter_backend_blocks(),
-        this Phase 3 path keeps similarity blocks, implicator/T-norm values, and
-        min/max accumulators on GPU until the final public NumPy conversion.
-        
+
+        This function is mathematically equivalent to the dense ITFRS reference
+        model but keeps only row-level lower and upper accumulators in memory.
+        When the similarity engine resolves backend="cupy" and exposes
+        ``iter_backend_blocks()``, similarity blocks, implicator/T-norm values,
+        and min/max accumulators remain backend-resident until the final NumPy
+        conversion at the public result boundary.
+
         Parameters
         ----------
         similarity_engine : BaseSimilarityEngine
@@ -503,19 +472,15 @@ def compute_itfrs_blockwise(
         if tnorm_vals.shape[1] > 0:
             upper_acc[block.row_slice] = xp.maximum(upper_acc[block.row_slice], xp.max(tnorm_vals, axis=1))
 
-    boundary_acc = upper_acc - lower_acc
-    positive_region_acc = lower_acc.copy()
-
     if backend is not None:
         lower_out = backend.to_numpy(lower_acc)
         upper_out = backend.to_numpy(upper_acc)
-        boundary_out = backend.to_numpy(boundary_acc)
-        positive_region_out = backend.to_numpy(positive_region_acc)
     else:
         lower_out = np.asarray(lower_acc)
         upper_out = np.asarray(upper_acc)
-        boundary_out = np.asarray(boundary_acc)
-        positive_region_out = np.asarray(positive_region_acc)
+
+    boundary_out = upper_out - lower_out
+    positive_region_out = lower_out.copy()
 
     return ITFRSBlockwiseApproximation(
         lower=lower_out,

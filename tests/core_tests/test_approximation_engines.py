@@ -27,7 +27,7 @@ from FRsutils.core.fuzzy_quantifiers import LinearFuzzyQuantifier, QuadraticFuzz
 from FRsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
 from FRsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
 from FRsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
-from FRsutils.core.tnorms import MinTNorm, ProductTNorm
+from FRsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
 
 
 class FakeArrayNamespace:
@@ -469,6 +469,61 @@ def test_build_itfrs_components_accepts_existing_component_instances():
 
     assert resolved_ub_tnorm is ub_tnorm
     assert resolved_lb_implicator is lb_implicator
+
+
+def test_build_itfrs_components_resolves_private_nested_config_key():
+    """Dense and public builders should share the private nested-config path."""
+    config = {
+        "_nested_config": {
+            "fr_model": {
+                "type": "itfrs",
+                "ub_tnorm": {"name": "product", "params": {}},
+                "lb_implicator": {"name": "kleene", "params": {}},
+            }
+        }
+    }
+
+    ub_tnorm, lb_implicator = build_itfrs_components_from_config(
+        config,
+        require_explicit_components=True,
+    )
+
+    assert isinstance(ub_tnorm, ProductTNorm)
+    assert isinstance(lb_implicator, KleeneDienesImplicator)
+
+
+def test_build_itfrs_components_preserves_legacy_top_level_tnorm_p():
+    """The shared ITFRS builder keeps the old flat `p` alias for Yager."""
+    config = {
+        "type": "itfrs",
+        "ub_tnorm_name": "yager",
+        "p": 0.83,
+        "lb_implicator_name": "lukasiewicz",
+    }
+
+    ub_tnorm, lb_implicator = build_itfrs_components_from_config(
+        config,
+        require_explicit_components=True,
+    )
+
+    assert isinstance(ub_tnorm, YagerTNorm)
+    assert ub_tnorm.p == pytest.approx(0.83)
+    assert isinstance(lb_implicator, LukasiewiczImplicator)
+
+
+def test_build_itfrs_components_can_require_explicit_component_specs():
+    """Dense direct construction should reject incomplete ITFRS configs."""
+    with pytest.raises(ValueError, match="ub_tnorm_name"):
+        build_itfrs_components_from_config(
+            {"type": "itfrs", "lb_implicator_name": "lukasiewicz"},
+            require_explicit_components=True,
+        )
+
+    with pytest.raises(ValueError, match="lb_implicator_name"):
+        build_itfrs_components_from_config(
+            {"type": "itfrs", "ub_tnorm_name": "minimum"},
+            require_explicit_components=True,
+        )
 
 
 def test_build_vqrs_components_from_none_returns_default_quantifiers_and_tnorm():
