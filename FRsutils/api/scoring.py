@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Scoring helpers for fuzzy-rough approximation outputs.
+"""Scikit-learn-style scoring helpers for fuzzy-rough approximations.
 
-This module belongs to the stable public API layer.
+This module provides the public estimator wrapper used to compute and cache
+fuzzy-rough positive-region scores without importing internal core modules.
 """
 
 from __future__ import annotations
@@ -15,63 +16,34 @@ from sklearn.utils.validation import check_is_fitted
 from FRsutils.api.approximations import compute_approximations
 from FRsutils.api.results import FuzzyRoughApproximationResult
 
-
 class FuzzyRoughPositiveRegionScorer(BaseEstimator):
-    """Reusable public estimator for fuzzy-rough positive-region scores.
-    
-    The scorer wraps `compute_approximations(...)` and stores the resulting
-    lower/upper/boundary/positive-region arrays as fitted attributes. It is meant
-    for users and downstream packages that want a stable object-oriented API
-    without importing FRsutils internals.
-    
+    """Estimate fuzzy-rough positive-region scores for fitted samples.
+
+    The scorer wraps :func:`FRsutils.api.compute_approximations` and stores the
+    resulting lower, upper, boundary, and positive-region arrays as fitted
+    attributes. It follows scikit-learn estimator conventions for cloning,
+    ``get_params``, and ``set_params``.
+
     Parameters
     ----------
-    model : object
-        Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
-    similarity : object
-        Optional similarity alias for matrix construction.
-    similarity_sigma : object
-        Optional Gaussian similarity sigma parameter.
-    similarity_tnorm : object
-        Optional t-norm alias for feature-level aggregation.
-    ub_tnorm_name : object
-        Optional upper-approximation t-norm alias.
-    lb_implicator_name : object
-        Optional lower-approximation implicator alias.
-    ub_owa_method_name : object
-        Optional OWAFRS upper OWA method alias.
-    lb_owa_method_name : object
-        Optional OWAFRS lower OWA method alias.
-    ub_owa_method_base : object
-        Optional OWAFRS upper OWA base parameter.
-    lb_owa_method_base : object
-        Optional OWAFRS lower OWA base parameter.
-    lb_fuzzy_quantifier_name : object
-        Optional VQRS lower quantifier alias.
-    ub_fuzzy_quantifier_name : object
-        Optional VQRS upper quantifier alias.
-    lb_fuzzy_quantifier_alpha : object
-        Optional lower quantifier alpha.
-    lb_fuzzy_quantifier_beta : object
-        Optional lower quantifier beta.
-    ub_fuzzy_quantifier_alpha : object
-        Optional upper quantifier alpha.
-    ub_fuzzy_quantifier_beta : object
-        Optional upper quantifier beta.
-    similarity_matrix : object
+    model : str, default="itfrs"
+        Fuzzy-rough model alias, such as ``"itfrs"``, ``"vqrs"``, or
+        ``"owafrs"``.
+    similarity : str or None, default=None
+        Similarity alias used when constructing a similarity matrix from ``X``.
+    similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
         Optional precomputed similarity matrix.
-    config : object
-        Optional flat or nested FRsutils config mapping.
-    return_similarity_matrix : object
-        If True, store the similarity matrix in result_.
-    engine : object
-        Approximation execution engine forwarded to compute_approximations.
-    block_size : object
-        Block size forwarded when engine="blockwise".
-    backend : object
-        Backend alias forwarded for blockwise similarity-block execution.
-    extra_params : object
-        Optional mapping for advanced flat parameters not yet exposed.
+    config : Mapping or None, default=None
+        Optional flat or nested FRsutils configuration.
+    engine : {"dense", "blockwise"}, default="dense"
+        Approximation execution engine.
+    block_size : int, default=1024
+        Block size used by ``engine="blockwise"``.
+    backend : str, default="numpy"
+        Backend alias for blockwise similarity-block execution.
+    extra_params : Mapping or None, default=None
+        Optional flat parameters not represented by explicit constructor
+        arguments.
     """
 
     def __init__(
@@ -126,14 +98,7 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.extra_params = extra_params
 
     def _flat_config(self) -> Dict[str, Any]:
-        """Build flat public config from explicit scorer parameters.
-                
-                Returns
-                -------
-                Dict[str, Any]
-                    Flat configuration dictionary with None values removed.
-                
-        """
+        """Return flat public config with ``None`` values removed."""
         params: Dict[str, Any] = {
             "similarity_sigma": self.similarity_sigma,
             "similarity_tnorm": self.similarity_tnorm,
@@ -158,19 +123,18 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
 
     def fit(self, X: Optional[np.ndarray], y: np.ndarray):
         """Fit the scorer and cache fuzzy-rough approximation outputs.
-                
-                Parameters
-                ----------
-                X : Optional[np.ndarray]
-                    Input feature matrix, or None when a similarity matrix is available.
-                y : np.ndarray
-                    Label vector aligned with X or similarity_matrix.
-                
-                Returns
-                -------
-                object
-                    self.
-                
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features) or None
+            Feature matrix, or ``None`` when ``similarity_matrix`` is provided.
+        y : array-like of shape (n_samples,)
+            Label vector aligned with ``X`` or ``similarity_matrix``.
+
+        Returns
+        -------
+        self : FuzzyRoughPositiveRegionScorer
+            Fitted scorer.
         """
         result = compute_approximations(
             X,
@@ -195,65 +159,61 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         return self
 
     def fit_score(self, X: Optional[np.ndarray], y: np.ndarray) -> np.ndarray:
-        """Fit the scorer and return positive-region scores directly.
-                
-                Parameters
-                ----------
-                X : Optional[np.ndarray]
-                    Input feature matrix, or None when a similarity matrix is available.
-                y : np.ndarray
-                    Label vector aligned with X or similarity_matrix.
-                
-                Returns
-                -------
-                np.ndarray
-                    One-dimensional positive-region score array.
-                
+        """Fit the scorer and return positive-region scores.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features) or None
+            Feature matrix, or ``None`` when ``similarity_matrix`` is provided.
+        y : array-like of shape (n_samples,)
+            Label vector aligned with ``X`` or ``similarity_matrix``.
+
+        Returns
+        -------
+        scores : ndarray of shape (n_samples,)
+            Positive-region scores for the fitted samples.
         """
         return self.fit(X, y).positive_region_
 
     def score_samples(self, X: Optional[np.ndarray] = None) -> np.ndarray:
-        """Return fitted training positive-region scores.
-                
-                The current FRsutils fuzzy-rough approximation models compute scores for
-                the fitted similarity matrix. Therefore this method intentionally returns
-                the cached training scores and does not yet score unseen samples.
-                
-                Parameters
-                ----------
-                X : Optional[np.ndarray]
-                    Ignored placeholder for sklearn-like call sites.
-                
-                Returns
-                -------
-                np.ndarray
-                    Fitted positive-region score array.
-                
-                Raises
-                ------
-                NotFittedError
-                    If fit has not been called.
-                
+        """Return cached positive-region scores for fitted samples.
+
+        The current public scorer computes scores for the fitted similarity
+        matrix. The optional ``X`` argument is accepted only for sklearn-like call
+        sites and is not used to score unseen samples.
+
+        Parameters
+        ----------
+        X : ndarray or None, default=None
+            Ignored placeholder for sklearn-like call sites.
+
+        Returns
+        -------
+        scores : ndarray of shape (n_samples,)
+            Fitted positive-region score array.
+
+        Raises
+        ------
+        NotFittedError
+            If ``fit`` has not been called.
         """
         check_is_fitted(self, "positive_region_")
         return self.positive_region_
 
     def as_result(self) -> FuzzyRoughApproximationResult:
-        """Return the fitted approximation result object.
-                
-                Returns
-                -------
-                FuzzyRoughApproximationResult
-                    Fitted FuzzyRoughApproximationResult.
-                
-                Raises
-                ------
-                NotFittedError
-                    If fit has not been called.
-                
+        """Return the fitted public approximation result object.
+
+        Returns
+        -------
+        result : FuzzyRoughApproximationResult
+            Cached approximation result from the last ``fit`` call.
+
+        Raises
+        ------
+        NotFittedError
+            If ``fit`` has not been called.
         """
         check_is_fitted(self, "result_")
         return self.result_
-
 
 __all__ = ["FuzzyRoughPositiveRegionScorer"]

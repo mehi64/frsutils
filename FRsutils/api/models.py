@@ -19,20 +19,18 @@ from FRsutils.core.models.owafrs import OWAFRS
 from FRsutils.core.models.vqrs import VQRS
 from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
-
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
     """Return True when config already looks like FRsutils internal nested config.
-        
-        Parameters
-        ----------
-        config : Mapping[str, Any]
-            Candidate configuration mapping.
-        
-        Returns
-        -------
-        bool
-            True if the mapping contains nested fuzzy-rough config sections.
-        
+
+    Parameters
+    ----------
+    config : Mapping[str, Any]
+        Candidate configuration mapping.
+
+    Returns
+    -------
+    bool
+        True if the mapping contains nested fuzzy-rough config sections.
     """
     if isinstance(config.get("fr_model"), Mapping):
         return True
@@ -42,25 +40,23 @@ def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
         return True
     return False
 
-
 def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
     """Convert and validate a public similarity-matrix input.
-        
-        Parameters
-        ----------
-        similarity_matrix : Any
-            Candidate square pairwise similarity matrix.
-        
-        Returns
-        -------
-        np.ndarray
-            2D NumPy array.
-        
-        Raises
-        ------
-        ValueError
-            If the matrix is missing, non-square, or not 2D.
-        
+
+    Parameters
+    ----------
+    similarity_matrix : Any
+        Candidate square pairwise similarity matrix.
+
+    Returns
+    -------
+    np.ndarray
+        2D NumPy array.
+
+    Raises
+    ------
+    ValueError
+        If the matrix is missing, non-square, or not 2D.
     """
     if similarity_matrix is None:
         raise ValueError("similarity_matrix must be provided.")
@@ -72,27 +68,25 @@ def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
         raise ValueError("similarity_matrix must be square.")
     return sim
 
-
 def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
     """Convert and validate labels aligned with a similarity matrix.
-        
-        Parameters
-        ----------
-        labels : Any
-            Candidate label vector.
-        expected_length : int
-            Required label length.
-        
-        Returns
-        -------
-        np.ndarray
-            1D NumPy label array.
-        
-        Raises
-        ------
-        ValueError
-            If labels are missing or misaligned.
-        
+
+    Parameters
+    ----------
+    labels : Any
+        Candidate label vector.
+    expected_length : int
+        Required label length.
+
+    Returns
+    -------
+    np.ndarray
+        1D NumPy label array.
+
+    Raises
+    ------
+    ValueError
+        If labels are missing or misaligned.
     """
     if labels is None:
         raise ValueError("labels must be provided.")
@@ -104,44 +98,39 @@ def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
         raise ValueError("Length of labels must match similarity_matrix size.")
     return labels_array
 
-
 def get_fuzzy_rough_model_class(model_type: str):
     """Resolve a registered fuzzy-rough model class by public alias.
-        
-        Parameters
-        ----------
-        model_type : str
-            Registered model alias, e.g. "itfrs", "owafrs", or "vqrs".
-        
-        Returns
-        -------
-        object
-            Registered model class.
-        
-        Raises
-        ------
-        TypeError
-            If model_type is not a non-empty string.
-        ValueError
-            If no model is registered for the alias.
-        
+
+    Parameters
+    ----------
+    model_type : str
+        Registered model alias, e.g. "itfrs", "owafrs", or "vqrs".
+
+    Returns
+    -------
+    object
+        Registered model class.
+
+    Raises
+    ------
+    TypeError
+        If model_type is not a non-empty string.
+    ValueError
+        If no model is registered for the alias.
     """
     if not isinstance(model_type, str) or not model_type.strip():
         raise TypeError("model_type must be a non-empty string.")
     return FuzzyRoughModel.get_class(model_type.strip().lower())
 
-
 def list_fuzzy_rough_models() -> Dict[str, list[str]]:
     """List available fuzzy-rough model aliases.
-        
-        Returns
-        -------
-        Dict[str, list[str]]
-            Mapping from primary alias to all aliases registered for each model.
-        
+
+    Returns
+    -------
+    Dict[str, list[str]]
+        Mapping from primary alias to all aliases registered for each model.
     """
     return FuzzyRoughModel.list_available()
-
 
 def _resolve_model_type(
     *,
@@ -150,26 +139,25 @@ def _resolve_model_type(
     nested_config: Mapping[str, Any],
 ) -> str:
     """Resolve the model alias from explicit, flat, or nested config sources.
-        
-        Parameters
-        ----------
-        model_type : Optional[str]
-            Explicit model alias from the public positional/keyword arg.
-        external_config : Mapping[str, Any]
-            Flat-or-mixed public config snapshot.
-        nested_config : Mapping[str, Any]
-            Nested FRsutils config snapshot.
-        
-        Returns
-        -------
-        str
-            Normalized model alias.
-        
-        Raises
-        ------
-        ValueError
-            If aliases conflict or no alias is available.
-        
+
+    Parameters
+    ----------
+    model_type : Optional[str]
+        Explicit model alias from the public positional/keyword arg.
+    external_config : Mapping[str, Any]
+        Flat-or-mixed public config snapshot.
+    nested_config : Mapping[str, Any]
+        Nested FRsutils config snapshot.
+
+    Returns
+    -------
+    str
+        Normalized model alias.
+
+    Raises
+    ------
+    ValueError
+        If aliases conflict or no alias is available.
     """
     nested_type = None
     fr_cfg = nested_config.get("fr_model", {}) if isinstance(nested_config, Mapping) else {}
@@ -192,7 +180,6 @@ def _resolve_model_type(
 
     return normalized[0]
 
-
 def build_fuzzy_rough_model(
     model_type: Optional[str] = None,
     *,
@@ -202,37 +189,36 @@ def build_fuzzy_rough_model(
     **flat_config: Any,
 ) -> FuzzyRoughModel:
     """Build a registered fuzzy-rough model from flat or nested config.
-        
-        This is the recommended public construction point for downstream packages.
-        It accepts:
-        - flat sklearn-style params, e.g. `type="itfrs"`, `ub_tnorm_name="minimum"`
-        - nested FRsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
-        
-        Parameters
-        ----------
-        model_type : Optional[str]
-            Optional explicit model alias. Must agree with config when both are provided.
-        similarity_matrix : Any
-            Pairwise similarity matrix used by the model.
-        labels : Any
-            Label vector aligned with the similarity matrix.
-        config : Optional[Mapping[str, Any]]
-            Optional flat or nested configuration mapping.
-        flat_config : Any
-            Additional flat configuration values.
-        
-        Returns
-        -------
-        FuzzyRoughModel
-            Constructed fuzzy-rough model instance.
-        
-        Raises
-        ------
-        TypeError
-            If config is not mapping-like.
-        ValueError
-            If the model type or matrix/labels are invalid.
-        
+
+    This is the recommended public construction point for downstream packages.
+    It accepts:
+    - flat sklearn-style params, e.g. `type="itfrs"`, `ub_tnorm_name="minimum"`
+    - nested FRsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
+
+    Parameters
+    ----------
+    model_type : Optional[str]
+        Optional explicit model alias. Must agree with config when both are provided.
+    similarity_matrix : Any
+        Pairwise similarity matrix used by the model.
+    labels : Any
+        Label vector aligned with the similarity matrix.
+    config : Optional[Mapping[str, Any]]
+        Optional flat or nested configuration mapping.
+    flat_config : Any
+        Additional flat configuration values.
+
+    Returns
+    -------
+    FuzzyRoughModel
+        Constructed fuzzy-rough model instance.
+
+    Raises
+    ------
+    TypeError
+        If config is not mapping-like.
+    ValueError
+        If the model type or matrix/labels are invalid.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -272,7 +258,6 @@ def build_fuzzy_rough_model(
         labels=labels_array,
         **constructor_config,
     )
-
 
 __all__ = [
     "FuzzyRoughModel",

@@ -49,6 +49,69 @@ def test_public_similarity_engine_converts_array_like_x_to_float_matrix():
     np.testing.assert_allclose(engine.X, np.array([[0.0, 1.0], [2.0, 3.0]]))
 
 
+def test_public_build_similarity_matrix_accepts_python_list_input():
+    matrix = build_similarity_matrix([[0.0, 0.5], [1.0, 0.25]], similarity="linear")
+
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.dtype == np.float64
+    np.testing.assert_allclose(np.diag(matrix), np.ones(2), atol=0.0)
+
+
+def test_public_build_similarity_matrix_supports_flat_config_mapping_with_kwargs_override():
+    config = {"similarity": "linear", "similarity_tnorm": "minimum"}
+
+    actual = build_similarity_matrix(
+        X_ENGINE,
+        config=config,
+        similarity="gaussian",
+        similarity_sigma=0.5,
+        similarity_tnorm="product",
+    )
+    expected = build_similarity_matrix(
+        X_ENGINE,
+        similarity="gaussian",
+        similarity_sigma=0.5,
+        similarity_tnorm="product",
+    )
+
+    np.testing.assert_allclose(actual, expected, atol=1e-12)
+    assert config == {"similarity": "linear", "similarity_tnorm": "minimum"}
+
+
+def test_public_build_similarity_matrix_rejects_nested_config_mixed_with_flat_kwargs():
+    nested_config = normalize_flat_config_to_nested(
+        {"similarity": "linear", "similarity_tnorm": "minimum"}
+    )
+
+    with pytest.raises(ValueError):
+        build_similarity_matrix(
+            X_ENGINE,
+            config=nested_config,
+            similarity="gaussian",
+            similarity_sigma=0.5,
+        )
+
+
+@pytest.mark.parametrize("config", [[("similarity", "linear")], "linear"])
+def test_public_build_similarity_matrix_rejects_non_mapping_config(config):
+    with pytest.raises(TypeError):
+        build_similarity_matrix(X_ENGINE, config=config)
+
+
+def test_public_build_similarity_matrix_rejects_unknown_similarity_alias():
+    with pytest.raises(ValueError):
+        build_similarity_matrix(X_ENGINE, similarity="not-a-similarity")
+
+
+def test_public_build_similarity_matrix_does_not_mutate_flat_config_mapping():
+    config = {"similarity": "gaussian", "similarity_sigma": 0.75, "similarity_tnorm": "minimum"}
+    before = deepcopy(config)
+
+    _ = build_similarity_matrix(X_ENGINE, config=config)
+
+    assert config == before
+
+
 @pytest.mark.parametrize(
     "flat_config",
     [

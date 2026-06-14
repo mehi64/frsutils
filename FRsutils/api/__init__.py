@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Public API entry points for FRsutils."""
+"""Canonical public API facade for FRsutils.
+
+Import user-facing fuzzy-rough utilities from this module rather than from
+internal ``FRsutils.core`` modules.
+"""
 
 from FRsutils.api.approximations import (
     compute_approximations,

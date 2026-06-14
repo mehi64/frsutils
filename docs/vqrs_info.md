@@ -1,54 +1,50 @@
 # VQRS model
 
-## 1. Introduction
-
-VQRS stands for **Vaguely Quantified Rough Sets**. In FRsutils, VQRS uses fuzzy
+VQRS stands for Vaguely Quantified Rough Sets. In FRsutils, VQRS uses fuzzy
 quantifiers to compute lower and upper approximation degrees from a fuzzy
 similarity relation and class labels.
 
-## 2. Intuition
+## Intuition
 
-For each instance, VQRS compares the instance to all other instances through the
-active similarity relation. The model then measures how strongly the similar
-instances support membership in the target class. Fuzzy quantifiers control how
-strict the lower and upper approximation interpretations are.
+For each instance, VQRS compares the instance to the rest of the dataset through
+the active similarity relation. It then measures how strongly similar instances
+support membership in the target class. Fuzzy quantifiers control how strict the
+lower and upper approximation interpretations are.
 
-## 3. Definitions
+## Implementation contract
 
-Let:
+`FRsutils.core.models.VQRS` is the dense NumPy reference implementation. It
+expects a fully materialized similarity matrix, a one-dimensional label vector,
+and lower and upper fuzzy quantifiers.
 
-- `U` be the universe of instances.
-- `R(x, y)` be the fuzzy similarity between instances `x` and `y`.
-- `X` be a target class or decision concept.
-- `Q_l` be the lower-approximation fuzzy quantifier.
-- `Q_u` be the upper-approximation fuzzy quantifier.
+The public approximation API also provides exact blockwise VQRS execution:
 
-For each instance `x`, VQRS aggregates similarity mass from class-compatible and
-all comparable instances, then applies the selected fuzzy quantifier.
+```python
+from FRsutils.api import compute_approximations
 
-## 4. Lower and upper approximations in VQRS
+result = compute_approximations(X, y, model="vqrs", engine="blockwise")
+```
 
-The lower approximation captures conservative support for class membership. The
-upper approximation captures possible support for class membership. FRsutils
-implements these calculations through the public approximation API and supports
-dense and exact blockwise execution paths.
+## Approximation outputs
 
-### Lower and upper approximation reference
+FRsutils reports the following public outputs:
 
-<img src="../images/VQRS/lb_ub.PNG" alt="lower and upper approximation" width="350"/>
+```text
+boundary_region = upper_approximation - lower_approximation
+positive_region = lower_approximation
+```
 
-### Quadratic fuzzy quantifier reference
+Public output arrays are NumPy arrays.
 
-<img src="../images/VQRS/quadratic_fuzzy_quantifier.PNG" alt="quadratic fuzzy quantifier" width="350"/>
-
-## 5. Current execution status
+## Backend status
 
 VQRS supports:
 
 - dense NumPy execution,
 - exact blockwise NumPy execution,
-- optional CuPy similarity-block execution,
-- experimental GPU-resident blockwise accumulator execution for the VQRS
-  approximation path, with final public output converted back to NumPy arrays.
-  The public boundary and positive-region arrays are derived from the returned
-  NumPy lower and upper approximation arrays.
+- optional CuPy-backed similarity blocks,
+- experimental GPU-resident blockwise approximation accumulators, with final
+  public output converted back to NumPy arrays.
+
+For VQRS blockwise execution, public boundary and positive-region arrays are
+derived from the returned NumPy lower and upper approximation arrays.

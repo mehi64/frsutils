@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Top-level package exports for FRsutils."""
+"""Top-level package namespace for FRsutils.
+
+The canonical user-facing API is exposed through ``FRsutils.api`` to keep the
+package root compact and avoid leaking internal implementation modules.
+"""
 
 from . import api
 from .core import tnorms, implicators, similarities

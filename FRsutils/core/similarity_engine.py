@@ -187,13 +187,20 @@ def build_similarity_components(
     sim_cfg = nested.get("similarity", {}) if isinstance(nested, Mapping) else {}
     tnorm_cfg = nested.get("similarity_tnorm", {}) if isinstance(nested, Mapping) else {}
 
-    similarity_type = sim_cfg.get("name") or effective_config.get("similarity") or "gaussian"
+    flat_similarity = effective_config.get("similarity")
+    if isinstance(flat_similarity, Mapping):
+        flat_similarity = None
+    flat_similarity_tnorm = effective_config.get("similarity_tnorm")
+    if isinstance(flat_similarity_tnorm, Mapping):
+        flat_similarity_tnorm = None
+
+    similarity_type = sim_cfg.get("name") or flat_similarity or "gaussian"
     similarity_params = dict(sim_cfg.get("params") if isinstance(sim_cfg.get("params"), dict) else {})
     if str(similarity_type).lower() in {"gaussian", "gauss"} and "sigma" in effective_config and "sigma" not in similarity_params:
         # Backward-compatible legacy flat alias used by older tests/examples.
         similarity_params["sigma"] = effective_config["sigma"]
 
-    tnorm_type = tnorm_cfg.get("name") or effective_config.get("similarity_tnorm") or "minimum"
+    tnorm_type = tnorm_cfg.get("name") or flat_similarity_tnorm or "minimum"
     tnorm_params = tnorm_cfg.get("params") if isinstance(tnorm_cfg.get("params"), dict) else {}
 
     similarity_func = Similarity.create(similarity_type, **similarity_params)

@@ -53,3 +53,58 @@ def test_downstream_gets_named_result_not_tuple():
     assert hasattr(result, "lower")
     assert hasattr(result, "upper")
     assert hasattr(result, "positive_region")
+
+
+def test_public_api_star_import_exposes_expected_facade_names():
+    """The canonical facade exposes the stable user-facing names via __all__."""
+    namespace = {}
+
+    exec("from FRsutils.api import *", namespace)
+
+    expected_names = {
+        "compute_approximations",
+        "compute_lower_approximation",
+        "compute_upper_approximation",
+        "compute_boundary_region",
+        "compute_positive_region",
+        "build_similarity_matrix",
+        "build_similarity_engine",
+        "build_fuzzy_rough_model",
+        "FuzzyRoughApproximationResult",
+        "FuzzyRoughPositiveRegionScorer",
+        "ITFRS",
+        "VQRS",
+        "OWAFRS",
+    }
+
+    assert expected_names <= set(namespace)
+
+
+def test_top_level_package_keeps_public_api_under_api_namespace():
+    """The package root stays compact while FRsutils.api remains canonical."""
+    import FRsutils
+
+    assert hasattr(FRsutils, "api")
+    assert FRsutils.__all__ == [
+        "api",
+        "tnorms",
+        "implicators",
+        "similarities",
+        "itfrs",
+    ]
+    assert not hasattr(FRsutils, "compute_approximations")
+    assert not hasattr(FRsutils, "build_fuzzy_rough_model")
+
+
+def test_public_api_does_not_expose_internal_constructor_utilities():
+    """Downstream users should not depend on internal construction helpers."""
+    import FRsutils.api as public_api
+
+    internal_names = {
+        "LazyConstructibleMixin",
+        "RegistryFactoryMixin",
+        "normalize_config",
+    }
+
+    assert internal_names.isdisjoint(set(public_api.__all__))
+

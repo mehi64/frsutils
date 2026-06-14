@@ -1,81 +1,100 @@
-# Paper and Release Claims
+# Paper and release claim boundaries
 
-This document freezes the wording that should be used for FRsutils release notes,
-README summaries, benchmark reports, and paper/software-submission text.
+This document records the wording that should be used when describing FRsutils
+in a JOSS paper, release note, README section, or benchmark report.
 
-## Recommended short claim
+## Safe project summary
 
-FRsutils is a Python library for reusable fuzzy-rough set utilities with a stable
-public API for similarity construction, lower/upper approximation, boundary
-region, and positive-region computation. It supports dense and exact blockwise
-execution, optional CuPy-accelerated similarity-block computation, and
-experimental CuPy-resident blockwise approximation accumulators for ITFRS and
-VQRS.
+FRsutils is a scientific Python library for reusable fuzzy-rough set
+computations. It provides backend-aware public APIs for similarity construction,
+fuzzy-rough lower and upper approximations, boundary regions, and positive-region
+scores. The currently documented model aliases are `itfrs`, `vqrs`, and
+`owafrs`.
 
-## Recommended longer claim
+A safe short claim is:
 
-FRsutils separates fuzzy-rough core computation from downstream sampling
-algorithms. The package exposes a public `FRsutils.api` facade for dense and exact
-blockwise fuzzy-rough approximations. Blockwise execution avoids materializing
-the full pairwise similarity matrix during approximation computation. Optional
-CuPy support can accelerate similarity-block computation. For ITFRS and VQRS,
-blockwise CuPy execution can also keep approximation reductions on the backend
-until the final public NumPy output conversion. OWAFRS remains on the
-conservative exact blockwise NumPy row-buffer path in the current release because
-its row-wise sorting and OWA aggregation need a separate memory/sorting study.
+> FRsutils provides dense and exact blockwise fuzzy-rough approximation APIs for
+> ITFRS, VQRS, and OWAFRS, with a stable NumPy output contract and optional CuPy
+> support in explicit blockwise execution paths.
 
-## Do not claim
+## Public API scope
 
-Do not claim any of the following for the current release/paper cycle:
+Use `FRsutils.api` as the canonical import surface in papers, examples, and
+user-facing documentation:
 
-- full GPU-native fuzzy-rough execution,
-- GPU-native FRSMOTE,
-- GPU-resident OWAFRS approximation accumulators,
-- end-to-end CuPy outputs from public APIs,
-- CuPy support as a mandatory dependency,
-- benchmark speedups before running the Phase 6 benchmark suite on a stable
-  target machine.
-
-## Correct backend wording
-
-Use this wording when describing `backend="cupy"`:
-
-```text
-`backend="cupy"` is optional and experimental. It enables CuPy-backed
-similarity-block computation and, for blockwise ITFRS/VQRS, CuPy-resident
-approximation accumulators. Public result arrays remain NumPy arrays.
+```python
+from FRsutils.api import compute_approximations
+from FRsutils.api import FuzzyRoughPositiveRegionScorer
 ```
 
-For OWAFRS, use this wording:
+Do not describe internal modules under `FRsutils.core` or `FRsutils.utils` as the
+stable public API. They may be useful for maintainers, but the JOSS-facing user
+entry point is the `FRsutils.api` facade.
 
-```text
-OWAFRS supports exact blockwise execution, but its approximation accumulator is
-not GPU-resident in the current release. CuPy may be used for similarity-block
-computation only; the OWA row-buffer and sorting path remains NumPy-based.
-```
+## Execution claim boundary
 
-## Relationship to frsampling
+FRsutils supports two main approximation execution modes through the public API:
 
-FRsutils owns fuzzy-rough core computation. `frsampling` owns FRSMOTE and future
-sampling algorithms. Downstream packages should import from `FRsutils.api`, not
-from internal modules.
+- `engine="dense"`: builds or consumes a full pairwise similarity matrix and uses
+  the dense NumPy reference model implementations.
+- `engine="blockwise"`: computes exact approximations by processing similarity
+  blocks and avoiding full similarity-matrix materialization by default.
 
-## Evidence expected before final paper submission
+The public output contract is intentionally NumPy-based. Public result arrays are
+returned as NumPy arrays even when an optional CuPy-backed blockwise path is used
+internally.
 
-Before using numerical speedup claims in a paper, generate benchmark artifacts
-with:
+## CuPy and GPU wording
 
-```bash
-python benchmarks/benchmark_fuzzy_rough_execution.py \
-    --models itfrs,vqrs,owafrs \
-    --sample-sizes 128,256,512,1024 \
-    --n-features 8 \
-    --block-sizes 64,128,256 \
-    --scenarios dense_numpy,blockwise_numpy,blockwise_cupy \
-    --repeats 5 \
-    --output-json benchmark_results.json \
-    --output-csv benchmark_results.csv
-```
+Use careful, model-specific wording:
 
-Record the machine, Python version, NumPy version, optional CuPy/CUDA version,
-GPU model, and command line together with the benchmark artifacts.
+- ITFRS: CuPy-backed blockwise execution can use GPU-backed similarity blocks and
+  GPU-resident approximation accumulators.
+- VQRS: CuPy-backed blockwise execution can use GPU-backed similarity blocks and
+  GPU-resident approximation accumulators.
+- OWAFRS: CuPy-backed blockwise execution can use GPU-backed similarity blocks,
+  but this release does not claim GPU-resident OWAFRS approximation accumulators.
+
+Avoid these claims unless they are later supported by benchmarks and tests:
+
+- “FRsutils is fully GPU-native.”
+- “All fuzzy-rough models run fully on the GPU.”
+- “CuPy always improves performance.”
+- “OWAFRS aggregation is GPU-resident.”
+
+## Benchmark wording
+
+If benchmark results are included, state the exact scenario:
+
+- model alias, such as `itfrs`, `vqrs`, or `owafrs`
+- execution engine, such as dense or blockwise
+- backend, such as NumPy or CuPy
+- sample size, feature count, block size, and hardware
+- whether CuPy/CUDA was available or skipped
+
+Prefer wording such as:
+
+> In the tested environment, blockwise execution reduced full-matrix
+> materialization and matched dense-reference outputs numerically. CuPy-backed
+> runs were optional and were skipped when CuPy/CUDA was unavailable.
+
+## Oversampling boundary
+
+FRsutils should be described as the fuzzy-rough core library. Fuzzy-rough
+oversampling algorithms such as FRSMOTE live in the standalone downstream
+`frsampling` package and depend on FRsutils through `FRsutils.api`.
+
+Do not present FRSMOTE as part of the stable FRsutils core public API unless the
+project intentionally changes that boundary later.
+
+## Recommended JOSS phrasing
+
+A compact JOSS-facing paragraph:
+
+> FRsutils is a Python library for fuzzy-rough set computations, including
+> similarity construction, lower and upper approximations, boundary regions, and
+> positive-region scores. It provides a compact public API through `FRsutils.api`,
+> supports ITFRS, VQRS, and OWAFRS model aliases, and offers dense as well as
+> exact blockwise execution. Optional CuPy-backed blockwise execution is available
+> for selected internal steps while preserving NumPy arrays as the public output
+> contract.

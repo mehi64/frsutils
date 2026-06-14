@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 3 tests for the public positive-region scorer."""
+"""Contract tests for the public positive-region scorer."""
 
 import numpy as np
 import pytest
+from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 
 from FRsutils.api import (
@@ -10,6 +11,7 @@ from FRsutils.api import (
     FuzzyRoughPositiveRegionScorer,
     build_similarity_matrix,
     compute_positive_region,
+    normalize_flat_config_to_nested,
 )
 
 
@@ -25,6 +27,28 @@ X_SMALL = np.array(
 Y_SMALL = np.array([0, 0, 1, 1])
 
 
+MODEL_SCORER_CONFIGS = {
+    "itfrs": {
+        "ub_tnorm_name": "minimum",
+        "lb_implicator_name": "lukasiewicz",
+    },
+    "vqrs": {
+        "lb_fuzzy_quantifier_name": "linear",
+        "lb_fuzzy_quantifier_alpha": 0.0,
+        "lb_fuzzy_quantifier_beta": 0.5,
+        "ub_fuzzy_quantifier_name": "quadratic",
+        "ub_fuzzy_quantifier_alpha": 0.1,
+        "ub_fuzzy_quantifier_beta": 0.8,
+    },
+    "owafrs": {
+        "ub_tnorm_name": "minimum",
+        "lb_implicator_name": "lukasiewicz",
+        "ub_owa_method_name": "linear",
+        "lb_owa_method_name": "harmonic",
+    },
+}
+
+
 def test_positive_region_scorer_fit_score_matches_function_api():
     """fit_score returns the same values as compute_positive_region."""
     scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
@@ -35,6 +59,29 @@ def test_positive_region_scorer_fit_score_matches_function_api():
     np.testing.assert_allclose(fitted_scores, function_scores)
     np.testing.assert_allclose(scorer.score_samples(), function_scores)
     assert scorer.n_samples_in_ == len(Y_SMALL)
+
+
+@pytest.mark.parametrize("model", ["itfrs", "vqrs", "owafrs"])
+def test_positive_region_scorer_matches_function_api_for_each_model(model):
+    """The scorer forwards model-specific flat params for every public model."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model=model,
+        similarity="linear",
+        **MODEL_SCORER_CONFIGS[model],
+    )
+
+    fitted_scores = scorer.fit_score(X_SMALL, Y_SMALL)
+    function_scores = compute_positive_region(
+        X_SMALL,
+        Y_SMALL,
+        model=model,
+        similarity="linear",
+        **MODEL_SCORER_CONFIGS[model],
+    )
+
+    assert isinstance(fitted_scores, np.ndarray)
+    assert fitted_scores.shape == (len(Y_SMALL),)
+    np.testing.assert_allclose(fitted_scores, function_scores)
 
 
 def test_positive_region_scorer_exposes_full_result():
@@ -78,6 +125,102 @@ def test_positive_region_scorer_is_sklearn_parameter_compatible():
     assert scorer.model == "vqrs"
     assert scorer.lb_fuzzy_quantifier_alpha == 0.2
     assert scorer.fit_score(X_SMALL, Y_SMALL).shape == (len(Y_SMALL),)
+
+
+def test_positive_region_scorer_is_sklearn_clone_compatible():
+    """sklearn.clone preserves constructor params without fitted state."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model="owafrs",
+        similarity="linear",
+        engine="blockwise",
+        block_size=2,
+        ub_owa_method_name="linear",
+        lb_owa_method_name="harmonic",
+    )
+    scorer.fit(X_SMALL, Y_SMALL)
+
+    cloned = clone(scorer)
+
+    assert cloned.model == "owafrs"
+    assert cloned.similarity == "linear"
+    assert cloned.engine == "blockwise"
+    assert cloned.block_size == 2
+    assert cloned.ub_owa_method_name == "linear"
+    assert cloned.lb_owa_method_name == "harmonic"
+    assert not hasattr(cloned, "positive_region_")
+    assert cloned.fit_score(X_SMALL, Y_SMALL).shape == (len(Y_SMALL),)
+
+
+def test_positive_region_scorer_forwards_blockwise_execution_options():
+    """Scorer users can request blockwise approximation through public params."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model="vqrs",
+        similarity="linear",
+        engine="blockwise",
+        block_size=2,
+        backend="numpy",
+        **MODEL_SCORER_CONFIGS["vqrs"],
+    )
+
+    scores = scorer.fit_score(X_SMALL, Y_SMALL)
+    dense_scores = compute_positive_region(
+        X_SMALL,
+        Y_SMALL,
+        model="vqrs",
+        similarity="linear",
+        **MODEL_SCORER_CONFIGS["vqrs"],
+    )
+
+    np.testing.assert_allclose(scores, dense_scores)
+    assert scorer.result_.engine == "blockwise"
+    assert scorer.result_.block_size == 2
+    assert scorer.result_.used_blockwise is True
+    assert scorer.result_.backend == "numpy"
+
+
+def test_positive_region_scorer_accepts_nested_config():
+    """Nested public configs can be used with the object-oriented scorer."""
+    nested_config = normalize_flat_config_to_nested(
+        {
+            "type": "owafrs",
+            "similarity": "linear",
+            **MODEL_SCORER_CONFIGS["owafrs"],
+        }
+    )
+    scorer = FuzzyRoughPositiveRegionScorer(model="owafrs", config=nested_config)
+
+    scores = scorer.fit_score(X_SMALL, Y_SMALL)
+    expected = compute_positive_region(X_SMALL, Y_SMALL, model="owafrs", config=nested_config)
+
+    np.testing.assert_allclose(scores, expected)
+
+
+def test_positive_region_scorer_accepts_extra_flat_params_mapping():
+    """Advanced flat params can be passed through extra_params."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model="owafrs",
+        similarity="linear",
+        extra_params={
+            "ub_tnorm_name": "minimum",
+            "lb_implicator_name": "lukasiewicz",
+            "ub_owa_method_name": "linear",
+            "lb_owa_method_name": "harmonic",
+        },
+    )
+
+    assert scorer.fit_score(X_SMALL, Y_SMALL).shape == (len(Y_SMALL),)
+
+
+def test_positive_region_scorer_rejects_non_mapping_extra_params():
+    """extra_params is a public pass-through mapping, not an arbitrary object."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model="itfrs",
+        similarity="linear",
+        extra_params=[("ub_tnorm_name", "minimum")],
+    )
+
+    with pytest.raises(TypeError, match="extra_params must be a mapping"):
+        scorer.fit(X_SMALL, Y_SMALL)
 
 
 def test_positive_region_scorer_rejects_unfitted_access():

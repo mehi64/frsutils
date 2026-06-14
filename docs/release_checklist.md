@@ -1,63 +1,106 @@
-# Release and Paper Hardening Checklist
+# FRsutils release and JOSS readiness checklist
 
-Use this checklist before tagging a release, preparing a software paper, or
-sharing benchmark artifacts.
+Use this checklist before tagging a release or submitting FRsutils for JOSS
+review.
 
-## 1. Scope and package boundary
+## 1. Public API checks
 
-- [ ] FRsutils contains fuzzy-rough core computation only.
-- [ ] FRSMOTE and future sampling algorithms remain in `frsampling`.
-- [ ] Documentation states that downstream packages depend on `FRsutils.api`.
-- [ ] No new examples import from private `FRsutils.core` or `FRsutils.utils`
-      paths unless the example is explicitly an internal developer example.
+- [ ] The canonical import path is documented as `FRsutils.api`.
+- [ ] User-facing examples avoid importing from internal `FRsutils.core` modules.
+- [ ] `FRsutils.api.__all__` exposes the intended public objects only.
+- [ ] Top-level `FRsutils` remains compact and does not accidentally expose the
+      full public facade.
+- [ ] `examples/public_api_quickstart.py` runs successfully.
 
-## 2. Public API examples
-
-- [ ] `examples/phase7_public_api_quickstart.py` runs from a fresh checkout.
-- [ ] README examples use `FRsutils.api`.
-- [ ] Result objects are accessed by named fields, not tuple order.
-- [ ] Execution metadata is shown for dense/blockwise/backend paths.
-
-## 3. Benchmark artifacts
-
-- [ ] `examples/phase7_benchmark_smoke.py` runs in CPU-only mode.
-- [ ] `benchmarks/benchmark_fuzzy_rough_execution.py` writes JSON and CSV.
-- [ ] CuPy/CUDA-unavailable rows are skipped, not treated as failures.
-- [ ] Final paper numbers are generated on a fixed target machine, not inferred
-      from CI or a small smoke test.
-- [ ] Benchmark command line and environment metadata are preserved.
-
-## 4. GPU and backend claims
-
-- [ ] The release does not claim full GPU-native fuzzy-rough execution.
-- [ ] The release does not claim GPU-native FRSMOTE.
-- [ ] ITFRS and VQRS GPU-resident accumulator support is described as
-      experimental.
-- [ ] OWAFRS is explicitly documented as non-GPU-resident for the approximation
-      accumulator in the current release.
-- [ ] Public outputs are documented as NumPy arrays.
-
-## 5. Tests
-
-Run at minimum:
+Recommended command:
 
 ```bash
-python -m pytest tests/api tests/benchmarks tests/examples -q
+python -m pytest tests/api -q -rs
 ```
 
-For `frsampling`, run from its repository root after installing or exposing
-FRsutils on `PYTHONPATH`:
+## 2. Core model checks
+
+Run the focused fast and public-contract tests for all fuzzy-rough models:
 
 ```bash
-PYTHONPATH="$PWD/src:../FRsutils" python -m pytest tests -q
+python -m pytest \
+  tests/models_tests/test_itfrs_fast.py \
+  tests/models_tests/test_vqrs_fast.py \
+  tests/models_tests/test_owafrs_fast.py \
+  tests/api \
+  tests/core_tests/test_approximation_engines.py \
+  -q -rs
 ```
 
-## 6. Documentation consistency
+Run slow exhaustive model-combination tests before a release tag:
 
-- [ ] README claim matches `docs/paper_claims.md`.
-- [ ] `docs/backend_execution_status.md` matches the actual metadata behavior.
-- [ ] `docs/public_api_contract.md` describes the stable public boundary.
-- [ ] `docs/phase_5_owafrs_non_gpu_resident_decision.md` remains linked from
-      backend docs.
-- [ ] `docs/phase_6_benchmark_suite.md` clearly says it provides a benchmark
-      harness, not final benchmark numbers.
+```bash
+python -m pytest tests/models_tests -m slow -o addopts="" -q -rs
+```
+
+## 3. Backend and CuPy checks
+
+- [ ] NumPy backend tests pass.
+- [ ] Fake-CuPy contract tests pass in normal CI.
+- [ ] Real CuPy/CUDA tests skip cleanly when CuPy is unavailable.
+- [ ] If claiming benchmark results for CuPy, run the tests on a machine with
+      compatible CuPy/CUDA installed.
+
+Recommended commands:
+
+```bash
+python -m pytest tests/api/test_cupy_backend_phase6_contract.py -q -rs
+python -m pytest tests/api/test_itfrs_blockwise_cupy_contract.py -q -rs
+python -m pytest tests/api/test_vqrs_blockwise_cupy_contract.py -q -rs
+python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
+```
+
+## 4. Documentation checks
+
+- [ ] `README.md` contains a working quickstart using `FRsutils.api`.
+- [ ] `docs/public_api.md` matches the current public API.
+- [ ] `examples/public_api_quickstart.py` runs successfully.
+- [ ] `tests/api/test_public_api_examples_smoke.py` passes.
+- [ ] `docs/documentation_smoke_check.md` has been followed after public API or
+      documentation changes.
+- [ ] `docs/cupy_info.md` and `docs/backend_execution_status.md` use conservative
+      backend wording.
+- [ ] `docs/paper_claims.md` reflects the claims made in the JOSS paper.
+- [ ] No documentation claims full GPU-native execution.
+- [ ] OWAFRS documentation does not claim GPU-resident approximation
+      accumulators.
+
+Recommended documentation smoke commands:
+
+```bash
+python examples/public_api_quickstart.py
+python -m pytest tests/api/test_public_api_examples_smoke.py -q -rs
+python -m pytest tests/api/test_public_api_downstream_contract.py -q -rs
+```
+
+## 5. Metadata checks
+
+See `docs/joss_metadata_check.md` for a detailed metadata checklist. At minimum:
+
+- [ ] `LICENSE` exists and matches SPDX headers.
+- [ ] `pyproject.toml` package metadata is current.
+- [ ] `CITATION.cff` exists or the README citation instructions are current.
+- [ ] `paper.md` exists and uses the same model/backend claims as the docs.
+- [ ] The package version is consistent across metadata and citation examples.
+
+## 6. Final validation commands
+
+Focused release smoke:
+
+```bash
+python -m pytest tests/api tests/core_tests/test_approximation_engines.py -q -rs
+```
+
+Full repository validation, including slow tests:
+
+```bash
+python -m pytest -o addopts="" -q -rs
+```
+
+If the full test suite is too slow for every local iteration, run it before
+release tagging and before JOSS submission.

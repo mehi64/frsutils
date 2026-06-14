@@ -82,13 +82,19 @@ research, e.g.:
 
 ## Public API quickstart
 
-FRsutils exposes its stable user and downstream-package interface through
-`FRsutils.api`. End users should prefer the task-oriented helpers in this
-namespace. Downstream packages, including `frsampling`, should also depend only
-on this facade instead of importing from `FRsutils.core` or `FRsutils.utils`.
+The canonical user-facing API is `FRsutils.api`. End users, notebooks,
+examples, and downstream packages should import from this facade instead of
+importing directly from internal `FRsutils.core` or `FRsutils.utils` modules.
 
-The smallest end-user workflow is: prepare normalized numeric data, compute
-fuzzy-rough approximations, and read the named fields from the result object.
+```python
+from FRsutils.api import compute_approximations
+```
+
+The package top level, `FRsutils`, is intentionally kept compact so internal
+implementation details do not become public API by accident.
+
+The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough
+approximations, and read the named fields from the returned result object.
 
 ```python
 import numpy as np
@@ -100,13 +106,15 @@ from FRsutils.api import compute_approximations, compute_positive_region
 X = np.array(
     [
         [0.00, 0.10],
-        [0.10, 0.20],
-        [0.85, 0.80],
-        [0.95, 0.90],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
     ],
     dtype=float,
 )
-y = np.array([0, 0, 1, 1])
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
 
 result = compute_approximations(
     X,
@@ -141,16 +149,18 @@ from FRsutils.api import FuzzyRoughPositiveRegionScorer
 X = np.array(
     [
         [0.00, 0.10],
-        [0.10, 0.20],
-        [0.85, 0.80],
-        [0.95, 0.90],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
     ],
     dtype=float,
 )
-y = np.array([0, 0, 1, 1])
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
 
 scorer = FuzzyRoughPositiveRegionScorer(
-    model="itfrs",
+    model="owafrs",
     similarity="linear",
 )
 
@@ -162,9 +172,8 @@ print(result.lower)
 print(result.upper)
 ```
 
-Downstream packages should use the builder-level public API when they need to
-reuse a precomputed similarity matrix. This keeps external packages independent
-from FRsutils internals while avoiding repeated similarity-matrix construction.
+Downstream packages can reuse a precomputed similarity matrix through the public
+API without importing from FRsutils internals:
 
 ```python
 import numpy as np
@@ -174,18 +183,17 @@ from FRsutils.api import build_similarity_matrix, compute_positive_region
 X = np.array(
     [
         [0.00, 0.10],
-        [0.10, 0.20],
-        [0.85, 0.80],
-        [0.95, 0.90],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
     ],
     dtype=float,
 )
-y = np.array([0, 0, 1, 1])
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
 
-similarity_matrix = build_similarity_matrix(
-    X,
-    similarity="linear",
-)
+similarity_matrix = build_similarity_matrix(X, similarity="linear")
 
 scores = compute_positive_region(
     X=None,
@@ -197,8 +205,9 @@ scores = compute_positive_region(
 print(scores)
 ```
 
-See [`docs/public_api_contract.md`](docs/public_api_contract.md) for the stable
-public API boundary and downstream-package rules.
+A runnable version of the quickstart is available at
+[`examples/public_api_quickstart.py`](examples/public_api_quickstart.py). See
+[`docs/public_api.md`](docs/public_api.md) for the public API guide.
 
 ## Execution engines and backend status
 
@@ -262,10 +271,10 @@ metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
 
 ## Release-ready examples and paper claim boundary
 
-Phase 7 adds two small release-ready examples:
+The repository includes small release-ready examples:
 
 ```bash
-python examples/phase7_public_api_quickstart.py
+python examples/public_api_quickstart.py
 python examples/phase7_benchmark_smoke.py --output-dir phase7_benchmark_smoke_output
 ```
 
@@ -278,7 +287,8 @@ outputs remain NumPy arrays, and OWAFRS remains on the conservative exact
 blockwise NumPy row-buffer path in this release.
 
 Before tagging or submitting, use
-[`docs/release_checklist.md`](docs/release_checklist.md).
+[`docs/release_checklist.md`](docs/release_checklist.md) and the
+[`documentation smoke check`](docs/documentation_smoke_check.md).
 
 ## Algorithms and contents
 
@@ -359,11 +369,16 @@ From the repository root, the default test command excludes tests marked as
 python -m pytest tests -q
 ```
 
-Run the release/backend smoke set explicitly with:
+Run the documented quickstart and release/backend smoke set explicitly with:
 
 ```bash
-python -m pytest tests/api tests/benchmarks tests/examples -q
+python examples/public_api_quickstart.py
+python -m pytest tests/api/test_public_api_examples_smoke.py -q -rs
+python -m pytest tests/api tests/core_tests/test_approximation_engines.py -q -rs
 ```
+
+See [`docs/release_validation_commands.md`](docs/release_validation_commands.md)
+for the complete validation command list.
 
 Run exhaustive slow model-combination tests separately when needed:
 
