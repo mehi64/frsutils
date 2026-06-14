@@ -4,7 +4,9 @@
 This module contains dense-compatible blockwise approximation routines. The
 ITFRS and VQRS blockwise paths are the scalable backend-aware counterparts to
 their dense NumPy reference models and can use backend-resident accumulators
-when the similarity engine is configured with an optional CuPy backend.
+when the similarity engine is configured with an optional CuPy backend. OWAFRS
+uses an exact row-buffered blockwise path; optional CuPy support is limited to
+similarity-block generation and does not claim GPU-resident OWAFRS aggregation.
 """
 
 from __future__ import annotations
@@ -15,12 +17,10 @@ from typing import Any, Mapping, Optional, Tuple
 import numpy as np
 
 from FRsutils.core.backends import is_cupy_backend
-from FRsutils.core.implicators import Implicator
-from FRsutils.core.owa_weights import OWAWeights
 from FRsutils.core.similarity_engine import BaseSimilarityEngine
-from FRsutils.core.tnorms import TNorm
 from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
 from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
+from FRsutils.core.models.owafrs_components import build_owafrs_components_from_config
 from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
@@ -86,6 +86,11 @@ class VQRSBlockwiseApproximation:
 @dataclass(frozen=True)
 class OWAFRSBlockwiseApproximation:
     """Immutable exact OWAFRS blockwise approximation outputs.
+
+    OWAFRS blockwise execution keeps the OWA sorting/aggregation buffers in
+    NumPy to preserve the dense reference contract. CuPy-backed blockwise runs
+    may use GPU-resident similarity blocks, but this result object intentionally
+    does not claim GPU-resident OWAFRS approximation accumulators.
     
     Parameters
     ----------
@@ -196,49 +201,6 @@ def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type
     if not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
     return config if _is_nested_frs_config(config) else normalize_flat_config_to_nested(dict(config))
-
-
-def build_owafrs_components_from_config(
-    config: Optional[Mapping[str, Any]],
-) -> Tuple[TNorm, Implicator, OWAWeights, OWAWeights]:
-    """Build OWAFRS T-norm, implicator, and OWA strategies from config.
-        
-        Parameters
-        ----------
-        config : Optional[Mapping[str, Any]]
-            Optional flat or nested FRsutils config mapping.
-        
-        Returns
-        -------
-        Tuple[TNorm, Implicator, OWAWeights, OWAWeights]
-            Tuple `(ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method)`.
-        
-        Raises
-        ------
-        TypeError
-            If config sections cannot be resolved.
-        
-    """
-    nested = _as_nested_config(config, default_model_type="owafrs")
-    fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
-    if not isinstance(fr_cfg, Mapping):
-        raise TypeError("nested config section 'fr_model' must be a mapping.")
-
-    ub_tnorm = TNorm.create_from_spec(fr_cfg.get("ub_tnorm"))
-    lb_implicator = Implicator.create_from_spec(fr_cfg.get("lb_implicator"))
-    ub_owa_method = OWAWeights.create_from_spec(fr_cfg.get("ub_owa_method"))
-    lb_owa_method = OWAWeights.create_from_spec(fr_cfg.get("lb_owa_method"))
-
-    if ub_tnorm is None:
-        ub_tnorm = TNorm.create("minimum")
-    if lb_implicator is None:
-        lb_implicator = Implicator.create("lukasiewicz")
-    if ub_owa_method is None:
-        ub_owa_method = OWAWeights.create("linear")
-    if lb_owa_method is None:
-        lb_owa_method = OWAWeights.create("linear")
-
-    return ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method
 
 
 def _backend_index_array(indices: np.ndarray, *, xp: Any):
@@ -575,10 +537,13 @@ def compute_owafrs_blockwise(
     """Compute exact OWAFRS approximations from similarity blocks.
         
         OWAFRS requires row-wise sorting before applying OWA weights, so it cannot
-        use only min/max or sum accumulators. This Phase 5 implementation keeps one
-        `row_block_size x n_samples` lower/upper buffer at a time, fills it from
-        similarity blocks, sorts it exactly like the dense OWAFRS model, writes the
-        result rows, and releases the buffer before moving to the next row block.
+        use only min/max or sum accumulators like ITFRS or VQRS. This exact
+        implementation keeps one `row_block_size x n_samples` lower/upper NumPy
+        buffer at a time, fills it from similarity blocks, sorts it exactly like
+        the dense OWAFRS model, writes the result rows, and releases the buffer
+        before moving to the next row block. Optional CuPy support remains limited
+        to similarity-block generation; OWAFRS aggregation is intentionally
+        conservative and NumPy-compatible.
         
         Parameters
         ----------

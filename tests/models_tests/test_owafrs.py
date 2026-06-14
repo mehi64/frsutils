@@ -76,47 +76,9 @@ def test_lower_upper_approximation_shape_ndarray_range_all_combinations(tnorm_na
 
     assert isinstance(upper, np.ndarray)
     assert upper.shape == (3,)
-    assert np.all((0.0 <= upper) & (upper <= 1.0)), f"Out of range values in upp approx for {tnorm_name} + {implicator_name}"
+    assert np.all((0.0 <= upper) & (upper <= 1.0)), f"Out of range values in upper approx for {tnorm_name} + {implicator_name}"
 
 
-
-
-# @pytest.mark.parametrize("ub_owa_method_name", list(oww.OWAWeights.list_available().keys()))
-# @pytest.mark.parametrize("lb_owa_method_name", list(oww.OWAWeights.list_available().keys()))
-# @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
-# @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
-# def test_boundary_region_all_combinations_shape_range(tnorm_name, 
-#                                                     implicator_name,
-#                                                     ub_owa_method_name,
-#                                                     lb_owa_method_name):
-#     """
-#     Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
-#     correctness of values are not checked
-#     """
-#     sim_matrix = np.array([
-#         [1.0, 0.8, 0.0],
-#         [0.8, 1.0, 0.3],
-#         [0.0, 0.3, 1.0]
-#     ])
-#     labels = np.array([1, 1, 0])
-
-#     tnorm = TNorm.create(tnorm_name, p=0.83)
-#     implicator = Implicator.create(implicator_name)
-    
-#     ub_owa_method = oww.OWAWeights.create(ub_owa_method_name)
-#     lb_owa_method = oww.OWAWeights.create(lb_owa_method_name)
-
-
-#     model = OWAFRS(sim_matrix, labels, tnorm, implicator,ub_owa_method, lb_owa_method)
-
-
-#     boundary = model.boundary_region()
-#     expected = model.upper_approximation() - model.lower_approximation()
-#     np.testing.assert_allclose(boundary, expected, err_msg=f"Failed for {tnorm_name} + {implicator_name}")
-
-#     assert isinstance(boundary, np.ndarray)
-#     assert boundary.shape == (3,)
-#     assert np.all((0.0 <= boundary) & (boundary <= 1.0)), f"Out of range values in bouundry region for {tnorm_name} + {implicator_name}"
 
 
 @pytest.mark.parametrize("ub_owa_method_name", list(oww.OWAWeights.list_available().keys()))
@@ -127,7 +89,7 @@ def test_positive_region_all_combinations_shape_range(tnorm_name,
                                                     implicator_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
-    """Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
+    """Validates positive_region = lower_approximation across all OWAFRS combinations just for shape and range
     
     correctness of values are not checked
     """
@@ -239,7 +201,7 @@ def test_from_dict_roundtrip_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """Tests whether ITFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
+    """Tests whether OWAFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
     """
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
@@ -323,7 +285,7 @@ def test_describe_params_detailed_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """Ensure that ITFRS.describe_params_detailed() contains keys."""
+    """Ensure that OWAFRS.describe_params_detailed() contains keys."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -457,7 +419,7 @@ def test_logger_works_all_combinations(tnorm_name,
                                                     implicator_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
-    """Sanity check for logger presence in all ITFRS combinations."""
+    """Sanity check for logger presence in all OWAFRS combinations."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -536,8 +498,7 @@ def synthetic_data():
 
 @pytest.mark.parametrize("implicator_name", ['reichenbach', 'kleenedienes', 'lukasiewicz', 'goedel', 'goguen', 'yager', 'rescher', 'weber', 'fodor'])
 @pytest.mark.parametrize("tnorm_name", ['product', 'minimum', 'yager', 'luk', 'drastic', 'hamacher', 'einstein', 'nilpotent'])
-@pytest.mark.parametrize("similarity_name", ['gaussian', 'linear'])
-def test_owafrs_all_combinations(implicator_name, tnorm_name, similarity_name, synthetic_data):
+def test_owafrs_all_combinations(implicator_name, tnorm_name, synthetic_data):
     sim_matrix_raw = synthetic_data["sim_matrix"]
     labels = synthetic_data["y"]
     expected = synthetic_data["expected"]["owa_linear"]

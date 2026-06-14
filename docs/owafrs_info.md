@@ -68,5 +68,27 @@ OWA enables weighting the sorted values (e.g., top similarity scores or implicat
 
   - Since for the calculations of upper approximation, we calculate soft sup which is basically a product, to exclude the same instance from calculations we need to set the main diagonal to 0.0 which is ignored by max operator. Otherwise all upper approxamations will be 1.0.
 
-#### In OWAFRS, POS(x) = ????????????????????????
+#### In OWAFRS, POS(x) = lower approximation in the current FRsutils model contract
+---
+
+## 4. FRsutils implementation contract
+
+In FRsutils, `OWAFRS` in `FRsutils.core.models.owafrs` is the dense NumPy
+reference implementation. It expects a fully materialized similarity matrix, a
+one-dimensional label vector, an upper T-norm, a lower implicator, and lower and
+upper OWA weighting strategies. The direct dense model requires at least two
+samples because OWA aggregation excludes the self-comparison on the diagonal.
+
+The public approximation API also supports blockwise OWAFRS execution. In the
+current release cycle, CuPy support for OWAFRS is conservative: similarity
+blocks may be computed with the CuPy backend, while OWA sorting and aggregation
+remain NumPy-compatible. Therefore, OWAFRS should be documented as supporting
+GPU-backed similarity blocks, not GPU-resident approximation accumulators.
+
+For consistency with the other fuzzy-rough models, FRsutils reports:
+
+```text
+boundary_region = upper_approximation - lower_approximation
+positive_region = lower_approximation
+```
 

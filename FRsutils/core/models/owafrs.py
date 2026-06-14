@@ -8,13 +8,37 @@ from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 import FRsutils.core.tnorms as tn
 import FRsutils.core.owa_weights as owa_weights
 import FRsutils.core.implicators as imp
+from FRsutils.core.models.owafrs_components import build_owafrs_components_from_config
 from FRsutils.utils.logger.logger_util import get_logger
 import numpy as np
 
 
 @FuzzyRoughModel.register("owafrs")
 class OWAFRS(FuzzyRoughModel):
-    """Ordered Weighted Averaging Fuzzy Rough Sets (OWAFRS) approximation model."""
+    """Dense NumPy reference model for OWA-based fuzzy-rough approximations.
+
+    OWAFRS computes lower and upper approximations from a fully materialized
+    similarity matrix, class labels, an upper T-norm, a lower implicator, and
+    lower/upper OWA weighting strategies. Scalable blockwise execution and
+    optional CuPy-backed similarity blocks are handled outside this class by
+    :mod:`FRsutils.core.approximation_engines`.
+
+    Parameters
+    ----------
+    similarity_matrix : ndarray of shape (n_samples, n_samples)
+        Dense pairwise similarity matrix.
+    labels : array-like of shape (n_samples,)
+        Class labels aligned with the similarity matrix.
+    ub_tnorm : TNorm
+        T-norm used for upper-approximation evidence.
+    lb_implicator : Implicator
+        Implicator used for lower-approximation evidence.
+    ub_owa_method, lb_owa_method : OWAWeights
+        OWA weighting strategies for upper and lower approximation aggregation.
+    logger : object, optional
+        Optional logger used for diagnostic messages.
+    """
+
     def __init__(self,
                  similarity_matrix: np.ndarray,
                  labels: np.ndarray,
@@ -24,9 +48,18 @@ class OWAFRS(FuzzyRoughModel):
                  lb_owa_method: owa_weights.OWAWeights,
                  logger=None):
         
-        """Initialize the OWAFRS instance."""
+        """Initialize the dense OWAFRS reference model."""
+        if labels is None:
+            raise ValueError("labels must be provided.")
+
+        labels_array = np.asarray(labels)
+        if labels_array.ndim != 1:
+            raise ValueError("labels must be a one-dimensional array-like object.")
+        if labels_array.shape[0] < 2:
+            raise ValueError("OWAFRS requires at least two samples for OWA aggregation.")
+
         super().__init__(similarity_matrix,
-                          labels,
+                          labels_array,
                           logger=logger)
         self.validate_params(ub_tnorm=ub_tnorm, 
                              lb_implicator=lb_implicator,
@@ -39,7 +72,7 @@ class OWAFRS(FuzzyRoughModel):
         self.ub_owa_method = ub_owa_method
         self.lb_owa_method = lb_owa_method
 
-        n = len(labels)
+        n = self.labels.shape[0]
 
         # n-1 because the same instance is not included in calculations
         self.lb_owa_weights = lb_owa_method.weights(n-1, order='asc')
@@ -49,13 +82,12 @@ class OWAFRS(FuzzyRoughModel):
 
 
     def lower_approximation(self) -> np.ndarray:
-        """Compute the lower approximation using the owa.
-                
-                Returns
-                -------
-                np.ndarray
-                    Lower approximation array (n,)
-                
+        """Compute dense OWAFRS lower approximation values.
+
+        Returns
+        -------
+        lower : ndarray of shape (n_samples,)
+            OWA-aggregated lower approximation values.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         implication_vals = self.lb_implicator(self.similarity_matrix, label_mask)
@@ -70,13 +102,12 @@ class OWAFRS(FuzzyRoughModel):
 
 
     def upper_approximation(self) -> np.ndarray:
-        """Compute the upper approximation using the T-norm.
-                
-                Returns
-                -------
-                np.ndarray
-                    Upper approximation array (n,)
-                
+        """Compute dense OWAFRS upper approximation values.
+
+        Returns
+        -------
+        upper : ndarray of shape (n_samples,)
+            OWA-aggregated upper approximation values.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.ub_tnorm(self.similarity_matrix, label_mask)
@@ -91,17 +122,16 @@ class OWAFRS(FuzzyRoughModel):
 
     def to_dict(self, include_data: bool = False) -> dict:
         """Serialize the OWAFRS model to a dictionary.
-                
-                Parameters
-                ----------
-                include_data : bool
-                    If True, include similarity_matrix and labels in the output.
-                
-                Returns
-                -------
-                dict
-                    Dictionary representation of the model.
-                
+
+        Parameters
+        ----------
+        include_data : bool, default=False
+            If True, include ``similarity_matrix`` and ``labels`` in the output.
+
+        Returns
+        -------
+        data : dict
+            Serialized OWAFRS component configuration and optional data arrays.
         """
         data = {
             "type": "owafrs",
@@ -120,32 +150,34 @@ class OWAFRS(FuzzyRoughModel):
     @classmethod
     def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "OWAFRS":
         """Reconstruct an OWAFRS model from a serialized dictionary.
-                
-                Parameters
-                ----------
-                data : dict
-                    Serialized dictionary (from to_dict)
-                similarity_matrix : object
-                    Optional matrix to override or fill in if not in data
-                labels : object
-                    Optional label vector to override or fill in if not in data
-                logger : object
-                    Optional logger
-                
-                Returns
-                -------
-                'OWAFRS'
-                    ITFRS instance
-                
+
+        Parameters
+        ----------
+        data : dict
+            Serialized dictionary produced by :meth:`to_dict`.
+        similarity_matrix : array-like of shape (n_samples, n_samples), optional
+            Dense similarity matrix. When provided, this value overrides any
+            matrix embedded in ``data``.
+        labels : array-like of shape (n_samples,), optional
+            Class labels. When provided, this value overrides any labels embedded
+            in ``data``.
+        logger : object, optional
+            Optional logger for the reconstructed model.
+
+        Returns
+        -------
+        OWAFRS
+            Reconstructed dense OWAFRS model.
         """
         
         # Rebuild operators
         tnorm = tn.TNorm.from_dict(data["ub_tnorm"])
         implicator = imp.Implicator.from_dict(data["lb_implicator"])
 
-        # Use matrix and labels from dict if present, else fallback to args
-        sim = np.array(data["similarity_matrix"]) if "similarity_matrix" in data else similarity_matrix
-        lbl = np.array(data["labels"]) if "labels" in data else labels
+        # External arrays intentionally override embedded arrays so serialized
+        # component configs can be reused on new datasets.
+        sim = similarity_matrix if similarity_matrix is not None else (np.array(data["similarity_matrix"]) if "similarity_matrix" in data else None)
+        lbl = labels if labels is not None else (np.array(data["labels"]) if "labels" in data else None)
 
         if sim is None or lbl is None:
             raise ValueError("similarity_matrix and labels must be provided either in data or as arguments.")
@@ -167,13 +199,7 @@ class OWAFRS(FuzzyRoughModel):
 
     @classmethod
     def validate_params(cls, **kwargs):
-        """validation hook.
-        
-        Parameters
-        ----------
-        kwargs : object
-            Parameter value.
-        """
+        """Validate OWAFRS component objects at construction time."""
         
         tnrm = kwargs.get("ub_tnorm")
         if tnrm is None or not isinstance(tnrm, tn.TNorm):
@@ -192,14 +218,7 @@ class OWAFRS(FuzzyRoughModel):
             raise ValueError("Parameter 'lb_owa_method' must be provided and be an instance of derived classes from OWAWeights.")
 
     def _get_params(self) -> dict:
-        """Describe internal parameters.
-                
-                Returns
-                -------
-                dict
-                    Dictionary containing T-norm, implicator and owa weights used in owafrs.
-                
-        """
+        """Return dense OWAFRS component and data parameters."""
         return {
             "ub_tnorm": self.ub_tnorm,
             "lb_implicator": self.lb_implicator,
@@ -211,79 +230,30 @@ class OWAFRS(FuzzyRoughModel):
 
     @classmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict) -> "OWAFRS":
-        """Create an OWAFRS instance from a configuration dictionary.
-                
-                Parameters
-                ----------
-                config : dict
-                    Serialized config dict (can include tnorm, implicator, owa weighhts for upper and lower, and optionally data)
-                similarity_matrix : object
-                    Optional override for similarity matrix
-                labels : object
-                    Optional override for label vector
-                
-                Returns
-                -------
-                'OWAFRS'
-                    ITFRS instance
-                
+        """Create a dense OWAFRS instance from flat or nested configuration.
+
+        Parameters
+        ----------
+        similarity_matrix : array-like of shape (n_samples, n_samples), default=None
+            Optional dense similarity matrix. Overrides matrix data in ``config``
+            when provided.
+        labels : array-like of shape (n_samples,), default=None
+            Optional label vector. Overrides labels in ``config`` when provided.
+        **config : dict
+            Flat OWAFRS config, internal nested config under ``_nested_config``,
+            serialized component specs, or direct component instances.
+
+        Returns
+        -------
+        OWAFRS
+            Dense OWAFRS model configured with the requested components.
         """
-        nested = config.pop("_nested_config", None)
+        config = dict(config)
+        ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method = build_owafrs_components_from_config(
+            config,
+            require_explicit_components=True,
+        )
 
-        ub_tnorm = None
-        lb_implicator = None
-        ub_owa_method = None
-        lb_owa_method = None
-
-        if isinstance(nested, dict):
-            fr_cfg = nested.get("fr_model", {})
-            ub_tnorm = tn.TNorm.create_from_spec(fr_cfg.get("ub_tnorm"))
-            lb_implicator = imp.Implicator.create_from_spec(fr_cfg.get("lb_implicator"))
-            ub_owa_method = owa_weights.OWAWeights.create_from_spec(fr_cfg.get("ub_owa_method"))
-            lb_owa_method = owa_weights.OWAWeights.create_from_spec(fr_cfg.get("lb_owa_method"))
-
-        # Backward-compatible: flat config keys with prefix-only params
-        if ub_tnorm is None:
-            ub_tnorm_obj = config.get("ub_tnorm")
-            if isinstance(ub_tnorm_obj, dict):
-                ub_tnorm = tn.TNorm.from_dict(ub_tnorm_obj)
-            elif ub_tnorm_obj is not None:
-                ub_tnorm = ub_tnorm_obj
-            else:
-                name = config.get("ub_tnorm_name")
-                ub_tnorm = tn.TNorm.create(name, **{k[len("ub_tnorm_"):]: v for k, v in config.items() if k.startswith("ub_tnorm_")})
-
-        if lb_implicator is None:
-            lb_imp_obj = config.get("lb_implicator")
-            if isinstance(lb_imp_obj, dict):
-                lb_implicator = imp.Implicator.from_dict(lb_imp_obj)
-            elif lb_imp_obj is not None:
-                lb_implicator = lb_imp_obj
-            else:
-                name = config.get("lb_implicator_name")
-                lb_implicator = imp.Implicator.create(name, **{k[len("lb_implicator_"):]: v for k, v in config.items() if k.startswith("lb_implicator_")})
-
-        if lb_owa_method is None:
-            lb_owa_obj = config.get("lb_owa_method")
-            if isinstance(lb_owa_obj, dict):
-                lb_owa_method = owa_weights.OWAWeights.from_dict(lb_owa_obj)
-            elif lb_owa_obj is not None:
-                lb_owa_method = lb_owa_obj
-            else:
-                name = config.get("lb_owa_method_name")
-                lb_owa_method = owa_weights.OWAWeights.create(name, **{k[len("lb_owa_method_"):]: v for k, v in config.items() if k.startswith("lb_owa_method_")})
-
-        if ub_owa_method is None:
-            ub_owa_obj = config.get("ub_owa_method")
-            if isinstance(ub_owa_obj, dict):
-                ub_owa_method = owa_weights.OWAWeights.from_dict(ub_owa_obj)
-            elif ub_owa_obj is not None:
-                ub_owa_method = ub_owa_obj
-            else:
-                name = config.get("ub_owa_method_name")
-                ub_owa_method = owa_weights.OWAWeights.create(name, **{k[len("ub_owa_method_"):]: v for k, v in config.items() if k.startswith("ub_owa_method_")})
-
-        # Handle matrix and labels
         sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)
         lbl = labels if labels is not None else (np.array(config["labels"]) if "labels" in config else None)
 
@@ -291,7 +261,4 @@ class OWAFRS(FuzzyRoughModel):
             raise ValueError("similarity_matrix and labels must be provided either as arguments or in the config dictionary.")
 
         logger = config.get("logger", None)
-
-
         return cls(sim, lbl, ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method, logger=logger)
-

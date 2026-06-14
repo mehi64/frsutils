@@ -404,11 +404,13 @@ def compute_approximations(
     """Compute fuzzy-rough lower, upper, boundary, and positive-region values.
 
         Dense execution uses direct model classes with materialized similarity
-        matrices. For VQRS, that direct class is the dense NumPy reference path.
-        Blockwise execution computes similarity blocks and model reductions
-        through the approximation-engine layer. Optional CuPy support is internal
-        to blockwise execution; returned public arrays are NumPy arrays for
-        downstream scientific Python compatibility.
+        matrices. ITFRS, VQRS, and OWAFRS direct classes are dense NumPy reference
+        paths. Blockwise execution computes similarity blocks and model-specific
+        reductions through the approximation-engine layer. Optional CuPy support
+        is internal to blockwise execution; returned public arrays are NumPy
+        arrays for downstream scientific Python compatibility. For OWAFRS, CuPy
+        support currently means GPU-backed similarity blocks, not GPU-resident OWA
+        aggregation buffers.
 
         Parameters
         ----------

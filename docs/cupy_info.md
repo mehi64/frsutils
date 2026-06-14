@@ -4,10 +4,9 @@ CuPy support in FRsutils is currently optional and experimental. The supported
 public meaning is `backend="cupy"` through the blockwise execution path. Public
 result arrays remain NumPy arrays. For ITFRS and VQRS, blockwise execution can
 keep similarity blocks and approximation accumulators CuPy-resident until the
-final public output conversion. VQRS converts the lower, upper, and interim
-arrays back to NumPy and derives boundary and positive-region outputs from
-those public arrays. OWAFRS remains on the conservative NumPy
-approximation-accumulator path in the current release cycle.
+final public output conversion. OWAFRS can use CuPy-backed similarity blocks,
+but its OWA sorting/aggregation path is intentionally kept NumPy-compatible and
+does not currently claim GPU-resident approximation accumulators.
 
 For the frozen implementation status and next roadmap, see
 [`backend_execution_status.md`](backend_execution_status.md).
