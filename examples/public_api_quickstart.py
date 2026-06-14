@@ -51,16 +51,46 @@ def make_demo_dataset() -> Tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
+def _format_array(values: np.ndarray) -> str:
+    """Format an array compactly for console output.
+
+    Parameters
+    ----------
+    values : ndarray
+        Array to format.
+
+    Returns
+    -------
+    text : str
+        Compact string representation with stable precision.
+    """
+    return np.array2string(values, precision=4, suppress_small=True)
+
+
 def run_approximation_example() -> np.ndarray:
-    """Compute positive-region scores with the functional public API.
+    """Compute positive-region scores with functional public API calls.
 
     Returns
     -------
     scores : ndarray of shape (6,)
-        Positive-region scores from ``compute_approximations``.
+        Positive-region scores from blockwise ITFRS execution.
+
+    Notes
+    -----
+    The example also checks dense/blockwise equivalence before returning the
+    canonical blockwise scores used by smoke tests.
     """
     X, y = make_demo_dataset()
-    result = compute_approximations(
+
+    dense = compute_approximations(
+        X,
+        y,
+        model="itfrs",
+        similarity="linear",
+        engine="dense",
+        backend="numpy",
+    )
+    blockwise = compute_approximations(
         X,
         y,
         model="itfrs",
@@ -69,7 +99,7 @@ def run_approximation_example() -> np.ndarray:
         block_size=3,
         backend="numpy",
     )
-    shortcut = compute_positive_region(
+    shortcut_scores = compute_positive_region(
         X,
         y,
         model="itfrs",
@@ -78,8 +108,26 @@ def run_approximation_example() -> np.ndarray:
         block_size=3,
         backend="numpy",
     )
-    assert np.allclose(result.positive_region, shortcut)
-    return result.positive_region
+
+    assert np.allclose(dense.positive_region, blockwise.positive_region)
+    assert np.allclose(blockwise.positive_region, shortcut_scores)
+
+    print("Functional API example")
+    print("  dense positive region:    ", _format_array(dense.positive_region))
+    print("  blockwise positive region:", _format_array(blockwise.positive_region))
+    print("  blockwise metadata:")
+    print(f"    engine={blockwise.engine!r}")
+    print(f"    backend={blockwise.backend!r}")
+    print(f"    block_size={blockwise.block_size!r}")
+    print(f"    used_blockwise={blockwise.used_blockwise!r}")
+    print(f"    used_gpu_similarity_blocks={blockwise.used_gpu_similarity_blocks!r}")
+    print(
+        "    used_gpu_approximation_accumulators="
+        f"{blockwise.used_gpu_approximation_accumulators!r}"
+    )
+    print("  dense/blockwise equivalence: OK")
+
+    return blockwise.positive_region
 
 
 def run_scorer_example() -> np.ndarray:
@@ -96,23 +144,24 @@ def run_scorer_example() -> np.ndarray:
         similarity="linear",
         engine="dense",
     )
-    return scorer.fit_score(X, y)
+    scores = scorer.fit_score(X, y)
+
+    print("Scorer API example")
+    print("  OWAFRS positive region:", _format_array(scores))
+    return scores
 
 
 def main() -> int:
-    """Run both quickstart examples from the command line.
+    """Run the public API quickstart from the command line.
 
     Returns
     -------
-    int
+    exit_code : int
         Process exit code.
     """
-    approximation_scores = run_approximation_example()
-    scorer_scores = run_scorer_example()
-
     print("FRsutils public API quickstart")
-    print("compute_approximations positive region:", approximation_scores)
-    print("scorer positive region:", scorer_scores)
+    run_approximation_example()
+    run_scorer_example()
     return 0
 
 

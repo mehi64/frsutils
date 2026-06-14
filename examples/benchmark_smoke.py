@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Release-ready smoke example for the Phase 6 benchmark suite.
+"""Smoke example for running a tiny FRsutils benchmark suite.
 
-This module demonstrates FRsutils usage and is not part of the stable public API.
+This script writes JSON and CSV benchmark artifacts and is not part of the
+stable Python API.
 """
 
 from __future__ import annotations
@@ -25,17 +26,16 @@ from benchmarks.benchmark_fuzzy_rough_execution import (  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line parser for the smoke example.
-        
-        Returns
-        -------
-        argparse.ArgumentParser
-            Configured argument parser.
-        
+
+    Returns
+    -------
+    parser : argparse.ArgumentParser
+        Configured argument parser.
     """
     parser = argparse.ArgumentParser(description="Run a tiny FRsutils benchmark smoke example.")
     parser.add_argument(
         "--output-dir",
-        default="phase7_benchmark_smoke_output",
+        default="benchmark_smoke_output",
         help="Directory where benchmark JSON/CSV outputs will be written.",
     )
     return parser
@@ -43,17 +43,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the tiny benchmark and write JSON/CSV outputs.
-        
-        Parameters
-        ----------
-        argv : Sequence[str] | None
-            Optional command-line arguments for tests.
-        
-        Returns
-        -------
-        int
-            Process exit code.
-        
+
+    Parameters
+    ----------
+    argv : Sequence[str] or None, default=None
+        Optional command-line arguments for tests.
+
+    Returns
+    -------
+    exit_code : int
+        Process exit code.
     """
     args = build_parser().parse_args(argv)
     output_dir = Path(args.output_dir)
@@ -69,13 +68,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         random_state=11,
     )
 
-    json_path = output_dir / "phase7_benchmark_smoke.json"
-    csv_path = output_dir / "phase7_benchmark_smoke.csv"
+    json_path = output_dir / "benchmark_smoke.json"
+    csv_path = output_dir / "benchmark_smoke.csv"
     write_json_report(report, json_path)
     write_csv_report(report, csv_path)
 
     successful_rows = [row for row in report["results"] if row["status"] == "success"]
-    print("FRsutils Phase 7 benchmark smoke complete")
+    print("FRsutils benchmark smoke complete")
     print(f"rows={len(report['results'])}")
     print(f"successful_rows={len(successful_rows)}")
     print(f"json={json_path}")

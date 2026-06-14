@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Contract tests for Phase 7 release-ready examples."""
+"""Contract tests for release-ready examples."""
 
 import subprocess
 import sys
 from pathlib import Path
 
 
-def test_phase7_public_api_quickstart_runs_from_source_checkout():
+def test_public_api_quickstart_runs_from_source_checkout():
     """Public API quickstart example should run successfully."""
     repo_root = Path(__file__).resolve().parents[2]
-    script = repo_root / "examples" / "phase7_public_api_quickstart.py"
+    script = repo_root / "examples" / "public_api_quickstart.py"
 
     completed = subprocess.run(
         [sys.executable, str(script)],
@@ -20,15 +20,15 @@ def test_phase7_public_api_quickstart_runs_from_source_checkout():
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "FRsutils Phase 7 public API quickstart" in completed.stdout
+    assert "FRsutils public API quickstart" in completed.stdout
     assert "dense/blockwise equivalence: OK" in completed.stdout
 
 
-def test_phase7_benchmark_smoke_example_writes_outputs(tmp_path):
+def test_benchmark_smoke_example_writes_outputs(tmp_path):
     """Benchmark smoke example should write JSON/CSV artifacts."""
     repo_root = Path(__file__).resolve().parents[2]
-    script = repo_root / "examples" / "phase7_benchmark_smoke.py"
-    output_dir = tmp_path / "phase7_benchmark_smoke"
+    script = repo_root / "examples" / "benchmark_smoke.py"
+    output_dir = tmp_path / "benchmark_smoke"
 
     completed = subprocess.run(
         [sys.executable, str(script), "--output-dir", str(output_dir)],
@@ -39,6 +39,6 @@ def test_phase7_benchmark_smoke_example_writes_outputs(tmp_path):
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "FRsutils Phase 7 benchmark smoke complete" in completed.stdout
-    assert (output_dir / "phase7_benchmark_smoke.json").exists()
-    assert (output_dir / "phase7_benchmark_smoke.csv").exists()
+    assert "FRsutils benchmark smoke complete" in completed.stdout
+    assert (output_dir / "benchmark_smoke.json").exists()
+    assert (output_dir / "benchmark_smoke.csv").exists()
