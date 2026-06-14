@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for fuzzy quantifier functions."""
+
 import pytest
 import numpy as np
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier, validate_range_0_1
 from FRsutils.utils.logger.logger_util import get_logger
 
 
@@ -51,6 +54,116 @@ def test_quantifier_known_outputs(quant_type, alpha, beta, x, expected):
     fq = FuzzyQuantifier.create(quant_type, alpha=alpha, beta=beta)
     result = fq(x)
     np.testing.assert_allclose(result, expected, atol=1e-5)
+
+
+def test_linear_quantifier_matches_piecewise_formula_at_internal_points():
+    fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.8)
+    x = np.array([0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 1.0], dtype=float)
+    expected = np.array([0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0], dtype=float)
+
+    result = fq(x)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+
+
+def test_quadratic_quantifier_matches_piecewise_formula_at_internal_points():
+    fq = FuzzyQuantifier.create("quadratic", alpha=0.2, beta=0.8)
+    x = np.array([0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 1.0], dtype=float)
+    expected = np.array([0.0, 0.0, 0.125, 0.5, 0.875, 1.0, 1.0], dtype=float)
+
+    result = fq(x)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_quantifier_preserves_two_dimensional_input_shape(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x = np.array([[0.0, 0.2, 0.35], [0.5, 0.8, 1.0]], dtype=float)
+
+    result = fq(x)
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == x.shape
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+@pytest.mark.parametrize("x", [0.5, np.float64(0.5), np.array(0.5, dtype=float)])
+def test_quantifier_accepts_scalar_like_float_inputs(quant_type, x):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    result = fq(x)
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == ()
+    np.testing.assert_allclose(result, np.array(0.5), atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_quantifier_outputs_are_bounded_for_dense_valid_inputs(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x = np.linspace(0.0, 1.0, 1001, dtype=float)
+
+    result = fq(x)
+
+    assert np.all(result >= 0.0)
+    assert np.all(result <= 1.0)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_quantifier_is_non_decreasing_for_dense_valid_inputs(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x = np.linspace(0.0, 1.0, 1001, dtype=float)
+
+    result = fq(x)
+
+    assert np.all(np.diff(result) >= -1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_quantifier_returns_zero_below_alpha_and_one_above_beta(quant_type):
+    alpha = 0.2
+    beta = 0.8
+    fq = FuzzyQuantifier.create(quant_type, alpha=alpha, beta=beta)
+    below_alpha = np.array([0.0, 0.05, 0.1, alpha], dtype=float)
+    above_beta = np.array([beta, 0.9, 0.95, 1.0], dtype=float)
+
+    np.testing.assert_allclose(fq(below_alpha), np.zeros_like(below_alpha), atol=1e-12)
+    np.testing.assert_allclose(fq(above_beta), np.ones_like(above_beta), atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_quantifier_boundary_and_midpoint_values_are_continuous(quant_type):
+    alpha = 0.2
+    beta = 0.8
+    mid = (alpha + beta) / 2.0
+    fq = FuzzyQuantifier.create(quant_type, alpha=alpha, beta=beta)
+    x = np.array([alpha, mid, beta], dtype=float)
+    expected = np.array([0.0, 0.5, 1.0], dtype=float)
+
+    result = fq(x)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+
+
+def test_linear_quantifier_matches_formula_on_two_dimensional_input():
+    fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.8)
+    x = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 1.0]], dtype=float)
+    expected = np.array([[0.0, 0.0, 0.25], [0.5, 0.75, 1.0]], dtype=float)
+
+    result = fq(x)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+
+
+def test_quadratic_quantifier_matches_formula_on_two_dimensional_input():
+    fq = FuzzyQuantifier.create("quadratic", alpha=0.2, beta=0.8)
+    x = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 1.0]], dtype=float)
+    expected = np.array([[0.0, 0.0, 0.125], [0.5, 0.875, 1.0]], dtype=float)
+
+    result = fq(x)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
 #endregion
 
 
@@ -69,12 +182,344 @@ def test_create_to_dict_from_dict(quant_type):
 
     np.testing.assert_allclose(fq2._get_params()["alpha"], fq._get_params()["alpha"])
     np.testing.assert_allclose(fq2._get_params()["beta"], fq._get_params()["beta"])
+
+
+def test_quadratic_alias_quad_creates_equivalent_quantifier():
+    x = np.array([0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 1.0], dtype=float)
+    quadratic = FuzzyQuantifier.create("quadratic", alpha=0.2, beta=0.8)
+    quad = FuzzyQuantifier.create("quad", alpha=0.2, beta=0.8)
+
+    assert quad.name == quadratic.name
+    np.testing.assert_allclose(quad(x), quadratic(x), atol=1e-12)
+
+
+def test_list_available_includes_quadratic_alias_quad():
+    assert "quadratic" in registered_fqs
+    assert "quad" in registered_fqs["quadratic"]
+
+
+@pytest.mark.parametrize("quant_type", ["LINEAR", "Quadratic", "QUAD"])
+def test_factory_alias_lookup_is_case_insensitive(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    result = fq(np.array([0.2, 0.5, 0.8], dtype=float))
+
+    assert isinstance(fq, FuzzyQuantifier)
+    np.testing.assert_allclose(result, np.array([0.0, 0.5, 1.0]), atol=1e-12)
+
+
+def test_factory_rejects_unknown_alias():
+    with pytest.raises(ValueError, match="Unknown alias"):
+        FuzzyQuantifier.create("unknown", alpha=0.2, beta=0.8)
+
+
+@pytest.mark.parametrize("data", [
+    {"name": "linear", "params": {"alpha": 0.2, "beta": 0.8}},
+    {"type": "linear", "params": {"alpha": 0.2, "beta": 0.8}},
+    {"type": "linear", "alpha": 0.2, "beta": 0.8},
+])
+def test_from_dict_accepts_supported_linear_formats(data):
+    fq = FuzzyQuantifier.from_dict(data)
+    x = np.array([0.2, 0.5, 0.8], dtype=float)
+
+    assert fq.name == "linear"
+    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+
+
+@pytest.mark.parametrize("data", [
+    {"name": "quadratic", "params": {"alpha": 0.2, "beta": 0.8}},
+    {"type": "quadratic", "params": {"alpha": 0.2, "beta": 0.8}},
+    {"type": "quadratic", "alpha": 0.2, "beta": 0.8},
+])
+def test_from_dict_accepts_supported_quadratic_formats(data):
+    fq = FuzzyQuantifier.from_dict(data)
+    x = np.array([0.2, 0.35, 0.5, 0.65, 0.8], dtype=float)
+    expected = np.array([0.0, 0.125, 0.5, 0.875, 1.0], dtype=float)
+
+    assert fq.name == "quadratic"
+    np.testing.assert_allclose(fq(x), expected, atol=1e-12)
+
+
+@pytest.mark.parametrize("data", [
+    ["linear", {"alpha": 0.2, "beta": 0.8}],
+    "linear",
+    None,
+])
+def test_from_dict_rejects_non_dict_input(data):
+    with pytest.raises(TypeError):
+        FuzzyQuantifier.from_dict(data)
+
+
+@pytest.mark.parametrize("data", [
+    {"name": "linear", "params": [0.2, 0.8]},
+    {"type": "linear", "params": [0.2, 0.8]},
+])
+def test_from_dict_rejects_non_dict_params(data):
+    with pytest.raises(TypeError):
+        FuzzyQuantifier.from_dict(data)
+
+
+@pytest.mark.parametrize("data", [
+    {},
+    {"name": "linear"},
+    {"params": {"alpha": 0.2, "beta": 0.8}},
+    {"type": "linear", "alpha": 0.2},
+])
+def test_from_dict_rejects_unsupported_dict_formats(data):
+    with pytest.raises(ValueError):
+        FuzzyQuantifier.from_dict(data)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_to_dict_from_dict_preserves_validate_inputs(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8, validate_inputs=False)
+
+    restored = FuzzyQuantifier.from_dict(fq.to_dict())
+
+    assert restored._get_params()["validate_inputs"] is False
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_direct_constructor_factory_and_from_dict_are_equivalent(quant_type):
+    cls = FuzzyQuantifier.get_class(quant_type)
+    direct = cls(alpha=0.2, beta=0.8, validate_inputs=False)
+    factory = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8, validate_inputs=False)
+    restored = FuzzyQuantifier.from_dict(direct.to_dict())
+    x = np.linspace(0.0, 1.0, 101, dtype=float)
+
+    assert id(direct) != id(factory)
+    assert id(factory) != id(restored)
+    assert id(direct) != id(restored)
+    assert direct._get_params() == factory._get_params() == restored._get_params()
+    np.testing.assert_allclose(direct(x), factory(x), atol=1e-12)
+    np.testing.assert_allclose(factory(x), restored(x), atol=1e-12)
+#endregion
+
+# ----------------------------
+# Registry and Nested-Spec Integration
+# ----------------------------
+#region<Registry and Nested-Spec Integration>
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_create_from_spec_accepts_preferred_nested_spec(quant_type):
+    spec = {"name": quant_type, "params": {"alpha": 0.2, "beta": 0.8}}
+    fq = FuzzyQuantifier.create_from_spec(spec)
+    x = np.array([0.2, 0.5, 0.8], dtype=float)
+
+    assert isinstance(fq, FuzzyQuantifier)
+    assert fq.name == FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8).name
+    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_create_from_spec_accepts_existing_instance_as_pass_through(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    restored = FuzzyQuantifier.create_from_spec(fq)
+
+    assert restored is fq
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_create_from_spec_accepts_internal_instance_marker_as_pass_through(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    restored = FuzzyQuantifier.create_from_spec({"__instance__": fq})
+
+    assert restored is fq
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_create_from_spec_accepts_legacy_compact_type_spec(quant_type):
+    spec = {"type": quant_type, "alpha": 0.2, "beta": 0.8, "validate_inputs": False}
+    fq = FuzzyQuantifier.create_from_spec(spec)
+    x = np.array([-0.1, 0.5, 1.1], dtype=float)
+
+    assert isinstance(fq, FuzzyQuantifier)
+    assert fq._get_params()["validate_inputs"] is False
+    result = fq(x)
+    assert result.shape == x.shape
+
+
+def test_create_from_spec_returns_none_for_none_spec():
+    assert FuzzyQuantifier.create_from_spec(None) is None
+
+
+@pytest.mark.parametrize("spec", [
+    {"name": "linear", "params": [0.2, 0.8]},
+    {"name": "linear", "params": None},
+    {"params": {"alpha": 0.2, "beta": 0.8}},
+    ["linear", {"alpha": 0.2, "beta": 0.8}],
+])
+def test_create_from_spec_rejects_invalid_specs(spec):
+    with pytest.raises((TypeError, ValueError)):
+        FuzzyQuantifier.create_from_spec(spec)
+
+
+def test_create_extracts_namespaced_parameters():
+    fq = FuzzyQuantifier.create(
+        "linear",
+        namespace="lb",
+        lb_alpha=0.2,
+        lb_beta=0.8,
+        ub_alpha=0.1,
+        ub_beta=0.9,
+    )
+    x = np.array([0.2, 0.5, 0.8], dtype=float)
+
+    assert fq._get_params()["alpha"] == 0.2
+    assert fq._get_params()["beta"] == 0.8
+    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+
+
+def test_create_extracts_namespaced_parameters_case_insensitively_for_alias():
+    fq = FuzzyQuantifier.create(
+        "QUAD",
+        namespace="ub",
+        ub_alpha=0.2,
+        ub_beta=0.8,
+        lb_alpha=0.1,
+        lb_beta=0.9,
+    )
+    x = np.array([0.2, 0.35, 0.5, 0.65, 0.8], dtype=float)
+    expected = np.array([0.0, 0.125, 0.5, 0.875, 1.0], dtype=float)
+
+    assert fq.name == "quadratic"
+    assert fq._get_params()["alpha"] == 0.2
+    assert fq._get_params()["beta"] == 0.8
+    np.testing.assert_allclose(fq(x), expected, atol=1e-12)
+
+
+def test_create_with_strict_true_rejects_unused_parameters():
+    with pytest.raises(ValueError, match="Unused parameters"):
+        FuzzyQuantifier.create(
+            "linear",
+            alpha=0.2,
+            beta=0.8,
+            extra_param=123,
+            strict=True,
+        )
+
+
+def test_create_with_strict_false_ignores_unused_parameters():
+    fq = FuzzyQuantifier.create(
+        "linear",
+        alpha=0.2,
+        beta=0.8,
+        extra_param=123,
+        strict=False,
+    )
+    x = np.array([0.2, 0.5, 0.8], dtype=float)
+
+    assert isinstance(fq, FuzzyQuantifier)
+    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+
+
+def test_create_with_strict_true_checks_filtered_namespaced_parameters():
+    with pytest.raises(ValueError, match="Unused parameters"):
+        FuzzyQuantifier.create(
+            "linear",
+            namespace="lb",
+            lb_alpha=0.2,
+            lb_beta=0.8,
+            lb_extra_param=123,
+            ub_extra_param=456,
+            strict=True,
+        )
+
+
+def test_create_with_namespace_ignores_unrelated_namespace_even_in_strict_mode():
+    fq = FuzzyQuantifier.create(
+        "linear",
+        namespace="lb",
+        lb_alpha=0.2,
+        lb_beta=0.8,
+        ub_extra_param=456,
+        strict=True,
+    )
+
+    assert fq._get_params()["alpha"] == 0.2
+    assert fq._get_params()["beta"] == 0.8
+
+
+def test_create_from_spec_passes_strict_flag_to_factory():
+    spec = {"name": "linear", "params": {"alpha": 0.2, "beta": 0.8, "extra_param": 123}}
+
+    with pytest.raises(ValueError, match="Unused parameters"):
+        FuzzyQuantifier.create_from_spec(spec, strict=True)
+
+
+def test_create_from_spec_ignores_unused_params_when_not_strict():
+    spec = {"name": "linear", "params": {"alpha": 0.2, "beta": 0.8, "extra_param": 123}}
+    fq = FuzzyQuantifier.create_from_spec(spec, strict=False)
+
+    assert fq._get_params()["alpha"] == 0.2
+    assert fq._get_params()["beta"] == 0.8
+
 #endregion
 
 # ----------------------------
 # Validation and Fail-Fast
 # ----------------------------
 #region<Validation and Fail-Fast>
+@pytest.mark.parametrize("value", [0.0, 0.5, 1.0])
+def test_validate_range_0_1_accepts_valid_float_scalars(value):
+    assert validate_range_0_1(value, name="value") == value
+
+
+@pytest.mark.parametrize("value", [-0.1, 1.1, float("inf"), float("-inf")])
+def test_validate_range_0_1_rejects_invalid_float_scalars(value):
+    with pytest.raises(ValueError):
+        validate_range_0_1(value, name="value")
+
+
+def test_validate_range_0_1_accepts_valid_float_array():
+    values = np.array([0.0, 0.25, 0.5, 0.75, 1.0], dtype=float)
+
+    result = validate_range_0_1(values, name="values")
+
+    assert result is values
+
+
+@pytest.mark.parametrize("values", [
+    np.array([-0.1, 0.5], dtype=float),
+    np.array([0.5, 1.1], dtype=float),
+    np.array([0.5, np.inf], dtype=float),
+    np.array([-np.inf, 0.5], dtype=float),
+])
+def test_validate_range_0_1_rejects_out_of_range_float_arrays(values):
+    with pytest.raises(ValueError):
+        validate_range_0_1(values, name="values")
+
+
+@pytest.mark.parametrize("values", [
+    np.array([0, 1], dtype=int),
+    np.array([True, False], dtype=bool),
+])
+def test_validate_range_0_1_rejects_non_float_arrays(values):
+    with pytest.raises(TypeError):
+        validate_range_0_1(values, name="values")
+
+
+@pytest.mark.parametrize("value", [
+    [0.0, 1.0],
+    (0.0, 1.0),
+    "0.5",
+    None,
+])
+def test_validate_range_0_1_rejects_unsupported_input_types(value):
+    with pytest.raises(TypeError):
+        validate_range_0_1(value, name="value")
+
+
+def test_validate_range_0_1_rejects_scalar_nan():
+    with pytest.raises(ValueError):
+        validate_range_0_1(float("nan"), name="value")
+
+
+def test_validate_range_0_1_rejects_array_nan():
+    with pytest.raises(ValueError):
+        validate_range_0_1(np.array([0.5, np.nan], dtype=float), name="values")
+
+
 @pytest.mark.parametrize("params", [
     {"typ":"linear", "alpha": None, "beta": 0.6},
     {"typ":"linear", "alpha": 0.2, "beta": None},
@@ -95,6 +540,129 @@ def test_invalid_alpha_beta(params):
 
     val =str(exc_info.value)
     logger.info(params["typ"] + ', alpha:' + str(params["alpha"])+ ', beta:' + str(params["beta"]) + "Caught error message: " + val)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+@pytest.mark.parametrize("x", [
+    np.array([-0.1, 0.5], dtype=float),
+    np.array([0.5, 1.1], dtype=float),
+    -0.1,
+    1.1,
+])
+def test_quantifier_call_rejects_out_of_range_inputs(quant_type, x):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    with pytest.raises(ValueError):
+        fq(x)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+@pytest.mark.parametrize("x", [
+    np.array([0, 1], dtype=int),
+    0,
+    1,
+])
+def test_quantifier_call_rejects_non_float_inputs(quant_type, x):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    with pytest.raises(TypeError):
+        fq(x)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+@pytest.mark.parametrize("x", [float("nan"), np.array([0.5, np.nan], dtype=float)])
+def test_quantifier_call_rejects_nan_inputs(quant_type, x):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+
+    with pytest.raises(ValueError):
+        fq(x)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_validate_inputs_false_bypasses_input_range_validation(quant_type):
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8, validate_inputs=False)
+    x = np.array([-0.1, 0.5, 1.1], dtype=float)
+
+    result = fq(x)
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == x.shape
+
+
+#endregion
+
+# ----------------------------
+# Optional CuPy Backend Behavior
+# ----------------------------
+#region<Optional CuPy Backend Behavior>
+def _import_cupy_or_skip():
+    """Return CuPy or skip the test when CuPy is unavailable."""
+    return pytest.importorskip("cupy", reason="CuPy is not installed in this test environment.")
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_compute_backend_cupy_returns_cupy_array_and_matches_numpy(quant_type):
+    cp = _import_cupy_or_skip()
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x_np = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 0.8]], dtype=float)
+    x_cp = cp.asarray(x_np)
+
+    result_cp = fq.compute_backend(x_cp, xp=cp)
+    expected_np = fq(x_np)
+
+    assert isinstance(result_cp, cp.ndarray)
+    assert result_cp.shape == x_cp.shape
+    np.testing.assert_allclose(cp.asnumpy(result_cp), expected_np, atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_compute_backend_cupy_preserves_scalar_like_shape(quant_type):
+    cp = _import_cupy_or_skip()
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x_cp = cp.asarray(0.5, dtype=float)
+
+    result_cp = fq.compute_backend(x_cp, xp=cp)
+
+    assert isinstance(result_cp, cp.ndarray)
+    assert result_cp.shape == ()
+    np.testing.assert_allclose(cp.asnumpy(result_cp), np.array(0.5), atol=1e-12)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+@pytest.mark.parametrize("x_np", [
+    np.array([-0.1, 0.5], dtype=float),
+    np.array([0.5, 1.1], dtype=float),
+])
+def test_compute_backend_cupy_rejects_out_of_range_inputs(quant_type, x_np):
+    cp = _import_cupy_or_skip()
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x_cp = cp.asarray(x_np)
+
+    with pytest.raises(ValueError):
+        fq.compute_backend(x_cp, xp=cp)
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_compute_backend_cupy_validate_inputs_false_bypasses_range_validation(quant_type):
+    cp = _import_cupy_or_skip()
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8, validate_inputs=False)
+    x_np = np.array([-0.1, 0.5, 1.1], dtype=float)
+    x_cp = cp.asarray(x_np)
+
+    result_cp = fq.compute_backend(x_cp, xp=cp, validate_inputs=fq.validate_inputs)
+
+    assert isinstance(result_cp, cp.ndarray)
+    assert result_cp.shape == x_cp.shape
+
+
+@pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
+def test_compute_backend_cupy_rejects_nan_inputs(quant_type):
+    cp = _import_cupy_or_skip()
+    fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
+    x_cp = cp.asarray([0.5, cp.nan], dtype=float)
+
+    with pytest.raises(ValueError):
+        fq.compute_backend(x_cp, xp=cp)
 
 #endregion
 

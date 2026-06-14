@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use FRsutils in academic work, research prototypes, benchmarks, or publications, please cite the software. After the JOSS paper is accepted, cite the JOSS paper DOI as the preferred citation."
+type: software
+title: "FRsutils: Fuzzy-Rough Set Utilities for Python"
+authors:
+  - family-names: Amiri
+    given-names: Mehran
+repository-code: "https://github.com/mehi64/FRsutils"
+url: "https://github.com/mehi64/FRsutils"
+version: "0.0.3"
+date-released: "2026-06-14"
+license: BSD-3-Clause
+abstract: "FRsutils is a Python library for reusable fuzzy-rough set utilities, including similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough approximation models, lower and upper approximations, and positive-region computation."
+keywords:
+  - fuzzy-rough sets
+  - fuzzy sets
+  - rough sets
+  - positive region
+  - similarity matrix
+  - Python
+# After JOSS acceptance, add a preferred-citation block with the JOSS paper DOI.
+# Example:
+# preferred-citation:
+#   type: article
+#   title: "FRsutils: Fuzzy-Rough Set Utilities for Python"
+#   authors:
+#     - family-names: Amiri
+#       given-names: Mehran
+#   journal: "Journal of Open Source Software"
+#   doi: "10.xxxx/joss.xxxxx"
+#   year: 2026

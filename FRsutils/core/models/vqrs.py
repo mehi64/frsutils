@@ -1,65 +1,45 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Dense NumPy reference implementation of the VQRS model.
+
+The direct :class:`VQRS` class consumes a materialized similarity matrix and is
+kept as the readable dense reference path. Scalable NumPy/CuPy-aware execution
+for public workflows belongs to the blockwise approximation-engine layer.
 """
-@file vqrs.py
-@brief VQRS (Vaguely Quantified Rough Set) model implementation.
-
-Supports both direct construction and lazy instantiation via config or dictionary.
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Strategy Pattern: Fuzzy quantifier is configurable
-# - Adapter Pattern: Implements to_dict/from_dict serialization
-# - Template Method: Inherits from FuzzyRoughModel abstract interface
-# - Logger Injection: Supports injected or default logger
-# - Fail-Fast Validation: Ensures correct quantifier types
-# - Supports internal nested config via `_nested_config` (flat -> nested adapter)
-##############################################
-
-##############################################
-# ✅ How to Use - Examples
-##############################################
-
-# Direct instantiation
-from FRsutils.core.models.vqrs import VQRS
-from FRsutils.core.fuzzy_quantifiers import LinearFuzzyQuantifier
-import numpy as np
-
-sim_matrix = np.array([[1.0, 0.5], [0.5, 1.0]])
-labels = np.array([1, 1])
-fq = LinearFuzzyQuantifier(alpha=0.1, beta=0.6)
-vqrs = VQRS(sim_matrix, labels, fq, fq)
-
-vqrs.lower_approximation()
-vqrs.upper_approximation()
-
-# From config
-config = {
-    "lb_fuzzy_quantifier": {"type": "linear", "alpha": 0.1, "beta": 0.6},
-    "ub_fuzzy_quantifier": {"type": "linear", "alpha": 0.2, "beta": 1.0}
-}
-vqrs2 = VQRS.from_config(config, similarity_matrix=sim_matrix, labels=labels)
-
-# Serialization
-model_dict = vqrs.to_dict(include_data=True)
-vqrs_restored = VQRS.from_dict(model_dict)
-"""
-
 
 import numpy as np
 import FRsutils.core.tnorms as tn
 from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
 
 
 
 @FuzzyRoughModel.register("vqrs")
 class VQRS(FuzzyRoughModel):
-    """
-    @brief VQRS model for fuzzy rough approximation using fuzzy quantifiers.
+    """Dense reference VQRS model using fuzzy quantifiers.
 
-    @param similarity_matrix: Pairwise similarity matrix (n x n)
-    @param labels: Corresponding label vector (n,)
-    @param fuzzy_quantifier_lower: FuzzyQuantifier instance for lower approx
-    @param fuzzy_quantifier_upper: FuzzyQuantifier instance for upper approx
+    Parameters
+    ----------
+    similarity_matrix : ndarray of shape (n_samples, n_samples)
+        Materialized pairwise similarity matrix.
+    labels : array-like of shape (n_samples,)
+        Class labels aligned with ``similarity_matrix``. Labels are stored as a
+        NumPy array so direct dense computations can use vectorized indexing.
+    lb_fuzzy_quantifier : FuzzyQuantifier
+        Fuzzy quantifier applied to the VQRS interim ratio for the lower
+        approximation.
+    ub_fuzzy_quantifier : FuzzyQuantifier
+        Fuzzy quantifier applied to the VQRS interim ratio for the upper
+        approximation.
+    logger : object, optional
+        Logger used by the base fuzzy-rough model.
+
+    Notes
+    -----
+    This class is the dense NumPy reference implementation. Public blockwise
+    execution, including optional CuPy-backed accumulators, is implemented in
+    :mod:`FRsutils.core.approximation_engines` and exposed through
+    :func:`FRsutils.api.compute_approximations`.
     """
     def __init__(self, 
                  similarity_matrix: np.ndarray, 
@@ -67,8 +47,13 @@ class VQRS(FuzzyRoughModel):
                  lb_fuzzy_quantifier: FuzzyQuantifier,
                  ub_fuzzy_quantifier: FuzzyQuantifier,
                  logger=None):
-        super().__init__(similarity_matrix, 
-                         labels, 
+        """Initialize a dense VQRS reference model."""
+        label_array = np.asarray(labels) if labels is not None else None
+        if label_array is not None and label_array.ndim != 1:
+            raise ValueError("labels must be a 1D array-like vector.")
+
+        super().__init__(similarity_matrix,
+                         label_array,
                          logger=logger)
         
         self.validate_params(
@@ -84,47 +69,56 @@ class VQRS(FuzzyRoughModel):
 
 
     def _interim_calculations(self) -> np.ndarray:
-        """
-        @brief R_Ay which is then feed into upper and lower quantifiers
-        """
+        """Compute the VQRS interim ratio before fuzzy quantification."""
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.tnorm(self.similarity_matrix, label_mask)
 
-        # to ommit the same instace from calculations, we set the main diagonal to 0.0
-        # later on the sum operator ignores that.
+        # Exclude each sample from its own same-label numerator contribution.
         np.fill_diagonal(tnorm_vals, 0.0)
         numerator = np.sum(tnorm_vals, axis=1)
 
-        # since the similarity matrix has the main diagonal 1.0, the sum needs to cbe reduced by 1.0
-        # so we reduce
+        # Dense VQRS assumes a unit similarity diagonal and excludes self-similarity.
         denominator = np.sum(self.similarity_matrix, axis=1) - 1.0
 
-        interim = numerator / denominator
+        with np.errstate(divide="ignore", invalid="ignore"):
+            interim = numerator / denominator
         return interim
 
     def lower_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the lower approximation using the fuzzy quantifier.
-
-        @return: Lower approximation array (n,)
+        """Compute the lower approximation using the fuzzy quantifier.
+                
+                Returns
+                -------
+                np.ndarray
+                    Lower approximation array (n,)
+                
         """
         return self.lb_fuzzy_quantifier(self._interim_calculations())
 
     def upper_approximation(self) -> np.ndarray:
-        """
-        @brief Compute the upper approximation using the fuzzy quantifier.
-
-        @return: Upper approximation array (n,)
+        """Compute the upper approximation using the fuzzy quantifier.
+                
+                Returns
+                -------
+                np.ndarray
+                    Upper approximation array (n,)
+                
         """
         return self.ub_fuzzy_quantifier(self._interim_calculations())
 
     def to_dict(self, include_data: bool = False) -> dict:
-        """
-        @brief Serialize the VQS model to a dictionary.
-
-        @param include_data: If True, include similarity_matrix and labels in the output.
-
-        @return: Dictionary representation of the model.
+        """Serialize the VQRS model to a dictionary.
+                
+                Parameters
+                ----------
+                include_data : bool
+                    If True, include similarity_matrix and labels in the output.
+                
+                Returns
+                -------
+                dict
+                    Dictionary representation of the model.
+                
         """
         data = {
             "type": "vqrs",
@@ -140,15 +134,24 @@ class VQRS(FuzzyRoughModel):
 
     @classmethod
     def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "VQRS":
-        """
-        @brief Reconstruct an VQRS model from a serialized dictionary.
-
-        @param data: Serialized dictionary (from to_dict)
-        @param similarity_matrix: Optional matrix to override or fill in if not in data
-        @param labels: Optional label vector to override or fill in if not in data
-        @param logger: Optional logger
-
-        @return: VQRS instance
+        """Reconstruct an VQRS model from a serialized dictionary.
+                
+                Parameters
+                ----------
+                data : dict
+                    Serialized dictionary (from to_dict)
+                similarity_matrix : object
+                    Optional matrix to override or fill in if not in data
+                labels : object
+                    Optional label vector to override or fill in if not in data
+                logger : object
+                    Optional logger
+                
+                Returns
+                -------
+                'VQRS'
+                    VQRS instance
+                
         """
         fq_lower = FuzzyQuantifier.from_dict(data["lb_fuzzy_quantifier"])
         fq_upper = FuzzyQuantifier.from_dict(data["ub_fuzzy_quantifier"])
@@ -163,10 +166,13 @@ class VQRS(FuzzyRoughModel):
         return cls(sim, lbl, fq_lower, fq_upper, logger=logger)
 
     def _get_params(self) -> dict:
-        """
-        @brief Describe internal lower and upper fuzzy_quantifier parameters.
-
-        @return: Dictionary containing lower and upper fuzzy_quantifier used in vqrs.
+        """Describe internal lower and upper fuzzy_quantifier parameters.
+                
+                Returns
+                -------
+                dict
+                    Dictionary containing lower and upper fuzzy_quantifier used in vqrs.
+                
         """
         return {
             "tnorm": self.tnorm,
@@ -178,54 +184,30 @@ class VQRS(FuzzyRoughModel):
 
     @classmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict) -> "VQRS":
+        """Create a dense VQRS instance from flat or nested configuration.
+
+        Parameters
+        ----------
+        similarity_matrix : array-like of shape (n_samples, n_samples), default=None
+            Optional dense similarity matrix. Overrides matrix data in ``config``
+            when provided.
+        labels : array-like of shape (n_samples,), default=None
+            Optional label vector. Overrides labels in ``config`` when provided.
+        **config : dict
+            Flat VQRS config, internal nested config under ``_nested_config``, or
+            serialized fuzzy-quantifier specs.
+
+        Returns
+        -------
+        VQRS
+            Dense VQRS model configured with the requested fuzzy quantifiers.
         """
-        @brief Create a VQRS instance from a configuration dictionary.
+        config = dict(config)
+        lb_fuzzy_quantifier, ub_fuzzy_quantifier, _ = build_vqrs_components_from_config(
+            config,
+            require_explicit_components=True,
+        )
 
-        @param config: Serialized config dict (can include tnorm, fuzzy quantifiers, and optionally data)
-        @param similarity_matrix: Optional override for similarity matrix
-        @param labels: Optional override for label vector
-        @return: VQRS instance
-        """
-        nested = config.pop("_nested_config", None)
-
-        lb_fuzzy_quantifier = None
-        ub_fuzzy_quantifier = None
-
-        if isinstance(nested, dict):
-            fr_cfg = nested.get("fr_model", {})
-            lb_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("lb_fuzzy_quantifier"))
-            ub_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("ub_fuzzy_quantifier"))
-
-        # Backward-compatible: flat config keys
-        if ub_fuzzy_quantifier is None:
-            ub_fq = config.get("ub_fuzzy_quantifier")
-            if isinstance(ub_fq, dict):
-                ub_fuzzy_quantifier = FuzzyQuantifier.from_dict(ub_fq)
-            elif ub_fq is not None:
-                ub_fuzzy_quantifier = ub_fq
-            else:
-                name = config.get("ub_fuzzy_quantifier_name")
-                # Prefer new flat naming: ub_fuzzy_quantifier_alpha/beta
-                params = {k[len("ub_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("ub_fuzzy_quantifier_")}
-                if not params:
-                    # legacy: ub_alpha/ub_beta (handled by normalizer but keep safety)
-                    params = {k[len("ub_"):]: v for k, v in config.items() if k.startswith("ub_") and k in {"ub_alpha", "ub_beta"}}
-                ub_fuzzy_quantifier = FuzzyQuantifier.create(name, **params)
-
-        if lb_fuzzy_quantifier is None:
-            lb_fq = config.get("lb_fuzzy_quantifier")
-            if isinstance(lb_fq, dict):
-                lb_fuzzy_quantifier = FuzzyQuantifier.from_dict(lb_fq)
-            elif lb_fq is not None:
-                lb_fuzzy_quantifier = lb_fq
-            else:
-                name = config.get("lb_fuzzy_quantifier_name")
-                params = {k[len("lb_fuzzy_quantifier_"):]: v for k, v in config.items() if k.startswith("lb_fuzzy_quantifier_")}
-                if not params:
-                    params = {k[len("lb_"):]: v for k, v in config.items() if k.startswith("lb_") and k in {"lb_alpha", "lb_beta"}}
-                lb_fuzzy_quantifier = FuzzyQuantifier.create(name, **params)
-
-        # Handle matrix and labels
         sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)
         lbl = labels if labels is not None else (np.array(config["labels"]) if "labels" in config else None)
 
@@ -237,10 +219,12 @@ class VQRS(FuzzyRoughModel):
     
     @classmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief validation hook.
-
-        @param kwargs
+        """validation hook.
+        
+        Parameters
+        ----------
+        kwargs : object
+            Parameter value.
         """
         fq_l = kwargs.get("lb_fuzzy_quantifier")
         fq_u = kwargs.get("ub_fuzzy_quantifier")
@@ -252,6 +236,7 @@ class VQRS(FuzzyRoughModel):
             raise ValueError("fuzzy_quantifier_upper must be a valid FuzzyQuantifier instance.")
 
     def describe_params_detailed(self) -> dict:
+        """Return detailed parameter metadata for this component."""
         return {
             "lb_fuzzy_quantifier": self.lb_fuzzy_quantifier.describe_params_detailed(),
             "ub_fuzzy_quantifier": self.ub_fuzzy_quantifier.describe_params_detailed()

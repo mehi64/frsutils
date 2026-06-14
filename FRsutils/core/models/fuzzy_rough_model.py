@@ -1,17 +1,7 @@
-"""
-@file base_fuzzy_rough_model.py
-@brief Base class for fuzzy rough set approximation models.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Base abstractions for fuzzy-rough approximation models.
 
-Defines the abstract contract that all fuzzy rough models must implement,
-including lower and upper approximations, boundary and positive regions.
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Template Method Pattern: abstract lower_approximation() and upper_approximation()
-# - SRP: Handles only shape/format validation and contract definition
-# - LSP: All subclasses can safely extend this without changing client behavior
-# - Fail-Fast Validation: Input validation at init
-##############################################
+This module belongs to the core fuzzy-rough computation layer.
 """
 
 from abc import abstractmethod
@@ -21,11 +11,14 @@ from FRsutils.utils.base_component_with_logger import BaseComponentWithLogger
 
 
 class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
-    """
-    @brief Abstract base class for fuzzy-rough approximation models.
-
-    @param similarity_matrix: Symmetric (n x n) similarity matrix in [0, 1]
-    @param labels: Label vector of length n
+    """Abstract base class for fuzzy-rough approximation models.
+    
+    Parameters
+    ----------
+    similarity_matrix : object
+        Symmetric (n x n) similarity matrix in [0, 1]
+    labels : object
+        Label vector of length n
     """
 
     def __init__(self, 
@@ -33,6 +26,7 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
                  labels: np.ndarray,
                  logger=None):
         
+        """Initialize the FuzzyRoughModel instance."""
         BaseComponentWithLogger.__init__(self, logger)
         self.validate_params_base(similarity_matrix=similarity_matrix, 
                                   labels=labels)
@@ -42,44 +36,63 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
 
     @abstractmethod
     def lower_approximation(self) -> np.ndarray:
-        """
-        @brief Abstract method to compute lower approximation.
-
-        @return: Array of lower approximation values.
+        """Abstract method to compute lower approximation.
+                
+                Returns
+                -------
+                np.ndarray
+                    Array of lower approximation values.
+                
         """
         raise NotImplementedError("lower_approximation is not implemented")
 
     @abstractmethod
     def upper_approximation(self) -> np.ndarray:
-        """
-        @brief Abstract method to compute upper approximation.
-
-        @return: Array of upper approximation values.
+        """Abstract method to compute upper approximation.
+                
+                Returns
+                -------
+                np.ndarray
+                    Array of upper approximation values.
+                
         """
         raise NotImplementedError("upper_approximation is not implemented")
 
 
     def boundary_region(self) -> np.ndarray:
-        """
-        @brief Compute the boundary region (upper - lower).
-
-        @return: Difference of upper and lower approximation arrays.
+        """Compute the boundary region (upper - lower).
+                
+                Returns
+                -------
+                np.ndarray
+                    Difference of upper and lower approximation arrays.
+                
         """
         return self.upper_approximation() - self.lower_approximation()
 
     def positive_region(self) -> np.ndarray:
-        """
-        @brief Return the positive region (same as lower approx).
-
-        @return: Lower approximation values.
+        """Return the positive region (same as lower approx).
+                
+                Returns
+                -------
+                np.ndarray
+                    Lower approximation values.
+                
         """
         return self.lower_approximation()
 
     @abstractmethod
     def to_dict(self, include_data: bool = False) -> dict:
-        """
-        @param include_data: If True, include similarity matrix and labels in output.
-        @return: Serialized dictionary representation of the model.
+        """Parameters
+                ----------
+                include_data : bool
+                    If True, include similarity matrix and labels in output.
+                
+                Returns
+                -------
+                dict
+                    Serialized dictionary representation of the model.
+                
         """
         raise NotImplementedError
 
@@ -87,20 +100,28 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
     @classmethod
     @abstractmethod
     def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None):
-        """
-        @param data: Serialized dict.
-        @param similarity_matrix: Optional matrix override.
-        @param labels: Optional label override.
-        @param logger: Optional logger override.
-        @return: Reconstructed model instance.
+        """Parameters
+                ----------
+                data : dict
+                    Serialized dict.
+                similarity_matrix : object
+                    Optional matrix override.
+                labels : object
+                    Optional label override.
+                logger : object
+                    Optional logger override.
+                
+                Returns
+                -------
+                object
+                    Reconstructed model instance.
+                
         """
         raise NotImplementedError       
 
     @classmethod
     def validate_params_base(cls, **kwargs):
-        """
-        @brief Validates similarity matrix and labels
-        """
+        """Validates similarity matrix and labels"""
         similarity_matrix = kwargs.get("similarity_matrix")
         labels = kwargs.get("labels")
 
@@ -119,13 +140,23 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
     @classmethod
     @abstractmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict):
-        """
-        @brief Alternate constructor from flat config dict.
-
-        @param config: Config dictionary.
-        @param similarity_matrix: Optional matrix.
-        @param labels: Optional labels.
-        @param logger: Optional logger.
-        @return: Model instance.
+        """Alternate constructor from flat config dict.
+                
+                Parameters
+                ----------
+                config : dict
+                    Config dictionary.
+                similarity_matrix : object
+                    Optional matrix.
+                labels : object
+                    Optional labels.
+                logger : object
+                    Optional logger.
+                
+                Returns
+                -------
+                object
+                    Model instance.
+                
         """
         raise NotImplementedError("Subclasses must implement from_config().")

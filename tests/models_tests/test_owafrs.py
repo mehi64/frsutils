@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for the OWAFRS fuzzy-rough model."""
+
 import pytest
 import numpy as np
 from FRsutils.core.models.owafrs import OWAFRS
@@ -9,9 +12,13 @@ from FRsutils.core.tnorms import TNorm
 from FRsutils.core.implicators import Implicator
 import FRsutils.core.owa_weights as oww
 
+pytestmark = pytest.mark.slow
+
+
 
 @pytest.fixture
 def synthetic_data_():
+    """Synthetic data ."""
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -22,6 +29,7 @@ def synthetic_data_():
 
 @pytest.fixture
 def model_instance(synthetic_data_):
+    """Model instance."""
     sim, lbl = synthetic_data_
     tnorm = MinTNorm()
     implicator = LukasiewiczImplicator()
@@ -38,8 +46,8 @@ def test_lower_upper_approximation_shape_ndarray_range_all_combinations(tnorm_na
                                                                   implicator_name,
                                                                   ub_owa_method_name,
                                                                   lb_owa_method_name):
-    """
-    @brief Test lower_approximation shape, type, and value range for all combinations of TNorm and Implicator
+    """Test lower_approximation shape, type, and value range for all combinations of TNorm and Implicator
+    
     but correctness of values are not checked
     """
     sim_matrix = np.array([
@@ -68,47 +76,9 @@ def test_lower_upper_approximation_shape_ndarray_range_all_combinations(tnorm_na
 
     assert isinstance(upper, np.ndarray)
     assert upper.shape == (3,)
-    assert np.all((0.0 <= upper) & (upper <= 1.0)), f"Out of range values in upp approx for {tnorm_name} + {implicator_name}"
+    assert np.all((0.0 <= upper) & (upper <= 1.0)), f"Out of range values in upper approx for {tnorm_name} + {implicator_name}"
 
 
-
-
-# @pytest.mark.parametrize("ub_owa_method_name", list(oww.OWAWeights.list_available().keys()))
-# @pytest.mark.parametrize("lb_owa_method_name", list(oww.OWAWeights.list_available().keys()))
-# @pytest.mark.parametrize("tnorm_name", list(TNorm.list_available().keys()))
-# @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
-# def test_boundary_region_all_combinations_shape_range(tnorm_name, 
-#                                                     implicator_name,
-#                                                     ub_owa_method_name,
-#                                                     lb_owa_method_name):
-#     """
-#     @brief Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
-#     correctness of values are not checked
-#     """
-#     sim_matrix = np.array([
-#         [1.0, 0.8, 0.0],
-#         [0.8, 1.0, 0.3],
-#         [0.0, 0.3, 1.0]
-#     ])
-#     labels = np.array([1, 1, 0])
-
-#     tnorm = TNorm.create(tnorm_name, p=0.83)
-#     implicator = Implicator.create(implicator_name)
-    
-#     ub_owa_method = oww.OWAWeights.create(ub_owa_method_name)
-#     lb_owa_method = oww.OWAWeights.create(lb_owa_method_name)
-
-
-#     model = OWAFRS(sim_matrix, labels, tnorm, implicator,ub_owa_method, lb_owa_method)
-
-
-#     boundary = model.boundary_region()
-#     expected = model.upper_approximation() - model.lower_approximation()
-#     np.testing.assert_allclose(boundary, expected, err_msg=f"Failed for {tnorm_name} + {implicator_name}")
-
-#     assert isinstance(boundary, np.ndarray)
-#     assert boundary.shape == (3,)
-#     assert np.all((0.0 <= boundary) & (boundary <= 1.0)), f"Out of range values in bouundry region for {tnorm_name} + {implicator_name}"
 
 
 @pytest.mark.parametrize("ub_owa_method_name", list(oww.OWAWeights.list_available().keys()))
@@ -119,8 +89,8 @@ def test_positive_region_all_combinations_shape_range(tnorm_name,
                                                     implicator_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
-    """
-    @brief Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
+    """Validates positive_region = lower_approximation across all OWAFRS combinations just for shape and range
+    
     correctness of values are not checked
     """
     sim_matrix = np.array([
@@ -157,9 +127,7 @@ def test_to_dict_include_data_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """
-    @brief Validates presence of all fields in `to_dict(include_data=True)`
-    """
+    """Validates presence of all fields in `to_dict(include_data=True)`"""
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -197,9 +165,7 @@ def test_to_dict_exclude_data_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """
-    @brief Validates presence/absence of fields in `to_dict(include_data=False)`
-    """
+    """Validates presence/absence of fields in `to_dict(include_data=False)`"""
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -235,8 +201,7 @@ def test_from_dict_roundtrip_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """
-    @brief Tests whether ITFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
+    """Tests whether OWAFRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
     """
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
@@ -272,9 +237,7 @@ def test_from_config_equivalence_all_combinations(tnorm_name,
                                                     implicator_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
-    """
-    @brief Test OWAFRS.from_config builds a valid model for all combinations.
-    """
+    """Test OWAFRS.from_config builds a valid model for all combinations."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -322,9 +285,7 @@ def test_describe_params_detailed_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """
-    @brief Ensure that ITFRS.describe_params_detailed() contains keys.
-    """
+    """Ensure that OWAFRS.describe_params_detailed() contains keys."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -360,9 +321,7 @@ def test_get_params_internal_all_combinations(tnorm_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
 
-    """
-    @brief Ensure _get_params returns full param dict.
-    """
+    """Ensure _get_params returns full param dict."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -391,9 +350,7 @@ def test_get_params_internal_all_combinations(tnorm_name,
 
 
 def test_validate_params_invalid_tnorm():
-    """
-    @brief Validation must fail when T-norm is missing or invalid.
-    """
+    """Validation must fail when T-norm is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -408,9 +365,7 @@ def test_validate_params_invalid_tnorm():
 
 
 def test_validate_params_invalid_implicator():
-    """
-    @brief Validation must fail when implicator is missing or invalid.
-    """
+    """Validation must fail when implicator is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -426,9 +381,7 @@ def test_validate_params_invalid_implicator():
         
         
 def test_validate_params_invalid_ub_owa_method():
-    """
-    @brief Validation must fail when lb_owa_method is missing or invalid.
-    """
+    """Validation must fail when lb_owa_method is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -443,9 +396,7 @@ def test_validate_params_invalid_ub_owa_method():
                                )
         
 def test_validate_params_invalid_lb_owa_method():
-    """
-    @brief Validation must fail when lb_owa_method is missing or invalid.
-    """
+    """Validation must fail when lb_owa_method is missing or invalid."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -468,9 +419,7 @@ def test_logger_works_all_combinations(tnorm_name,
                                                     implicator_name,
                                                     ub_owa_method_name,
                                                     lb_owa_method_name):
-    """
-    @brief Sanity check for logger presence in all ITFRS combinations.
-    """
+    """Sanity check for logger presence in all OWAFRS combinations."""
     sim = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -518,9 +467,7 @@ def test_logger_works_all_combinations(tnorm_name,
     ("yager", "yager_tn_upperBound_p_0_83")
 ])
 def test_owafrs_model_with_all_settings(test_case, implicator_name, expected_lower_key, tnorm_name, expected_upper_key):
-    """
-    @brief Test for `owafrs_model_with_all_settings` method of OWAFRS model.
-    """
+    """Test for `owafrs_model_with_all_settings` method of OWAFRS model."""
     sim = test_case["sim_matrix"]
     y = test_case["y"]
     expected = test_case["expected"]["owa_linear"]
@@ -546,12 +493,12 @@ def test_owafrs_model_with_all_settings(test_case, implicator_name, expected_low
 
 @pytest.fixture
 def synthetic_data():
+    """Synthetic data."""
     return ds.get_OWAFRS_testing_testsets()[0]
 
 @pytest.mark.parametrize("implicator_name", ['reichenbach', 'kleenedienes', 'lukasiewicz', 'goedel', 'goguen', 'yager', 'rescher', 'weber', 'fodor'])
 @pytest.mark.parametrize("tnorm_name", ['product', 'minimum', 'yager', 'luk', 'drastic', 'hamacher', 'einstein', 'nilpotent'])
-@pytest.mark.parametrize("similarity_name", ['gaussian', 'linear'])
-def test_owafrs_all_combinations(implicator_name, tnorm_name, similarity_name, synthetic_data):
+def test_owafrs_all_combinations(implicator_name, tnorm_name, synthetic_data):
     sim_matrix_raw = synthetic_data["sim_matrix"]
     labels = synthetic_data["y"]
     expected = synthetic_data["expected"]["owa_linear"]
@@ -648,4 +595,5 @@ def test_to_dict_and_from_dict_roundtrip(synthetic_data):
     np.testing.assert_allclose(reconstructed.upper_approximation(), model.upper_approximation())    
     
 def normalize(name: str) -> str:
+    """Normalize."""
     return name.lower().replace("-", "").replace("_", "")

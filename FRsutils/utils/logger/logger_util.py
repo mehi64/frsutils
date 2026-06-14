@@ -1,36 +1,7 @@
-"""
-@file logger_util.py
-@brief A tiny logger for writing in console and file.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Project logger factory and logging-directory setup helpers.
 
-
-This module provides a single logger instance via `get_logger()`.
-Do not instantiate `_TinyLogger` directly.
-
-
-Provides:
-- Colorized terminal logging
-- Structured CSV/JSON logging to a separate file (JSON is not tested)
-- Run ID & experiment tagging
-- Config, metrics, Git info, system info logging (commented in code and not tested)
-- Exception handling & timing utilities (commented in code and not tested)
-- Step decorator for automatic context logging (commented in code and not tested)
-
-@example
-logger = MLLogger(
-    name="MyExperiment",
-    log_to_console=True,
-    log_to_file=True,
-    file_path="experiment.log",
-    structured_output="json",
-    level=logging.INFO,
-    experiment_name="my_project"
-)
-
-logger.set_run(run_id="run_20250602") # this is optional
-logger.info("Training started")
-logger.error("Division by zero in evaluation.")
-logger.critical("Critical error in evaluation.")
-logger.warning("Validation data is imbalanced.")
+This module provides shared utility behavior used by FRsutils components.
 """
 
 # only get_logger is available for import, not _TinyLogger.
@@ -40,6 +11,7 @@ import inspect
 import logging
 import os
 import sys
+from pathlib import Path
 import json
 import csv
 from datetime import datetime
@@ -54,11 +26,63 @@ except ImportError:  # pragma: no cover - exercised only when optional colorlog 
     colorlog = None
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_LOGS_DIR = PROJECT_ROOT / "logs"
+
+
+def _ensure_project_logs_dir():
+    """Ensures that the project-level logs directory exists.
+    
+    Returns
+    -------
+    object
+        Path to the project-level logs directory.
+    """
+
+    DEFAULT_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    return DEFAULT_LOGS_DIR
+
+
+def _resolve_project_log_path(file_path):
+    """Resolves relative log file paths from project root and ensures parent directory exists.
+    
+    Parameters
+    ----------
+    file_path : object
+        Relative or absolute log file path.
+    
+    Returns
+    -------
+    object
+        Absolute Path object for the log file.
+    """
+
+    _ensure_project_logs_dir()
+    path = Path(file_path)
+    resolved_path = path if path.is_absolute() else PROJECT_ROOT / path
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    return resolved_path
+
+
+def _ensure_log_file_parent(file_path):
+    """Ensures the parent directory for a log file exists.
+    
+    Parameters
+    ----------
+    file_path : object
+        Relative or absolute log file path.
+    
+    Returns
+    -------
+    object
+        Absolute Path object for the log file.
+    """
+
+    return _resolve_project_log_path(file_path)
+
+
 class _TinyLogger:
-    """
-    @class TinyLogger
-    @brief tiny logger
-    """
+    """tiny logger"""
 
     def __init__(
         self,
@@ -71,19 +95,26 @@ class _TinyLogger:
         run_id=None,
         experiment_name=None
     ):
-        """
-        @brief Initializes the logger.
-        @param name Logger name. (unique name gives singleton logger)
-        @param log_to_console Enable terminal output. possible to use with file output.
-        @param log_to_file Enable logging to file. possible to use with console output.
-        @param file_path Path to the human-readable log file.
-        @param structured_output Optional structured format: 'csv' or 'json'.
-        @param level Logging level. Default is logging.DEBUG which prints all. With selecting one of the levels,
-        the logger will only print the messages of the specified level and above. The order of the levels is:
-        DEBUG < INFO < WARNING < ERROR < CRITICAL. The lower the level, the more verbose the output. e.g. by selecting DEBUG,
-        the logger will print all the messages.
-        @param run_id Unique identifier for this experiment run. Uses current timestamp to generate unique run ids.
-        @param experiment_name Optional experiment group label.
+        """Initializes the logger.
+        
+        Parameters
+        ----------
+        name : object
+            Logger name. (unique name gives singleton logger)
+        log_to_console : object
+            Enable terminal output. possible to use with file output.
+        log_to_file : object
+            Enable logging to file. possible to use with console output.
+        file_path : object
+            Path to the human-readable log file.
+        structured_output Optional structured format : object
+            'csv' or 'json'.
+        level : object
+            Logging level. Default is logging.DEBUG which prints all. With selecting one of the levels, the logger will only print the messages of the specified level and above. The order of the levels is: DEBUG < INFO < WARNING < ERROR < CRITICAL. The lower the level, the more verbose the output. e.g. by selecting DEBUG, the logger will print all the messages.
+        run_id : object
+            Unique identifier for this experiment run. Uses current timestamp to generate unique run ids.
+        experiment_name : object
+            Optional experiment group label.
         """
         
         # find out who is calling this __init__function
@@ -93,6 +124,10 @@ class _TinyLogger:
 
         if caller != 'get_logger':
             raise RuntimeError("Direct instantiation is not allowed. Use get_logger() instead.")
+
+        # Always create the project-level logs directory before configuring logging.
+        _ensure_project_logs_dir()
+        self.file_path = _resolve_project_log_path(file_path)
         
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
@@ -114,8 +149,8 @@ class _TinyLogger:
         # file_path="E:/tst/some_folder/log_output.json",
         # then self.structured_path="E:/tst/some_folder/log_output.csv"
         if log_file_extension:
-            base, _ = os.path.splitext(file_path)
-            self.structured_path = base + f".{log_file_extension}"
+            base, _ = os.path.splitext(str(self.file_path))
+            self.structured_path = _ensure_log_file_parent(base + f".{log_file_extension}")
         else:
             self.structured_path = None
 
@@ -148,11 +183,16 @@ class _TinyLogger:
             # contain duplicated records. Instead, we have _structured_log which logs into csv file
 
     def _structured_log(self, level_name, message, record):
-        """
-        @brief Writes a structured log entry to a separate structured file.
-        @param level_name Log level as string.
-        @param message Log message.
-        @param record A LogRecord instance containing caller context.
+        """Writes a structured log entry to a separate structured file.
+        
+        Parameters
+        ----------
+        level_name : object
+            Log level as string.
+        message : object
+            Log message.
+        record : object
+            A LogRecord instance containing caller context.
         """
 
         # This checks if the log level is less than the logger's level
@@ -175,10 +215,12 @@ class _TinyLogger:
         }
 
         if self.structured_output == "json":
+            _ensure_log_file_parent(self.structured_path)
             with open(self.structured_path, "a") as f:
                 f.write(json.dumps(log_entry) + "\n")
 
         elif self.structured_output == "csv":
+            _ensure_log_file_parent(self.structured_path)
             write_header = not os.path.exists(self.structured_path) or os.stat(self.structured_path).st_size == 0
             with open(self.structured_path, "a", newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=log_entry.keys())
@@ -187,10 +229,14 @@ class _TinyLogger:
                 writer.writerow(log_entry)
 
     def _log(self, level, message):
-        """
-        @brief Core log dispatcher. Writes to standard logger and structured file (if enabled).
-        @param level Logging level (e.g., logging.INFO).
-        @param message Message to log.
+        """Core log dispatcher. Writes to standard logger and structured file (if enabled).
+        
+        Parameters
+        ----------
+        level : object
+            Logging level (e.g., logging.INFO).
+        message : object
+            Message to log.
         """
        
         if self.log_to_console:
@@ -214,11 +260,25 @@ class _TinyLogger:
             self._structured_log(logging.getLevelName(level), message, fake_record)
 
     # Basic log level methods
-    def debug(self, msg): self._log(logging.DEBUG, msg)
-    def info(self, msg): self._log(logging.INFO, msg)
-    def warning(self, msg): self._log(logging.WARNING, msg)
-    def error(self, msg): self._log(logging.ERROR, msg)
-    def critical(self, msg): self._log(logging.CRITICAL, msg)
+    def debug(self, msg):
+        """Log a debug message."""
+        self._log(logging.DEBUG, msg)
+
+    def info(self, msg):
+        """Log an informational message."""
+        self._log(logging.INFO, msg)
+
+    def warning(self, msg):
+        """Log a warning message."""
+        self._log(logging.WARNING, msg)
+
+    def error(self, msg):
+        """Log an error message."""
+        self._log(logging.ERROR, msg)
+
+    def critical(self, msg):
+        """Log a critical message."""
+        self._log(logging.CRITICAL, msg)
 
     def set_run(self, run_id, experiment_name=None):
         """Update experiment run ID and optionally name."""
@@ -243,9 +303,9 @@ class _TinyLogger:
 
     # def log_metric(self, name, value, step=None):
     #     """Log a scalar metric.
-    #     @param name Metric name.
-    #     @param value Metric value.
-    #     @param step Optional step or epoch.
+    #     Parameters: name is the metric name.
+    #     Parameters: value is the metric value.
+    #     Parameters: step is an optional step or epoch.
     #     """
     #     msg = f"Metric [{name}] = {value}" + (f" @ step {step}" if step else "")
     #     self.info(msg)
@@ -296,7 +356,7 @@ class _TinyLogger:
     # @contextmanager
     # def log_time(self, step_name):
     #     """Context manager for timing a code block.
-    #     @param step_name Description of the timed step.
+    #     Parameters: step_name describes the timed step.
     #     """
     #     start = time.time()
     #     self.info(f"Started: {step_name}")
@@ -341,6 +401,7 @@ def _detect_env():
     return "runtime"
 
 def get_logger(env=None, experiment_name=None):
+    """Return the logger associated with this component."""
     env = env or _detect_env()
     # print("logger type: ", env)
     if env == "debug":

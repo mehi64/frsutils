@@ -12,3 +12,12 @@ FRsutils.egg-info/
 *.zip
 *.csv
 temp/
+logs/*.csv
+logs/*.json
+.vscode
+**/__pycache__/
+datasets/
+test_reports/
+.coverage
+htmlcov/
+benchmark_smoke_output/

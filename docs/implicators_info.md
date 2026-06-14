@@ -14,9 +14,9 @@ Fuzzy implicators are functions used to generalize the implication operation ("i
 
 ## 2. Fuzzy Implicators Table
 
-**NOTE: FRstuils implementations of implicators are based on the formulae in the references present in this table.**
+**Note:** FRsutils implementations of implicators are based on the formulae in the references present in this table.**
 
-| Name            | Formula                                                                 | Alias Names             | Reference Page |tested and working in FRsutils| 
+| Name            | Formula                                                                 | Alias Names             | Reference Page | Tested in FRsutils | 
 |-----------------|-------------------------------------------------------------------------|--------------------------|----------------|----------------|
 | **Lukasiewicz** | `I(a, b) = min(1, 1 - a + b)`                                           | Bounded Implicator      | [1], Eq. (1)    | yes |
 | **Gödel**       | `I(a, b) = 1 if a <= b; b otherwise`                                    | Gödel Implicator        | [1], Eq. (2)    | yes |
@@ -57,23 +57,6 @@ Fuzzy implicators are functions used to generalize the implication operation ("i
 - implicators work on scalar but can be vectorized with np.vectorize()
 - implicators do not generate the same values for these (0,0) , (1,0) , (0,1) , (1,1). Their behavior is different. Do not draw a general conclusion on them.
 
-
-<img src="images/implicators/Luk.png" alt="Luk" width="500"/>
-
-------
-
-<img src="images/implicators/Goedel.png" alt="Goedel" width="500"/>
-
-------
-
-<img src="images/implicators/KD.png" alt="KD" width="500"/>
-
-------
-
-<img src="images/implicators/Reichenbach.png" alt="Reichenbach" width="500"/>
-
-------
-
-<img src="images/implicators/Gaines.png" alt="Gaines" width="500"/>
-
-------
+The historical rendered plot images for these implicators are not required for
+the release documentation. Formula definitions above are the authoritative
+description for the current FRsutils implementations.

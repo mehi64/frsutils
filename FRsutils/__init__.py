@@ -1,10 +1,8 @@
-"""
-@file __init__.py
-@brief Top-level package exports for FRsutils.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Top-level package namespace for FRsutils.
 
-This module keeps the historical top-level exports and exposes the new `api`
-facade package. Downstream packages should prefer `FRsutils.api` for stable
-imports instead of depending on deep internal paths.
+The canonical user-facing API is exposed through ``FRsutils.api`` to keep the
+package root compact and avoid leaking internal implementation modules.
 """
 
 from . import api

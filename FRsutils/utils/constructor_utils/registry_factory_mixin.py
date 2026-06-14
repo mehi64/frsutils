@@ -1,23 +1,7 @@
-"""
-@file registry_factory_mixin.py
-@brief Provides registration, factory instantiation, and reflection support for pluggable components.
+# SPDX-License-Identifier: BSD-3-Clause
+"""Registry-backed factory mixin for named component construction.
 
-This mixin is designed to be shared among base classes like TNorm, Implicator, and SimilarityFunction
-in the FRsutils framework. It encapsulates:
-- Registry management via @register
-- Factory instantiation with optional strict parameter checking
-- Introspection utilities: describe_params_detailed, help
-- Serialization support: to_dict / from_dict
-
-##############################################
-# ✅ Summary of Clean Code and Design Patterns
-# - Registry Pattern: _registry / _aliases with dynamic alias support
-# - Factory Method: create(name, **kwargs) with param filtering and instantiation
-# - Reflection: Uses inspect to dynamically match __init__ parameters
-# - Adapter: to_dict / from_dict for serialization
-# - Open/Closed: Easily extendable without modifying the mixin
-# - DRY: Removes duplication from base classes like TNorm and Implicator
-##############################################
+This module provides shared utility behavior used by FRsutils components.
 """
 
 import inspect
@@ -25,16 +9,15 @@ from typing import Type, Dict, List, Any
 from abc import ABC, abstractmethod
 
 class RegistryFactoryMixin(ABC):
-    """
-    @brief Mixin class for pluggable component registration and instantiation.
-
+    """Mixin class for pluggable component registration and instantiation.
+    
     Includes registry management, parameter filtering, dynamic factory creation,
     serialization, and runtime introspection utilities.
     """
     
     def __init_subclass__(cls, **kwargs):
-        """
-        @brief Automatically initializes per-subclass registry.
+        """Automatically initializes per-subclass registry.
+        
         Ensures that each subclass maintains its own `_registry` and `_aliases`.
         This is because some tnorms and implicators can have the same name, e.g. yager, luk.
         """
@@ -62,13 +45,20 @@ class RegistryFactoryMixin(ABC):
 
     @classmethod
     def register(cls, *names: str):
-        """
-        @brief Class decorator to register a subclass with one or more aliases.
-
-        Registers the class in the global registry and stores all aliases.
-
-        @param names: One or more alias names for the subclass.
-        @return: Class decorator.
+        """Class decorator to register a subclass with one or more aliases.
+                
+                Registers the class in the global registry and stores all aliases.
+                
+                Parameters
+                ----------
+                names : str
+                    One or more alias names for the subclass.
+                
+                Returns
+                -------
+                object
+                    Class decorator.
+                
         """
         def decorator(subclass: Type):
             if not names:
@@ -84,18 +74,28 @@ class RegistryFactoryMixin(ABC):
 
     @classmethod
     def create(cls, name: str, strict: bool = False, namespace: str = None, **kwargs) -> Any:
-        """
-        @brief Instantiates a subclass by alias name with optional flat namespaced parameters.
-
-        This supports scikit-learn compatible flat parameter dictionaries:
-            - FuzzyQuantifier.create("linear", namespace="lb", **config)
-            will extract lb_alpha and lb_beta and pass them as alpha, beta.
-
-        @param name: Alias of the registered subclass.
-        @param strict: If True, raises an error if extra unused kwargs exist.
-        @param namespace: Optional prefix for parameter isolation (e.g. 'lb').
-        @param kwargs: Full flat config dict.
-        @return: Instantiated subclass.
+        """Instantiates a subclass by alias name with optional flat namespaced parameters.
+                
+                This supports scikit-learn compatible flat parameter dictionaries:
+                - FuzzyQuantifier.create("linear", namespace="lb", **config)
+                will extract lb_alpha and lb_beta and pass them as alpha, beta.
+                
+                Parameters
+                ----------
+                name : str
+                    Alias of the registered subclass.
+                strict : bool
+                    If True, raises an error if extra unused kwargs exist.
+                namespace : str
+                    Optional prefix for parameter isolation (e.g. 'lb').
+                kwargs : object
+                    Full flat config dict.
+                
+                Returns
+                -------
+                Any
+                    Instantiated subclass.
+                
         """
         name = name.lower()
         if name not in cls._registry:
@@ -130,21 +130,28 @@ class RegistryFactoryMixin(ABC):
 
     @classmethod
     def create_from_spec(cls, spec_or_obj: Any, *, strict: bool = False) -> Any:
-        """ 
-        @brief Instantiate a registered component from a nested spec or an existing instance.
-
-        This helper enables the project-wide convention for **internal nested configs**:
-            {"name": <alias>, "params": {...}}
-
-        It also accepts several backward-compatible forms:
-        - direct instances of the registry base class
-        - {"__instance__": <obj>} (internal marker produced by the normalizer)
-        - objects serialized by `to_dict()` ("name" + "params")
-        - legacy compact dicts such as {"type": <alias>, ...} (no "params" key)
-
-        @param spec_or_obj: Nested spec dict or instance.
-        @param strict: If True, errors on unused parameters when calling `create()`.
-        @return: Instantiated component or the input instance.
+        """Instantiate a registered component from a nested spec or an existing instance.
+                
+                This helper enables the project-wide convention for **internal nested configs**:
+                {"name": <alias>, "params": {...}}
+                It also accepts several backward-compatible forms:
+                - direct instances of the registry base class
+                - {"__instance__": <obj>} (internal marker produced by the normalizer)
+                - objects serialized by `to_dict()` ("name" + "params")
+                - legacy compact dicts such as {"type": <alias>, ...} (no "params" key)
+                
+                Parameters
+                ----------
+                spec_or_obj : Any
+                    Nested spec dict or instance.
+                strict : bool
+                    If True, errors on unused parameters when calling `create()`.
+                
+                Returns
+                -------
+                Any
+                    Instantiated component or the input instance.
+                
         """
         if spec_or_obj is None:
             return None
@@ -178,34 +185,48 @@ class RegistryFactoryMixin(ABC):
 
     @classmethod
     def list_available(cls) -> Dict[str, List[str]]:
-        """
-        @brief Lists all registered subclasses and their aliases.
-
-        @return: Dictionary mapping primary alias to all aliases.
+        """Lists all registered subclasses and their aliases.
+                
+                Returns
+                -------
+                Dict[str, List[str]]
+                    Dictionary mapping primary alias to all aliases.
+                
         """
         return {names[0]: names for _, names in cls._aliases.items()}
 
     @staticmethod
     def _filter_args(cls, kwargs: dict) -> dict:
-        """
-        @brief Filters kwargs to only include those accepted by a class constructor.
-
-        Inspects the constructor signature and removes any extraneous keyword arguments.
-
-        @param cls: Target class.
-        @param kwargs: Full dictionary of keyword arguments.
-        @return: Filtered dictionary of valid constructor arguments.
+        """Filters kwargs to only include those accepted by a class constructor.
+                
+                Inspects the constructor signature and removes any extraneous keyword arguments.
+                
+                Parameters
+                ----------
+                cls : object
+                    Target class.
+                kwargs : dict
+                    Full dictionary of keyword arguments.
+                
+                Returns
+                -------
+                dict
+                    Filtered dictionary of valid constructor arguments.
+                
         """
         sig = inspect.signature(cls.__init__)
         return {k: v for k, v in kwargs.items() if k in sig.parameters}
 
     def describe_params_detailed(self) -> dict:
-        """
-        @brief Returns a dictionary describing the current instance's parameters.
-
-        Uses reflection to enumerate the constructor parameters and their current values.
-
-        @return: Dictionary mapping parameter names to their type and value.
+        """Returns a dictionary describing the current instance's parameters.
+                
+                Uses reflection to enumerate the constructor parameters and their current values.
+                
+                Returns
+                -------
+                dict
+                    Dictionary mapping parameter names to their type and value.
+                
         """
         sig = inspect.signature(self.__init__)
         return {
@@ -219,54 +240,73 @@ class RegistryFactoryMixin(ABC):
 
 
     def to_dict(self) -> dict:
-        """
-        @brief Serializes the instance to a dictionary.
-
-        @return: Dictionary with "type" and "params" fields.
+        """Serializes the instance to a dictionary.
+                
+                Returns
+                -------
+                dict
+                    Dictionary with "type" and "params" fields.
+                
         """
         return {"type": self.__class__.__name__, "name": self.name, "params": self._get_params()}
 
     @classmethod
     def from_dict(cls, data: dict) -> Any:
-        """
-        @brief Deserializes an instance from a dictionary.
-
-        Uses the type key to instantiate the correct registered subclass.
-
-        @param data: Dictionary with "type" and optionally "params".
-        @return: Instantiated object.
+        """Deserializes an instance from a dictionary.
+                
+                Uses the type key to instantiate the correct registered subclass.
+                
+                Parameters
+                ----------
+                data : dict
+                    Dictionary with "type" and optionally "params".
+                
+                Returns
+                -------
+                Any
+                    Instantiated object.
+                
         """
         return cls.create(data["name"], **data.get("params", {}))
 
     def help(self) -> str:
-        """
-        @brief Returns the class-level docstring.
-
-        Useful for introspection and documentation tools.
-
-        @return: String representation of the docstring or fallback text.
+        """Returns the class-level docstring.
+                
+                Useful for introspection and documentation tools.
+                
+                Returns
+                -------
+                str
+                    String representation of the docstring or fallback text.
+                
         """
         return inspect.getdoc(self.__class__) or "No documentation available."
 
     @classmethod
     @abstractmethod
     def validate_params(cls, **kwargs):
-        """
-        @brief parameter validation hook for subclasses.
+        """parameter validation hook for subclasses.
+        
         all subclasses must implement validate_params
         
-        @param kwargs: Parameters to validate.
+        Parameters
+        ----------
+        kwargs : object
+            Parameters to validate.
         """
         raise NotImplementedError("all subclasses must implement validate_params")
     
     @property
     def name(self) -> str:
-        """
-        @brief Returns the registered name of the class (lowercased, with known suffix removed).
-
-        Strips one of the known suffixes like 'TNorm', 'Implicator', etc., based on class name.
-
-        @return: Cleaned lowercase name.
+        """Returns the registered name of the class (lowercased, with known suffix removed).
+                
+                Strips one of the known suffixes like 'TNorm', 'Implicator', etc., based on class name.
+                
+                Returns
+                -------
+                str
+                    Cleaned lowercase name.
+                
         """
         name = self.__class__.__name__
         suffixes = ["TNorm", "Implicator", "Similarity", "SimilarityFunction", 
@@ -281,11 +321,18 @@ class RegistryFactoryMixin(ABC):
     
     @classmethod
     def get_registered_name(cls, instance: Any) -> str:
-        """
-        @brief Get the primary registered alias for a given instance.
-
-        @param instance: An instance of a registered subclass.
-        @return: Primary alias string.
+        """Get the primary registered alias for a given instance.
+                
+                Parameters
+                ----------
+                instance : Any
+                    An instance of a registered subclass.
+                
+                Returns
+                -------
+                str
+                    Primary alias string.
+                
         """
         for klass, aliases in cls._aliases.items():
             if isinstance(instance, klass):
@@ -294,12 +341,23 @@ class RegistryFactoryMixin(ABC):
     
     @classmethod
     def get_class(cls, name: str) -> Type:
-        """
-        @brief Returns the registered class associated with a given alias.
-
-        @param name: The alias name (case-insensitive).
-        @return: The class object registered under that alias.
-        @raises ValueError: If alias is not registered.
+        """Returns the registered class associated with a given alias.
+                
+                Parameters
+                ----------
+                name : str
+                    The alias name (case-insensitive).
+                
+                Returns
+                -------
+                Type
+                    The class object registered under that alias.
+                
+                Raises
+                ------
+                ValueError
+                    If alias is not registered.
+                
         """
         name = name.lower()
         if name not in cls._registry:

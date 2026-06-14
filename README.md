@@ -1,4 +1,4 @@
-<img src="images/logo/logo4.png" alt="FRsutils Logo" width="250"/>
+<img title="" src="logo/logo.png" alt="FRsutils Logo" width="250">
 
 # FRsutils
 
@@ -8,13 +8,18 @@ t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
 approximations, and positive-region computation.
 
 Fuzzy-rough oversampling algorithms such as FRSMOTE now live in the standalone
-`fuzzy_rough_oversampling` package. That package depends on FRsutils through the
+`frsampling` package. That package depends on FRsutils through the
 public `FRsutils.api` facade.
 
 # For Developers
 
-If you are a developer trying to extend FRsutils, please start here:
-[Development Guidelines](lessons_learned_and_trainings/For_Developers.md).
+If you are extending FRsutils, start with the public compatibility boundary in
+[`docs/public_api_contract.md`](docs/public_api_contract.md), then follow the
+release and documentation checks in
+[`docs/release_checklist.md`](docs/release_checklist.md),
+[`docs/documentation_smoke_check.md`](docs/documentation_smoke_check.md),
+[`docs/submit_readiness_report.md`](docs/submit_readiness_report.md), and
+[`docs/joss_final_submission_checklist.md`](docs/joss_final_submission_checklist.md).
 
 # Installation
 
@@ -32,12 +37,15 @@ pip install -e .
 
 ## Core requirements
 
-FRsutils core intentionally keeps a small mandatory dependency set:
+FRsutils core intentionally keeps the mandatory dependency set small, but the
+public API includes an sklearn-style positive-region scorer, so scikit-learn is
+part of the runtime contract:
 
 - Python >= 3.10
 - NumPy >= 1.21.0
+- scikit-learn
 
-## Optional development / dataset dependencies
+## Optional development / dataset / GPU dependencies
 
 Install these only when you need the related workflows:
 
@@ -46,45 +54,256 @@ Install these only when you need the related workflows:
 - `colorlog` for colored logging; FRsutils falls back to standard logging if it
   is not installed
 - `matplotlib` for plotting examples/tests
-- `cupy` for future/experimental GPU work
+- `cupy-cuda12x` or another CUDA-compatible CuPy wheel for explicit
+  `backend="cupy"` experiments
 
-## Oversampling package
+## Oversampling package boundary
 
-Install the standalone oversampling package when you need FRSMOTE or future
-fuzzy-rough oversamplers such as FRADASYN:
-
-```bash
-cd fuzzy_rough_oversampling
-pip install -e .
-```
-
-Use the new import path:
+FRsutils is the fuzzy-rough core package. Install the standalone `frsampling`
+package separately when you need FRSMOTE or future fuzzy-rough oversamplers such
+as FRADASYN. Downstream oversampling packages should import FRsutils through the
+public facade:
 
 ```python
-from fuzzy_rough_oversampling import FRSMOTE
+from FRsutils.api import compute_positive_region
 ```
 
-No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import paths. Existing scripts must be migrated explicitly.
+Use the downstream package import path for oversamplers:
 
-Migration guide:
-[FRSMOTE migration from FRsutils](docs/frsmote_migration.md).
+```python
+from frsampling import FRSMOTE
+```
 
-# Fuzzy-Rough set utilities [Under development]
+No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import
+paths. Existing scripts must be migrated explicitly in the downstream
+oversampling package.
 
-A basic Python library needed for fuzzy rough set calculations that are used in
-research, e.g.:
+# Fuzzy-rough set utilities
+
+FRsutils provides reusable fuzzy-rough set calculations used in research,
+including:
 
 - lower approximation
 - upper approximation
 - positive region
 - boundary region
 
+## Public API quickstart
+
+The canonical user-facing API is `FRsutils.api`. End users, notebooks,
+examples, and downstream packages should import from this facade instead of
+importing directly from internal `FRsutils.core` or `FRsutils.utils` modules.
+
+```python
+from FRsutils.api import compute_approximations
+```
+
+The package top level, `FRsutils`, is intentionally kept compact so internal
+implementation details do not become public API by accident.
+
+The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough
+approximations, and read the named fields from the returned result object.
+
+```python
+import numpy as np
+
+from FRsutils.api import compute_approximations, compute_positive_region
+
+# FRsutils expects numeric feature values on a comparable scale. In real
+# experiments, normalize or scale your data before calling the fuzzy-rough API.
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
+
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+)
+
+print("lower approximation:", result.lower)
+print("upper approximation:", result.upper)
+print("boundary region:", result.boundary)
+print("positive region:", result.positive_region)
+
+# Shortcut when only positive-region scores are needed.
+scores = compute_positive_region(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+)
+print("positive-region scores:", scores)
+```
+
+For reusable fitted scoring workflows, use the sklearn-style positive-region
+scorer:
+
+```python
+import numpy as np
+
+from FRsutils.api import FuzzyRoughPositiveRegionScorer
+
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
+
+scorer = FuzzyRoughPositiveRegionScorer(
+    model="owafrs",
+    similarity="linear",
+)
+
+scores = scorer.fit_score(X, y)
+result = scorer.as_result()
+
+print(scores)
+print(result.lower)
+print(result.upper)
+```
+
+Downstream packages can reuse a precomputed similarity matrix through the public
+API without importing from FRsutils internals:
+
+```python
+import numpy as np
+
+from FRsutils.api import build_similarity_matrix, compute_positive_region
+
+X = np.array(
+    [
+        [0.00, 0.10],
+        [0.08, 0.18],
+        [0.15, 0.12],
+        [0.80, 0.82],
+        [0.88, 0.90],
+        [0.95, 0.86],
+    ],
+    dtype=float,
+)
+y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
+
+similarity_matrix = build_similarity_matrix(X, similarity="linear")
+
+scores = compute_positive_region(
+    X=None,
+    y=y,
+    model="itfrs",
+    similarity_matrix=similarity_matrix,
+)
+
+print(scores)
+```
+
+A runnable version of the quickstart is available at
+[`examples/public_api_quickstart.py`](examples/public_api_quickstart.py). See
+[`docs/public_api.md`](docs/public_api.md) for the public API guide.
+
+## Execution engines and backend status
+
+FRsutils now exposes dense and exact blockwise execution through the public API.
+Dense mode preserves the historical full-matrix behavior. Blockwise mode avoids
+materializing the full `n x n` similarity matrix for approximation computation
+and is available for ITFRS, VQRS, and OWAFRS.
+
+```python
+from FRsutils.api import compute_approximations
+
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+    engine="blockwise",
+    block_size=512,
+    backend="numpy",
+)
+```
+
+`backend="cupy"` is an optional experimental backend for GPU-accelerated
+similarity-block computation. For `model="itfrs"` and `model="vqrs"` with
+`engine="blockwise"`, approximation reductions/accumulators can also stay
+CuPy-resident until final public NumPy output conversion. OWAFRS deliberately remains on the conservative NumPy row-buffer path after the
+OWAFRS non-GPU-resident decision because exact OWA execution requires row-wise sorting and a
+separate memory/sorting benchmark. Do not claim full GPU-native fuzzy-rough
+execution yet. See
+[`docs/backend_execution_status.md`](docs/backend_execution_status.md) and
+[`docs/owafrs_non_gpu_resident_decision.md`](docs/owafrs_non_gpu_resident_decision.md).
+
+The returned result records execution provenance so benchmark scripts and
+downstream packages can verify which path was used:
+
+```python
+result.engine                      # "dense" or "blockwise"
+result.backend                     # "numpy" or resolved optional backend
+result.block_size                  # None for dense; integer for blockwise
+result.used_blockwise              # bool
+result.used_gpu_similarity_blocks          # bool
+result.used_gpu_approximation_accumulators # bool, true for CuPy blockwise ITFRS/VQRS; false for OWAFRS
+```
+
+The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`,
+`backend`, and `block_size` parameters.
+
+## Benchmark suite
+
+FRsutils includes a reproducible benchmark harness for the public approximation API:
+
+```bash
+python benchmarks/benchmark_fuzzy_rough_execution.py     --models itfrs,vqrs,owafrs     --sample-sizes 128,256,512     --n-features 8     --block-sizes 64,128     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy     --repeats 3     --output-json benchmark_results.json     --output-csv benchmark_results.csv
+```
+
+The suite compares dense NumPy, exact blockwise NumPy, and optional CuPy-backed
+blockwise execution. It records runtime, lightweight Python allocator peak
+memory, dense-reference numerical-equivalence errors, and public execution
+metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
+[`docs/benchmark_suite.md`](docs/benchmark_suite.md).
+
+## Release-ready examples and paper claim boundary
+
+The repository includes small release-ready examples:
+
+```bash
+python examples/public_api_quickstart.py
+python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
+```
+
+Use the wording in [`docs/paper_claims.md`](docs/paper_claims.md) when describing
+FRsutils in a release note, software paper, or benchmark report. The safe claim
+is that FRsutils provides dense and exact blockwise fuzzy-rough approximation
+APIs, optional CuPy-accelerated similarity blocks, and experimental
+CuPy-resident blockwise approximation accumulators for ITFRS/VQRS. Public
+outputs remain NumPy arrays, and OWAFRS remains on the conservative exact
+blockwise NumPy row-buffer path in this release.
+
+Before tagging or submitting, use
+[`docs/release_checklist.md`](docs/release_checklist.md) and the
+[`documentation smoke check`](docs/documentation_smoke_check.md).
+
 ## Algorithms and contents
 
-- Similarities (See [fuzzy similarities](md_files/similarities_info.md))
+- Similarities (See [fuzzy similarities](docs/similarities_info.md))
   - Linear
   - Gaussian
-- Implicators (See [fuzzy implicators](md_files/implicators_info.md))
+- Implicators (See [fuzzy implicators](docs/implicators_info.md))
   - Lukasiewicz
   - Goedel
   - Reichenbach
@@ -94,7 +313,7 @@ research, e.g.:
   - Rescher
   - Weber
   - Fodor
-- T-norms (See [fuzzy tnorms](md_files/tnorms_info.md))
+- T-norms (See [fuzzy tnorms](docs/tnorms_info.md))
   - Min tnorm
   - Product tnorm
   - Lukasiewicz tnorm
@@ -103,7 +322,7 @@ research, e.g.:
   - EinsteinProduct tnorm
   - HamacherProduct tnorm
   - NilpotentMinimum tnorm
-- OWA weights (Ordered Weighted Average) (See [OWA](md_files/owa_weights_info.md))
+- OWA weights (Ordered Weighted Average) (See [OWA](docs/owa_weights_info.md))
   - Linear
   - Exponential
   - Harmonic
@@ -112,20 +331,20 @@ research, e.g.:
   - Linear
   - Quadratic
 - FR Models
-  - ITFRS (See [Implicator/T-norm Fuzzy-Rough Sets](md_files/itfrs_info.md))
-  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](md_files/owafrs_info.md))
-  - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](md_files/vqrs_info.md))
+  - ITFRS (See [Implicator/T-norm Fuzzy-Rough Sets](docs/itfrs_info.md))
+  - OWAFRS (See [Ordered Weighted Average Fuzzy-Rough Sets](docs/owafrs_info.md))
+  - VQRS (See [Vaguely Quantified fuzzy-Rough Sets](docs/vqrs_info.md))
 
 ## Fuzzy-rough oversampling boundary
 
 Fuzzy-rough oversampling algorithms are no longer part of FRsutils core. They
-live in the standalone `fuzzy_rough_oversampling` package, which depends on
+live in the standalone `frsampling` package, which depends on
 FRsutils through the public `FRsutils.api` facade. FRsutils intentionally does
-not provide old FRSMOTE compatibility wrappers after Phase 7.
+not provide old FRSMOTE compatibility wrappers.
 
 ```text
-fuzzy_rough_oversampling  --->  FRsutils.api
-FRsutils                  -X->  fuzzy_rough_oversampling
+frsampling  --->  FRsutils.api
+FRsutils    -X->  frsampling
 ```
 
 FRsutils should be cited/used as the fuzzy-rough core engine: similarities,
@@ -151,17 +370,35 @@ future FRADASYN belong to the downstream oversampling package.
 
 ## How to run tests
 
-From the repository root:
+From the repository root, the default test command excludes tests marked as
+`slow` via `pyproject.toml`:
 
 ```bash
 python -m pytest tests -q
 ```
 
-For the standalone oversampling package:
+Run the documented quickstart and release/backend smoke set explicitly with:
 
 ```bash
-PYTHONPATH="$PWD:$PWD/fuzzy_rough_oversampling/src" \
-python -m pytest fuzzy_rough_oversampling/tests -q
+python examples/public_api_quickstart.py
+python -m pytest tests/api/test_public_api_examples_smoke.py -q -rs
+python -m pytest tests/api tests/core_tests/test_approximation_engines.py -q -rs
+```
+
+See [`docs/release_validation_commands.md`](docs/release_validation_commands.md)
+for the complete validation command list.
+
+Run exhaustive slow model-combination tests separately when needed:
+
+```bash
+python -m pytest tests/models_tests -m slow -o addopts="" -q
+```
+
+For the standalone oversampling package, run from the `frsampling` repository
+root after making FRsutils importable:
+
+```bash
+PYTHONPATH="$PWD/src:../FRsutils" python -m pytest tests -q
 ```
 
 For more information on test procedures, please refer to
@@ -173,34 +410,39 @@ For more information on test procedures, please refer to
   perform repeated input-range checks. Validation is preferred at construction or
   workflow boundaries.
 
-## TODO
+## Maintenance notes
 
-- Add tests for t-norms with non-binary masks.
-- Implement and debug VQRS (Vaguely Quantified Rough Sets).
-- Change the code to get a class to calculate lower and upper approximations and
-  positive region regarding a single class of `y`.
+- Exhaustive model-combination tests are marked as `slow`; run them explicitly
+  with `python -m pytest tests/models_tests -m slow -o addopts="" -q`.
+- VQRS is implemented and covered by the public API/blockwise/backend tests.
+- New feature work should be deferred until the release/paper cleanup checklist is
+  complete.
 
 ## License
 
-This project is licensed under the AGPL-3.0 License. See the [LICENSE](./LICENSE)
-file for details.
+This project is licensed under the BSD-3-Clause License. See the [LICENSE](./LICENSE)
+file for details. The package metadata, citation metadata, and Python source
+headers use the same `BSD-3-Clause` identifier.
 
 ## How to cite us in your research papers
 
-If you use this library in your research, please cite it as follows:
+If you use this library in your research, please cite the software metadata in
+[`CITATION.cff`](./CITATION.cff). After the JOSS paper is accepted, cite the
+JOSS paper DOI as the preferred citation.
 
 **APA**:
 
-> Mehran Amiri. (*2025*). *FRsutils* (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
+> Mehran Amiri. (*2026*). *FRsutils: Fuzzy-Rough Set Utilities for Python*
+> (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
 
 **BibTeX**:
 
 ```bibtex
-@software{Mehran_Amiri_FRsutils_2025,
+@software{Amiri_FRsutils_2026,
   author = {Amiri, Mehran},
-  title = {FRsutils},
+  title = {FRsutils: Fuzzy-Rough Set Utilities for Python},
   url = {https://github.com/mehi64/FRsutils},
   version = {0.0.3},
-  year = {2025}
+  year = {2026}
 }
 ```

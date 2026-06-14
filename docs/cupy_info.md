@@ -1,42 +1,84 @@
-# cupy info
+# CuPy and backend execution
 
-## 1.Install
+CuPy support in FRsutils is optional and experimental. The stable backend is
+NumPy, and the public API always returns NumPy arrays so results remain easy to
+use with scientific Python, plotting tools, and scikit-learn-style workflows.
 
+Use CuPy only through explicit blockwise execution:
 
----
+```python
+from FRsutils.api import compute_approximations
 
-## 2. Current config
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+    engine="blockwise",
+    block_size=512,
+    backend="cupy",
+)
+```
 
-OS                           : Linux-6.11.0-26-generic-x86_64-with-glibc2.39
-Python Version               : 3.10.18
-CuPy Version                 : 13.4.1
-CuPy Platform                : NVIDIA CUDA
-NumPy Version                : 2.2.6
-SciPy Version                : None
-Cython Build Version         : 3.0.12
-Cython Runtime Version       : None
-CUDA Root                    : /usr
-nvcc PATH                    : /usr/bin/nvcc
-CUDA Build Version           : 12080
-CUDA Driver Version          : 12080
-CUDA Runtime Version         : 12080 (linked to CuPy) / 12000 (locally installed)
-CUDA Extra Include Dirs      : ['/home/mehran/anaconda3/envs/cupy310/targets/x86_64-linux/include', '/home/mehran/anaconda3/envs/cupy310/include']
-cuBLAS Version               : (available)
-cuFFT Version                : 11401
-cuRAND Version               : 10310
-cuSOLVER Version             : (11, 7, 5)
-cuSPARSE Version             : (available)
-NVRTC Version                : (12, 9)
-Thrust Version               : 200700
-CUB Build Version            : 200800
-Jitify Build Version         : <unknown>
-cuDNN Build Version          : None
-cuDNN Version                : None
-NCCL Build Version           : None
-NCCL Runtime Version         : None
-cuTENSOR Version             : None
-cuSPARSELt Build Version     : None
-Device 0 Name                : NVIDIA GeForce GTX 1050
-Device 0 Compute Capability  : 61
-Device 0 PCI Bus ID          : 0000:01:00.0
+## Current model support
 
+| Model | Dense execution | Blockwise NumPy | CuPy-backed similarity blocks | GPU-resident approximation accumulators |
+| --- | --- | --- | --- | --- |
+| ITFRS | Yes | Yes | Yes | Yes, experimental |
+| VQRS | Yes | Yes | Yes | Yes, experimental |
+| OWAFRS | Yes | Yes | Yes | No |
+
+The OWAFRS distinction is intentional. Exact OWAFRS needs row-wise sorting and
+OWA aggregation. In the current release cycle, similarity blocks may be computed
+with CuPy, but OWAFRS aggregation remains on the conservative NumPy-compatible
+row-buffer path. Do not describe OWAFRS as fully GPU-native.
+
+## Public result contract
+
+Regardless of backend, FRsutils public approximation results expose NumPy arrays:
+
+```python
+result.lower
+result.upper
+result.boundary
+result.positive_region
+```
+
+Execution metadata records what happened internally:
+
+```python
+result.engine
+result.backend
+result.block_size
+result.used_blockwise
+result.used_gpu_similarity_blocks
+result.used_gpu_approximation_accumulators
+```
+
+For CuPy-backed blockwise execution, `used_gpu_similarity_blocks` indicates that
+similarity blocks used the CuPy backend. For ITFRS and VQRS,
+`used_gpu_approximation_accumulators` may also be true. For OWAFRS it should
+remain false in the current implementation.
+
+## Recommended wording
+
+Safe wording for documentation, benchmark reports, and the JOSS paper:
+
+> FRsutils provides dense NumPy and exact blockwise fuzzy-rough approximation
+> APIs. Optional CuPy-backed blockwise execution is available for similarity
+> blocks, with experimental GPU-resident approximation accumulators for ITFRS
+> and VQRS. Public outputs remain NumPy arrays. OWAFRS uses GPU-backed
+> similarity blocks only and does not currently claim GPU-resident OWA
+> aggregation.
+
+## Testing CuPy support
+
+Run the backend contract tests with:
+
+```bash
+python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
+```
+
+If CuPy or CUDA is not installed, real-CuPy tests should be skipped. Fake-CuPy
+contract tests still exercise the public metadata and array-conversion behavior
+in regular CI.

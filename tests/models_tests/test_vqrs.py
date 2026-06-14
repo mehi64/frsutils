@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+"""Tests for the VQRS fuzzy-rough model."""
+
 import pytest
 import numpy as np
 from FRsutils.core.models.vqrs import VQRS
@@ -9,6 +12,7 @@ logger = get_logger("test")
 
 @pytest.fixture
 def synthetic_data_():
+    """Synthetic data ."""
     sim_matrix = np.array([
         [1.0, 0.8, 0.0],
         [0.8, 1.0, 0.3],
@@ -19,6 +23,7 @@ def synthetic_data_():
 
 @pytest.fixture
 def model_instance(synthetic_data_):
+    """Model instance."""
     sim, lbl = synthetic_data_
     ub_fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.8)
     lb_fq = FuzzyQuantifier.create("linear", alpha=0.1, beta=0.6)
@@ -28,8 +33,7 @@ def model_instance(synthetic_data_):
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_lower_approximation_shape_ndarray_range_all_combinations(quantifier_name, synthetic_data_, model_instance):
-    """
-    @brief Test lower_approximation shape, type, and value range for all possibilities of fuzzy quantifiers.
+    """Test lower_approximation shape, type, and value range for all possibilities of fuzzy quantifiers.
     """
     sim_matrix, labels = synthetic_data_
 
@@ -47,8 +51,7 @@ def test_lower_approximation_shape_ndarray_range_all_combinations(quantifier_nam
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_upper_approximation_shape_ndarray_range_all_combinations(quantifier_name, synthetic_data_, model_instance):
-    """
-    @brief Test upper_approximation shape, type, and value range for all possibilities of fuzzy quantifiers.
+    """Test upper_approximation shape, type, and value range for all possibilities of fuzzy quantifiers.
     """
     sim_matrix, labels = synthetic_data_
 
@@ -69,7 +72,7 @@ def test_upper_approximation_shape_ndarray_range_all_combinations(quantifier_nam
 # @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 # def test_boundary_region_all_combinations_shape_range(tnorm_name, implicator_name):
 #     """
-#     @brief Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
+#     Validates boundary_region = upper - lower across all ITFRS combinations just for shape and range
 #     correctness of values are not checked
 #     """
 #     sim = np.array([
@@ -94,8 +97,8 @@ def test_upper_approximation_shape_ndarray_range_all_combinations(quantifier_nam
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_positive_region_all_combinations_shape_range(quantifier_name, synthetic_data_):
-    """
-    @brief Validates positive_region == lower_approximation across all ITFRS combinations
+    """Validates positive_region == lower_approximation across all ITFRS combinations
+    
     correctness of values are not checked
     """
     sim_matrix, labels = synthetic_data_
@@ -116,9 +119,7 @@ def test_positive_region_all_combinations_shape_range(quantifier_name, synthetic
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_to_dict_include_data_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Validates presence of all fields in `to_dict(include_data=True)`
-    """
+    """Validates presence of all fields in `to_dict(include_data=True)`"""
     sim_matrix, labels = synthetic_data_
 
     fq_cls = FuzzyQuantifier.get_class(quantifier_name)
@@ -137,9 +138,7 @@ def test_to_dict_include_data_all_combinations(quantifier_name, synthetic_data_)
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_to_dict_excluse_data_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Validates presence of all fields in `to_dict(include_data=False)`
-    """
+    """Validates presence of all fields in `to_dict(include_data=False)`"""
     sim_matrix, labels = synthetic_data_
 
     fq_cls = FuzzyQuantifier.get_class(quantifier_name)
@@ -158,8 +157,7 @@ def test_to_dict_excluse_data_all_combinations(quantifier_name, synthetic_data_)
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_from_dict_roundtrip_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Tests whether VQRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
+    """Tests whether VQRS.from_dict correctly restores all fields for all combinations of TNorm and Implicator.
     """
     sim_matrix, labels = synthetic_data_
 
@@ -181,9 +179,7 @@ def test_from_dict_roundtrip_all_combinations(quantifier_name, synthetic_data_):
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_from_config_equivalence_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Test VQRS.from_config builds a valid model for all combinations.
-    """
+    """Test VQRS.from_config builds a valid model for all combinations."""
     sim_matrix, labels = synthetic_data_
 
     config = {
@@ -220,9 +216,7 @@ def test_from_config_equivalence_all_combinations(quantifier_name, synthetic_dat
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_describe_params_detailed_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Ensure that VQRS.describe_params_detailed() contains keys.
-    """
+    """Ensure that VQRS.describe_params_detailed() contains keys."""
     sim_matrix, labels = synthetic_data_
 
     config = {
@@ -251,9 +245,7 @@ def test_describe_params_detailed_all_combinations(quantifier_name, synthetic_da
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_get_params_internal_all_combinations(quantifier_name, synthetic_data_):
-    """
-    @brief Ensure _get_params returns full param dict.
-    """
+    """Ensure _get_params returns full param dict."""
     sim_matrix, labels = synthetic_data_
 
     config = {
@@ -279,7 +271,7 @@ def test_get_params_internal_all_combinations(quantifier_name, synthetic_data_):
 
 # def test_validate_params_invalid_lb_fuzzy_quantifier():
 #     """
-#     @brief Validation must fail when lb_fuzzy_quantifier is missing or invalid.
+#     Validation must fail when lb_fuzzy_quantifier is missing or invalid.
 #     """
 #     sim = np.array([
 #         [1.0, 0.8, 0.0],
@@ -293,7 +285,7 @@ def test_get_params_internal_all_combinations(quantifier_name, synthetic_data_):
 
 # def test_validate_params_invalid_implicator():
 #     """
-#     @brief Validation must fail when implicator is missing or invalid.
+#     Validation must fail when implicator is missing or invalid.
 #     """
 #     sim = np.array([
 #         [1.0, 0.8, 0.0],
@@ -309,7 +301,7 @@ def test_get_params_internal_all_combinations(quantifier_name, synthetic_data_):
 # @pytest.mark.parametrize("implicator_name", list(Implicator.list_available().keys()))
 # def test_logger_works_all_combinations(tnorm_name, implicator_name):
 #     """
-#     @brief Sanity check for logger presence in all ITFRS combinations.
+#     Sanity check for logger presence in all ITFRS combinations.
 #     """
 #     sim = np.array([
 #         [1.0, 0.8, 0.0],
@@ -357,7 +349,7 @@ def test_get_params_internal_all_combinations(quantifier_name, synthetic_data_):
 # ])
 # def test_itfrs_model_with_all_settings(test_case, implicator_name, expected_lower_key, tnorm_name, expected_upper_key):
 #     """
-#     @brief Test for `itfrs_model_with_all_settings` method of ITFRS model.
+#     Test for `itfrs_model_with_all_settings` method of ITFRS model.
 #     """
 #     sim = test_case["sim_matrix"]
 #     y = test_case["y"]

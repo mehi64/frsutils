@@ -1,12 +1,10 @@
-"""
-Synthetic Test Datasets for Fuzzy Components
-
-Provides structured test datasets for verifying T-norms, Implicators, and other fuzzy components.
-"""
+# SPDX-License-Identifier: BSD-3-Clause
+"""Synthetic datasets and expected values for fuzzy component tests."""
 
 import numpy as np
 
 def get_tnorm_call_testsets():
+    """Return tnorm call testsets values for tests or public helpers."""
     return [
         {
             "name": "basic_tnorms_DS_1",
@@ -35,6 +33,7 @@ def get_tnorm_call_testsets():
     ]
 
 def get_tnorm_reduce_testsets():
+    """Return tnorm reduce testsets values for tests or public helpers."""
     return [
         {
             "name": "tnorm_reduce",
@@ -79,6 +78,7 @@ def get_tnorm_reduce_testsets():
     ]
 
 def get_implicator_scalar_testsets():
+    """Return implicator scalar testsets values for tests or public helpers."""
     return [
         {
             "name": "basic_implicators",
@@ -225,6 +225,7 @@ def owa_weights_testing_testsets():
     ]
 
 def get_similarity_testing_testsets():
+    """Return similarity testing testsets values for tests or public helpers."""
     return [
         {
             "name": "basic_similarity",
@@ -289,6 +290,7 @@ def get_similarity_testing_testsets():
     ]
 
 def get_ITFRS_testing_testsets():
+    """Return ITFRS testing testsets values for tests or public helpers."""
     Reichenbach_lowerBound = np.array([0.63, 0.65, 0.45, 0.26, 0.26])
     KD_lowerBound = np.array([0.63, 0.65, 0.45, 0.26, 0.26])
     Luk_lowerBound = np.array([0.63, 0.65, 0.45, 0.26, 0.26])
@@ -351,6 +353,7 @@ def get_ITFRS_testing_testsets():
 
 def get_VQRS_testing_testsets():
     
+    """Return VQRS testing testsets values for tests or public helpers."""
     return [
         {
             "name": "vqrs",
@@ -385,6 +388,7 @@ def get_VQRS_testing_testsets():
 
 def get_OWAFRS_testing_testsets():
     
+    """Return OWAFRS testing testsets values for tests or public helpers."""
     reichenbach_lowerBound = np.array([0.822 , 0.8, 0.599, 0.539, 0.624])
     kd_lowerBound = np.array([0.822 , 0.8, 0.599, 0.539, 0.624])
     fodor_lowerBound = np.array([0.822 , 0.8, 0.599, 0.539, 0.624])

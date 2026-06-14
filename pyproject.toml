@@ -5,15 +5,54 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "FRsutils"
 version = "0.0.3"
-description = "A Python library for fuzzy-rough set utility functions."
+requires-python = ">=3.10"
+description = "Fuzzy-rough set utilities for Python."
 authors = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
+maintainers = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
 readme = "README.md"
-license = {text = " AGPL-3.0"}
-keywords = ["fuzzy-rough sets", "mathematics", "data science"]
+license = {text = "BSD-3-Clause"}
+keywords = [
+    "fuzzy-rough sets",
+    "rough sets",
+    "fuzzy sets",
+    "positive region",
+    "similarity matrix",
+    "data science",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
-    "numpy>=1.21.0"
+    "numpy>=1.21.0",
+    "scikit-learn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pandas",
+    "openpyxl",
+    "colorlog",
+    "matplotlib",
+]
+gpu-cuda12x = [
+    "cupy-cuda12x",
+]
+gpu-cuda11x = [
+    "cupy-cuda11x",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/mehi64/FRsutils"
 "Documentation" = "https://mehi64.github.io/FRsutils/"
+"Source" = "https://github.com/mehi64/FRsutils"
+"Issues" = "https://github.com/mehi64/FRsutils/issues"

@@ -1,6 +1,5 @@
-
-# This lets users write:
-# from frsutils.core.models import ITFRS
+# SPDX-License-Identifier: BSD-3-Clause
+"""Fuzzy-rough model implementations exposed by FRsutils."""
 
 from .itfrs import ITFRS
 from .owafrs import OWAFRS
