@@ -15,6 +15,7 @@ likely to read first:
 - `docs/backend_execution_status.md`
 - `docs/paper_claims.md`
 - `examples/public_api_quickstart.py`
+- `docs/submit_readiness_report.md`
 
 The canonical user-facing import path is `FRsutils.api`. Examples and user
 documentation should avoid importing from internal `FRsutils.core` modules unless
@@ -27,10 +28,11 @@ example updates.
 
 ```bash
 python examples/public_api_quickstart.py
+python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
 ```
 
 ```bash
-python -m pytest tests/api/test_public_api_examples_smoke.py -q -rs
+python -m pytest tests/api/test_public_api_examples_smoke.py tests/examples/test_examples_contract.py -q -rs
 ```
 
 ```bash
@@ -74,7 +76,7 @@ Fake-CuPy tests run in normal CI and verify the public API contract. Real CuPy
 validation requires a compatible local CuPy/CUDA installation.
 
 ```bash
-python -m pytest tests/api/test_cupy_backend_phase6_contract.py -q -rs
+python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
 ```
 
 ```bash
@@ -100,6 +102,9 @@ Before publishing, check the following manually:
 - Public outputs are documented as NumPy arrays regardless of backend.
 - `docs/paper_claims.md` and `paper.md`, if present, use the same model/backend
   claims.
+- README and documentation links point to files that exist in the repository.
+- The final validation commands in `docs/submit_readiness_report.md` are still current.
+- User-facing docs do not contain temporary milestone-based filenames or headings.
 
 ## Expected outcome
 

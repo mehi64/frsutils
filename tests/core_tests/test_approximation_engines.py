@@ -412,7 +412,7 @@ def test_set_block_diagonal_values_uses_backend_index_conversion_for_non_numpy_n
 
 
 # -----------------------------------------------------------------------------
-# Phase 2: component builders
+# Component builders
 # -----------------------------------------------------------------------------
 
 
@@ -788,7 +788,7 @@ def test_component_builders_reject_component_specs_with_non_mapping_params(build
 
 
 # -----------------------------------------------------------------------------
-# Phase 3: direct ITFRS blockwise engine tests
+# Direct ITFRS blockwise engine tests
 # -----------------------------------------------------------------------------
 
 
@@ -955,7 +955,7 @@ def test_compute_itfrs_blockwise_rejects_length_mismatched_labels():
 
 
 # -----------------------------------------------------------------------------
-# Phase 4: direct VQRS blockwise engine tests
+# Direct VQRS blockwise engine tests
 # -----------------------------------------------------------------------------
 
 

@@ -338,7 +338,7 @@ Regardless of backend, public outputs remain NumPy arrays for compatibility
 with scientific Python and scikit-learn-style workflows. See
 [`cupy_info.md`](cupy_info.md),
 [`backend_execution_status.md`](backend_execution_status.md), and
-[`phase_5_owafrs_non_gpu_resident_decision.md`](phase_5_owafrs_non_gpu_resident_decision.md)
+[`owafrs_non_gpu_resident_decision.md`](owafrs_non_gpu_resident_decision.md)
 for the detailed backend contract and OWAFRS decision record.
 
 ## Recommended imports

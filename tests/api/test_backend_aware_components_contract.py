@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 1 contract tests for backend-aware component formulas."""
+"""Contract tests for backend-aware component formulas."""
 
 import numpy as np
 

@@ -152,12 +152,12 @@ and forwards them to `compute_approximations(...)`. The fitted result object
 contains execution metadata including `used_gpu_similarity_blocks` and
 `used_gpu_approximation_accumulators`. The latter is true for the experimental
 CuPy-resident blockwise ITFRS and VQRS accumulator paths. It remains false for
-OWAFRS by design after the Phase 5 non-scope decision, even when OWAFRS uses
+OWAFRS by design after the OWAFRS non-GPU-resident decision, even when OWAFRS uses
 CuPy similarity-block computation.
 
 ## Benchmark and execution-reporting contract
 
-Phase 6 adds a public-API benchmark harness at:
+FRsutils includes a public-API benchmark harness at:
 
 ```text
 benchmarks/benchmark_fuzzy_rough_execution.py
@@ -173,7 +173,7 @@ The benchmark outputs JSON and CSV rows containing execution metadata from
 `used_gpu_approximation_accumulators`. Downstream benchmark consumers should use
 these fields instead of inferring execution paths from command-line arguments.
 
-See [`phase_6_benchmark_suite.md`](phase_6_benchmark_suite.md) for the benchmark
+See [`benchmark_suite.md`](benchmark_suite.md) for the benchmark
 matrix and interpretation rules.
 
 ## Advanced public API
@@ -279,9 +279,8 @@ through advanced APIs that document support for them.
 
 ## Backend and blockwise status
 
-See [`backend_execution_status.md`](backend_execution_status.md) for the frozen
-implementation status, historical phase mapping, and the reduced next-phase
-roadmap.
+See [`backend_execution_status.md`](backend_execution_status.md) for the current
+implementation status and model-specific backend boundary.
 
 ## Versioning expectation
 
@@ -306,7 +305,7 @@ The repository should keep tests that verify:
 4. a precomputed similarity matrix can feed approximation helpers,
 5. downstream-style code can use only `FRsutils.api` without importing internals.
 
-## Phase 2 execution metadata
+## Execution metadata
 
 `FuzzyRoughApproximationResult` records public execution provenance in addition
 to approximation arrays:
@@ -317,6 +316,8 @@ to approximation arrays:
 - `used_blockwise`: whether blockwise approximation execution was used.
 - `used_gpu_similarity_blocks`: whether similarity blocks were computed through
   the optional CuPy backend.
+- `used_gpu_approximation_accumulators`: whether model-specific approximation
+  accumulators remained CuPy-resident until final NumPy public output conversion.
 
 `FuzzyRoughPositiveRegionScorer` accepts `engine`, `backend`, and `block_size`
 and forwards them to `compute_approximations(...)` while preserving sklearn-style
@@ -324,7 +325,7 @@ parameter compatibility.
 
 ## Release and paper claim boundary
 
-Phase 7 freezes the wording that should be used in releases and software-paper
+The release-hardening docs freeze the wording that should be used in releases and software-paper
 material. Public examples and downstream packages should continue to depend on
 `FRsutils.api`; private `FRsutils.core` modules are not part of the stable
 compatibility boundary.
@@ -343,5 +344,5 @@ See also:
 
 - `docs/paper_claims.md`
 - `docs/release_checklist.md`
-- `docs/phase_7_release_paper_hardening.md`
+- `docs/release_paper_hardening.md`
 

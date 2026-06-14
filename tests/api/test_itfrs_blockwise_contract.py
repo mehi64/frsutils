@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 2 contract tests for exact blockwise ITFRS approximation."""
+"""Contract tests for exact blockwise ITFRS approximation."""
 
 import numpy as np
 import pytest
@@ -107,8 +107,8 @@ def test_compute_positive_region_wrapper_supports_blockwise_itfrs():
     np.testing.assert_allclose(blockwise_scores, dense_scores, atol=1e-12)
 
 
-def test_phase5_blockwise_now_supports_owafrs_after_row_buffer_accumulator_was_added():
-    """Phase 5 replaces the old OWAFRS guardrail with exact blockwise support."""
+def test_blockwise_now_supports_owafrs_after_row_buffer_accumulator_was_added():
+    """Exact blockwise support replaces the old OWAFRS guardrail."""
     dense = compute_approximations(
         X_BLOCKWISE,
         Y_BLOCKWISE,
@@ -128,7 +128,7 @@ def test_phase5_blockwise_now_supports_owafrs_after_row_buffer_accumulator_was_a
     np.testing.assert_allclose(blockwise.positive_region, dense.positive_region, atol=1e-12)
 
 
-def test_phase2_blockwise_requires_x_not_precomputed_similarity_matrix():
+def test_blockwise_requires_x_not_precomputed_similarity_matrix():
     """Blockwise execution generates blocks from X and rejects precomputed matrices."""
     sim = build_similarity_matrix(X_BLOCKWISE, similarity="linear")
 

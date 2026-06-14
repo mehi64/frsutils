@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 4 contract tests for exact blockwise VQRS approximation."""
+"""Contract tests for exact blockwise VQRS approximation."""
 
 import sys
 import types

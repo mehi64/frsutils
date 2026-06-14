@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 1 public contract tests for similarity-engine construction."""
+"""Public contract tests for similarity-engine construction."""
 
 from __future__ import annotations
 

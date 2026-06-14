@@ -428,7 +428,7 @@ def compute_vqrs_blockwise(
         `sum(min(S_ij, same_label_ij))` and denominator `sum(S_ij) - 1` row by
         row, then applies the configured lower and upper fuzzy quantifiers. When
         the similarity engine resolves
-        backend='cupy' and exposes iter_backend_blocks(), this Phase 4 path keeps
+        backend='cupy' and exposes iter_backend_blocks(), the implementation keeps
         similarity blocks, minimum T-norm values, numerator/denominator sums, and
         fuzzy-quantifier application backend-resident until the final public NumPy
         conversion of lower, upper, and interim outputs. Boundary and positive

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 6 contract tests for optional CuPy similarity-block backend."""
+"""Contract tests for optional CuPy similarity-block backend."""
 
 import numpy as np
 import pytest

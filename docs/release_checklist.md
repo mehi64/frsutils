@@ -49,7 +49,7 @@ python -m pytest tests/models_tests -m slow -o addopts="" -q -rs
 Recommended commands:
 
 ```bash
-python -m pytest tests/api/test_cupy_backend_phase6_contract.py -q -rs
+python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
 python -m pytest tests/api/test_itfrs_blockwise_cupy_contract.py -q -rs
 python -m pytest tests/api/test_vqrs_blockwise_cupy_contract.py -q -rs
 python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
@@ -66,6 +66,8 @@ python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
 - [ ] `docs/cupy_info.md` and `docs/backend_execution_status.md` use conservative
       backend wording.
 - [ ] `docs/paper_claims.md` reflects the claims made in the JOSS paper.
+- [ ] README and docs relative links resolve to existing files.
+- [ ] User-facing documentation has no temporary milestone-based file names.
 - [ ] No documentation claims full GPU-native execution.
 - [ ] OWAFRS documentation does not claim GPU-resident approximation
       accumulators.
@@ -74,7 +76,8 @@ Recommended documentation smoke commands:
 
 ```bash
 python examples/public_api_quickstart.py
-python -m pytest tests/api/test_public_api_examples_smoke.py -q -rs
+python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
+python -m pytest tests/api/test_public_api_examples_smoke.py tests/examples/test_examples_contract.py -q -rs
 python -m pytest tests/api/test_public_api_downstream_contract.py -q -rs
 ```
 
@@ -88,7 +91,35 @@ See `docs/joss_metadata_check.md` for a detailed metadata checklist. At minimum:
 - [ ] `paper.md` exists and uses the same model/backend claims as the docs.
 - [ ] The package version is consistent across metadata and citation examples.
 
-## 6. Final validation commands
+
+## 6. JOSS paper checks
+
+- [ ] `paper.md` builds with the JOSS template.
+- [ ] `paper.bib` contains every citation key used in `paper.md`.
+- [ ] Author affiliation is correct.
+- [ ] The AI usage disclosure is accurate for the submitted version.
+- [ ] The paper does not overstate CuPy/GPU support.
+- [ ] The paper describes oversampling algorithms as downstream usage rather than
+      part of the FRsutils core package.
+
+Recommended local citation-key sanity check:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+import re
+paper = Path('paper.md').read_text(encoding='utf-8')
+bib = Path('paper.bib').read_text(encoding='utf-8')
+used = set(re.findall(r'@([A-Za-z0-9:_-]+)', paper))
+defined = set(re.findall(r'@\w+\{([^,]+),', bib))
+missing = sorted(used - defined)
+print('used:', sorted(used))
+print('missing:', missing)
+raise SystemExit(1 if missing else 0)
+PY
+```
+
+## 7. Final validation commands
 
 Focused release smoke:
 
@@ -104,3 +135,33 @@ python -m pytest -o addopts="" -q -rs
 
 If the full test suite is too slow for every local iteration, run it before
 release tagging and before JOSS submission.
+
+
+## 8. Submit package checks
+
+Before submitting to JOSS or tagging a release candidate:
+
+- [ ] Complete `docs/submit_readiness_report.md` with the final validation
+      environment and test outcome.
+- [ ] Confirm `git status --short` contains only intended source, docs, metadata,
+      example, and test changes.
+- [ ] Confirm no generated reports, local benchmark outputs, caches, or IDE
+      files are staged.
+- [ ] Confirm `paper.md`, `paper.bib`, `CITATION.cff`, `LICENSE`,
+      `pyproject.toml`, and `README.md` are included in the release candidate.
+- [ ] Confirm optional CuPy/GPU test skips, if any, are documented as optional
+      environment skips rather than failures.
+
+Recommended final status command:
+
+```bash
+git status --short
+```
+
+## 9. External submission and citation steps
+
+Before submitting or coordinating the FRSMOTE paper citation, follow
+`docs/joss_final_submission_checklist.md`. It records the author-only steps that
+cannot be completed by automated tests, including affiliation confirmation,
+release tagging, software DOI creation, JOSS submission, and the citation plan
+for papers that need to reference FRsutils before the JOSS article is accepted.

@@ -1,6 +1,6 @@
-# Phase 6 — Benchmark Suite
+# Benchmark suite
 
-Phase 6 adds a reproducible benchmark suite for the dense, blockwise, and
+This document describes the reproducible benchmark suite for the dense, blockwise, and
 optional CuPy execution paths exposed through the public `FRsutils.api` facade.
 It does **not** change runtime approximation behavior. The goal is to make
 performance and equivalence claims measurable instead of relying on informal
@@ -18,7 +18,7 @@ The benchmark script compares:
 |---|---|
 | `dense_numpy` | Historical dense NumPy full-matrix approximation path. |
 | `blockwise_numpy` | Exact blockwise NumPy approximation path. |
-| `blockwise_cupy` | Optional CuPy-backed blockwise path. For ITFRS/VQRS this may use GPU-resident approximation accumulators; for OWAFRS it remains non-GPU-resident by Phase 5 decision. |
+| `blockwise_cupy` | Optional CuPy-backed blockwise path. For ITFRS/VQRS this may use GPU-resident approximation accumulators; for OWAFRS it remains non-GPU-resident by the OWAFRS non-GPU-resident decision. |
 
 The script writes machine-readable JSON and CSV reports. These reports are the
 preferred source for later paper tables, plots, and release notes.
@@ -63,7 +63,7 @@ or GPU memory tooling.
 
 ## Expected interpretation
 
-Phase 6 supports these paper-safe comparisons:
+The benchmark suite supports these paper-safe comparisons:
 
 ```text
 dense NumPy
@@ -83,7 +83,7 @@ OWAFRS + blockwise_cupy:
     used_gpu_approximation_accumulators remains False
 ```
 
-This preserves the Phase 5 decision that OWAFRS does not become GPU-resident in
+This preserves the OWAFRS non-GPU-resident decision in
 the current release/paper cycle.
 
 ## Tests
@@ -91,7 +91,7 @@ the current release/paper cycle.
 The benchmark suite has lightweight contract tests:
 
 ```text
-tests/benchmarks/test_phase6_benchmark_suite_contract.py
+tests/benchmarks/test_benchmark_suite_contract.py
 ```
 
 The tests run tiny CPU-only benchmark cases, verify dense/blockwise numerical
@@ -99,6 +99,6 @@ equivalence, and confirm that JSON/CSV artifacts are generated.
 
 ## Boundary
 
-Phase 6 creates the benchmark harness, not final benchmark numbers. Final
+The benchmark suite provides the harness, not final benchmark numbers. Final
 numbers should be generated later on a stable target machine with the intended
 CPU/GPU environment, fixed package versions, and documented run settings.

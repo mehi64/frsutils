@@ -1,4 +1,4 @@
-<img title="" src="images/logo/logo.png" alt="FRsutils Logo" width="250">
+<img title="" src="logo/logo.png" alt="FRsutils Logo" width="250">
 
 # FRsutils
 
@@ -13,8 +13,13 @@ public `FRsutils.api` facade.
 
 # For Developers
 
-If you are a developer trying to extend FRsutils, please start here:
-[Development Guidelines](lessons_learned_and_trainings/For_Developers.md).
+If you are extending FRsutils, start with the public compatibility boundary in
+[`docs/public_api_contract.md`](docs/public_api_contract.md), then follow the
+release and documentation checks in
+[`docs/release_checklist.md`](docs/release_checklist.md),
+[`docs/documentation_smoke_check.md`](docs/documentation_smoke_check.md),
+[`docs/submit_readiness_report.md`](docs/submit_readiness_report.md), and
+[`docs/joss_final_submission_checklist.md`](docs/joss_final_submission_checklist.md).
 
 # Installation
 
@@ -52,28 +57,31 @@ Install these only when you need the related workflows:
 - `cupy-cuda12x` or another CUDA-compatible CuPy wheel for explicit
   `backend="cupy"` experiments
 
-## Oversampling package
+## Oversampling package boundary
 
-Install the standalone oversampling package when you need FRSMOTE or future
-fuzzy-rough oversamplers such as FRADASYN:
+FRsutils is the fuzzy-rough core package. Install the standalone `frsampling`
+package separately when you need FRSMOTE or future fuzzy-rough oversamplers such
+as FRADASYN. Downstream oversampling packages should import FRsutils through the
+public facade:
 
-```bash
-cd frsampling
-pip install -e .
+```python
+from FRsutils.api import compute_positive_region
 ```
 
-Use the new import path:
+Use the downstream package import path for oversamplers:
 
 ```python
 from frsampling import FRSMOTE
 ```
 
-No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import paths. Existing scripts must be migrated explicitly. See the `frsampling` repository migration guide for FRSMOTE-specific migration details.
+No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import
+paths. Existing scripts must be migrated explicitly in the downstream
+oversampling package.
 
-# Fuzzy-Rough set utilities [Under development]
+# Fuzzy-rough set utilities
 
-A basic Python library needed for fuzzy rough set calculations that are used in
-research, e.g.:
+FRsutils provides reusable fuzzy-rough set calculations used in research,
+including:
 
 - lower approximation
 - upper approximation
@@ -234,11 +242,11 @@ result = compute_approximations(
 similarity-block computation. For `model="itfrs"` and `model="vqrs"` with
 `engine="blockwise"`, approximation reductions/accumulators can also stay
 CuPy-resident until final public NumPy output conversion. OWAFRS deliberately remains on the conservative NumPy row-buffer path after the
-Phase 5 decision because exact OWA execution requires row-wise sorting and a
+OWAFRS non-GPU-resident decision because exact OWA execution requires row-wise sorting and a
 separate memory/sorting benchmark. Do not claim full GPU-native fuzzy-rough
 execution yet. See
 [`docs/backend_execution_status.md`](docs/backend_execution_status.md) and
-[`docs/phase_5_owafrs_non_gpu_resident_decision.md`](docs/phase_5_owafrs_non_gpu_resident_decision.md).
+[`docs/owafrs_non_gpu_resident_decision.md`](docs/owafrs_non_gpu_resident_decision.md).
 
 The returned result records execution provenance so benchmark scripts and
 downstream packages can verify which path was used:
@@ -257,7 +265,7 @@ The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`,
 
 ## Benchmark suite
 
-Phase 6 adds a reproducible benchmark harness for the public approximation API:
+FRsutils includes a reproducible benchmark harness for the public approximation API:
 
 ```bash
 python benchmarks/benchmark_fuzzy_rough_execution.py     --models itfrs,vqrs,owafrs     --sample-sizes 128,256,512     --n-features 8     --block-sizes 64,128     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy     --repeats 3     --output-json benchmark_results.json     --output-csv benchmark_results.csv
@@ -267,7 +275,7 @@ The suite compares dense NumPy, exact blockwise NumPy, and optional CuPy-backed
 blockwise execution. It records runtime, lightweight Python allocator peak
 memory, dense-reference numerical-equivalence errors, and public execution
 metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
-[`docs/phase_6_benchmark_suite.md`](docs/phase_6_benchmark_suite.md).
+[`docs/benchmark_suite.md`](docs/benchmark_suite.md).
 
 ## Release-ready examples and paper claim boundary
 
@@ -275,7 +283,7 @@ The repository includes small release-ready examples:
 
 ```bash
 python examples/public_api_quickstart.py
-python examples/phase7_benchmark_smoke.py --output-dir phase7_benchmark_smoke_output
+python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
 ```
 
 Use the wording in [`docs/paper_claims.md`](docs/paper_claims.md) when describing
@@ -383,7 +391,7 @@ for the complete validation command list.
 Run exhaustive slow model-combination tests separately when needed:
 
 ```bash
-python -m pytest tests/models_tests -m slow -q
+python -m pytest tests/models_tests -m slow -o addopts="" -q
 ```
 
 For the standalone oversampling package, run from the `frsampling` repository
@@ -405,7 +413,7 @@ For more information on test procedures, please refer to
 ## Maintenance notes
 
 - Exhaustive model-combination tests are marked as `slow`; run them explicitly
-  with `python -m pytest tests/models_tests -m slow -q`.
+  with `python -m pytest tests/models_tests -m slow -o addopts="" -q`.
 - VQRS is implemented and covered by the public API/blockwise/backend tests.
 - New feature work should be deferred until the release/paper cleanup checklist is
   complete.
@@ -413,24 +421,28 @@ For more information on test procedures, please refer to
 ## License
 
 This project is licensed under the BSD-3-Clause License. See the [LICENSE](./LICENSE)
-file for details.
+file for details. The package metadata, citation metadata, and Python source
+headers use the same `BSD-3-Clause` identifier.
 
 ## How to cite us in your research papers
 
-If you use this library in your research, please cite it as follows:
+If you use this library in your research, please cite the software metadata in
+[`CITATION.cff`](./CITATION.cff). After the JOSS paper is accepted, cite the
+JOSS paper DOI as the preferred citation.
 
 **APA**:
 
-> Mehran Amiri. (*2025*). *FRsutils* (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
+> Mehran Amiri. (*2026*). *FRsutils: Fuzzy-Rough Set Utilities for Python*
+> (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
 
 **BibTeX**:
 
 ```bibtex
-@software{Mehran_Amiri_FRsutils_2025,
+@software{Amiri_FRsutils_2026,
   author = {Amiri, Mehran},
-  title = {FRsutils},
+  title = {FRsutils: Fuzzy-Rough Set Utilities for Python},
   url = {https://github.com/mehi64/FRsutils},
   version = {0.0.3},
-  year = {2025}
+  year = {2026}
 }
 ```

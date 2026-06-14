@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 6 contract tests for the benchmark suite."""
+"""Contract tests for the benchmark suite."""
 
 import csv
 import json
@@ -10,7 +10,7 @@ from pathlib import Path
 from benchmarks.benchmark_fuzzy_rough_execution import run_benchmark_suite, write_csv_report, write_json_report
 
 
-def test_phase6_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
+def test_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
     """Tiny CPU-only benchmark matrix should produce JSON/CSV rows."""
     report = run_benchmark_suite(
         models=["itfrs"],
@@ -22,7 +22,7 @@ def test_phase6_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
         random_state=7,
     )
 
-    assert report["metadata"]["benchmark_phase"] == "phase_6"
+    assert report["metadata"]["benchmark_suite"] == "public_api_execution"
     assert len(report["results"]) == 2
     assert all(row["status"] == "success" for row in report["results"])
 
@@ -39,14 +39,14 @@ def test_phase6_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
     write_csv_report(report, csv_path)
 
     loaded = json.loads(json_path.read_text(encoding="utf-8"))
-    assert loaded["metadata"]["benchmark_phase"] == "phase_6"
+    assert loaded["metadata"]["benchmark_suite"] == "public_api_execution"
 
     with csv_path.open("r", encoding="utf-8", newline="") as file_obj:
         rows = list(csv.DictReader(file_obj))
     assert len(rows) == 2
 
 
-def test_phase6_benchmark_cli_smoke(tmp_path):
+def test_benchmark_cli_smoke(tmp_path):
     """CLI should run a tiny benchmark and write JSON/CSV outputs."""
     repo_root = Path(__file__).resolve().parents[2]
     script = repo_root / "benchmarks" / "benchmark_fuzzy_rough_execution.py"
@@ -81,6 +81,6 @@ def test_phase6_benchmark_cli_smoke(tmp_path):
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "Phase 6 benchmark complete" in completed.stdout
+    assert "FRsutils benchmark complete" in completed.stdout
     assert json_path.exists()
     assert csv_path.exists()

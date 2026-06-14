@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 4 integration tests for similarity engines in approximation APIs."""
+"""Integration tests for similarity engines in approximation APIs."""
 
 from __future__ import annotations
 

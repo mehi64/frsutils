@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 2 contract tests for downstream-oriented public builders."""
+"""Contract tests for downstream-oriented public builders."""
 
 import numpy as np
 import pytest

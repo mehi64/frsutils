@@ -1,6 +1,6 @@
-# Phase 3 - GPU-resident ITFRS blockwise accumulator
+# GPU-resident ITFRS blockwise accumulator
 
-Phase 3 implements the first approximation path that can keep fuzzy-rough work on
+This path implements the first approximation path that can keep fuzzy-rough work on
 the selected array backend beyond similarity-block construction.
 
 ## Scope
@@ -34,15 +34,15 @@ scikit-learn, imbalanced-learn, `frsampling`, and existing user code.
 result.used_gpu_approximation_accumulators
 ```
 
-For the Phase 3 path, this flag is `True` only for blockwise ITFRS with a CuPy
+For this path, this flag is `True` only for blockwise ITFRS with a CuPy
 backend. `used_gpu_similarity_blocks` remains a separate flag and can be `True`
 for other models because their similarity blocks may be computed through CuPy
 while their approximation accumulators remain NumPy-resident.
 
 ## Explicit non-scope
 
-Phase 3 did not make VQRS or OWAFRS approximation accumulators GPU-resident.
-VQRS is handled by Phase 4. OWAFRS still uses the existing conservative path:
+This ITFRS-focused path does not make VQRS or OWAFRS approximation accumulators GPU-resident.
+VQRS is handled by its own GPU-resident blockwise path. OWAFRS still uses the conservative path:
 
 ```text
 CuPy similarity block computation
@@ -65,7 +65,7 @@ contract.
 The new contract test is:
 
 ```text
-tests/api/test_itfrs_gpu_resident_phase3_contract.py
+tests/api/test_itfrs_gpu_resident_contract.py
 ```
 
 It uses a NumPy-backed fake CuPy module so normal CPU-only CI can verify the

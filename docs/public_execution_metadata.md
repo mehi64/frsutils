@@ -1,17 +1,15 @@
-# Phase 2 - Public Execution Metadata and Scorer Backend Parameters
+# Public execution metadata and scorer backend parameters
 
-Phase 2 stabilizes the public execution contract after the backend-aware
-component formulas introduced in Phase 1.
+This document describes the public execution metadata contract for dense and blockwise approximation results.
 
 ## Purpose
 
-`compute_approximations(...)` already accepts execution controls such as
-`engine`, `block_size`, and `backend`. Before this phase, these controls affected
-execution but were not visible in the returned `FuzzyRoughApproximationResult`.
-That made it harder for downstream packages, tests, benchmark scripts, and paper
-artifacts to prove which execution path produced a result.
+`compute_approximations(...)` accepts execution controls such as `engine`,
+`block_size`, and `backend`. These controls are recorded on the returned
+`FuzzyRoughApproximationResult` so downstream packages, tests, benchmark scripts,
+and paper artifacts can prove which execution path produced a result.
 
-Phase 2 adds explicit, stable result metadata:
+FRsutils exposes explicit, stable result metadata:
 
 | Field | Meaning |
 | --- | --- |
@@ -20,6 +18,7 @@ Phase 2 adds explicit, stable result metadata:
 | `block_size` | Positive integer for blockwise execution; `None` for dense execution. |
 | `used_blockwise` | Boolean flag for blockwise approximation execution. |
 | `used_gpu_similarity_blocks` | Boolean flag for CuPy-backed similarity-block computation. |
+| `used_gpu_approximation_accumulators` | Boolean flag for model-specific CuPy-resident approximation accumulators. |
 
 The fields are also included in `FuzzyRoughApproximationResult.as_dict()`.
 
@@ -52,5 +51,7 @@ for `engine="blockwise"`, where similarity blocks can use the optional CuPy
 backend. The result field `used_gpu_similarity_blocks` is the safe public flag
 for checking whether GPU similarity-block execution actually happened.
 
-Phase 2 does **not** make ITFRS/VQRS/OWAFRS accumulators GPU-resident. That is a
-later phase.
+For blockwise CuPy execution, ITFRS and VQRS may report
+`used_gpu_approximation_accumulators=True`. OWAFRS deliberately keeps this field
+`False` because exact OWA sorting and aggregation remain on the conservative
+NumPy row-buffer path.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 3 contract tests for GPU-resident ITFRS blockwise accumulators."""
+"""Contract tests for GPU-resident ITFRS blockwise accumulators."""
 
 import sys
 import types

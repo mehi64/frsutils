@@ -166,7 +166,7 @@ def build_similarity_components(
     """Build similarity and T-norm components from flat or nested config.
         
         This mirrors `FRsutils.core.similarities.build_similarity_matrix` component
-        resolution so Phase 1 engines remain equivalent to the existing dense path.
+        resolution so blockwise engines remain equivalent to the dense path.
         
         Parameters
         ----------
@@ -234,8 +234,8 @@ def _registered_component_name(registry_cls: Any, component: Any) -> str:
 def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backend: ArrayBackend):
     """Compute feature-level similarity on a backend array.
         
-        Phase 1 moved backend-specific formulas into the Similarity components, so
-        this helper now acts only as a small engine-to-component adapter.
+        Backend-specific formulas live in Similarity components, so this helper acts
+        only as a small engine-to-component adapter.
         
         Parameters
         ----------
@@ -270,8 +270,8 @@ def _compute_similarity_from_diff(diff: Any, similarity_func: Similarity, backen
 def _apply_tnorm_backend(a: Any, b: Any, tnorm: TNorm, backend: ArrayBackend):
     """Apply a T-norm component on backend arrays.
         
-        Phase 1 moved backend-specific T-norm formulas into the TNorm components, so
-        this helper now acts only as a small engine-to-component adapter.
+        Backend-specific T-norm formulas live in TNorm components, so this helper acts
+        only as a small engine-to-component adapter.
         
         Parameters
         ----------
@@ -481,8 +481,8 @@ class DenseSimilarityEngine(BaseSimilarityEngine):
     """Compatibility engine that materializes the existing dense matrix path.
     
     DenseSimilarityEngine intentionally delegates `to_dense()` to the current
-    `build_similarity_matrix` implementation so Phase 1 does not alter dense
-    behavior. Its `iter_blocks()` yields the full matrix as a single block.
+    `build_similarity_matrix` implementation so dense behavior remains the
+    reference path. Its `iter_blocks()` yields the full matrix as a single block.
     """
 
     engine_name = "dense"
@@ -519,11 +519,10 @@ class DenseSimilarityEngine(BaseSimilarityEngine):
 
 
 class BlockwiseSimilarityEngine(BaseSimilarityEngine):
-    """Exact blockwise similarity engine for future streaming approximations.
+    """Exact blockwise similarity engine for streaming-friendly approximations.
     
-    Phase 1 uses this engine only for equivalence tests and dense materialization.
-    Future phases can consume `iter_blocks()` directly in ITFRS/VQRS/OWAFRS
-    accumulators without allocating the full pairwise matrix.
+    The engine exposes `iter_blocks()` for ITFRS/VQRS/OWAFRS accumulators that
+    should avoid allocating the full pairwise matrix.
     
     Parameters
     ----------

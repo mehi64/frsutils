@@ -1,13 +1,13 @@
-# Phase 8 — Cleanup and Consistency Pass
+# Cleanup and consistency pass
 
-Phase 8 is a release-cleanup phase. It does **not** add a new fuzzy-rough
+This release-cleanup pass does **not** add a new fuzzy-rough
 feature or execution path.
 
 ## Changes
 
 - Fixed README links from removed `md_files/` paths to current `docs/` paths.
-- Removed stale README TODO text claiming VQRS still needs implementation.
-- Updated `docs/backend_execution_status.md` after Phase 7.
+- Removed stale README text claiming VQRS still needs implementation.
+- Updated `docs/backend_execution_status.md` after the release-hardening work.
 - Rewrote `docs/vqrs_info.md` to remove OWAFRS copy/paste headings and typos.
 - Updated old FRSMOTE example imports to use the standalone `frsampling` package.
 - Moved KEEL Audit WIP variants to `archive/keel_audit_wip/` outside the

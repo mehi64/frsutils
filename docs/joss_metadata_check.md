@@ -32,25 +32,33 @@ Check citation files and README citation text:
 
 - [ ] `CITATION.cff` exists or the README clearly explains how to cite the
       package.
-- [ ] Citation title is `FRsutils`.
+- [ ] Citation title is correct and consistent with README/package metadata.
 - [ ] Author metadata is correct.
 - [ ] Version matches `pyproject.toml` for a tagged release.
 - [ ] Repository URL is correct.
 - [ ] DOI is added after archival, if applicable.
 - [ ] JOSS DOI is added after acceptance, if applicable.
 
+
+## Current metadata alignment status
+
+For the current release-candidate metadata, the project uses `BSD-3-Clause`
+consistently across the root `LICENSE` file, `pyproject.toml`, `CITATION.cff`,
+README license text, and Python SPDX headers. Keep this section current if the
+license or package version changes before submission.
+
 ## JOSS paper metadata
 
 Check `paper.md` and bibliography files:
 
-- [ ] `paper.md` exists at the expected JOSS path.
+- [x] `paper.md` exists at the repository root.
 - [ ] Author affiliations are correct.
-- [ ] The statement of need focuses on fuzzy-rough set utilities.
-- [ ] The paper describes `FRsutils.api` as the canonical user-facing API.
-- [ ] The paper does not describe internal modules as stable public API.
-- [ ] Backend/CuPy claims match `docs/paper_claims.md`.
-- [ ] OWAFRS is not described as having GPU-resident approximation accumulators.
-- [ ] Oversampling algorithms are described as downstream usage, not as part of
+- [x] The statement of need focuses on fuzzy-rough set utilities.
+- [x] The paper describes `FRsutils.api` as the canonical user-facing API.
+- [x] The paper does not describe internal modules as stable public API.
+- [x] Backend/CuPy claims match `docs/paper_claims.md`.
+- [x] OWAFRS is not described as having GPU-resident approximation accumulators.
+- [x] Oversampling algorithms are described as downstream usage, not as part of
       the FRsutils core package, unless the project scope changes.
 
 ## Documentation links
@@ -66,7 +74,7 @@ Check links from README and docs:
 
 ## Test evidence
 
-Before submission, record the commands and outcome for:
+Before submission, record the commands and outcome for the release candidate. Record the final outcome in `docs/submit_readiness_report.md`.
 
 ```bash
 python -m pytest tests/api tests/core_tests/test_approximation_engines.py -q -rs
@@ -75,3 +83,11 @@ python -m pytest -o addopts="" -q -rs
 
 If real CuPy/CUDA tests are skipped, note that optional GPU tests were skipped
 because CuPy/CUDA was unavailable in the tested environment.
+
+
+## Paper draft status
+
+The initial JOSS paper draft now exists as `paper.md`, with references in
+`paper.bib`. Before submission, manually confirm the author affiliation and any
+funding acknowledgement. If a DOI archive is created before review, add it to the
+README, `CITATION.cff`, and the JOSS submission form.

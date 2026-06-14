@@ -35,6 +35,6 @@ Do not claim:
 
 ## Future work
 
-A future performance-focused phase can revisit GPU-resident OWAFRS if benchmarks
+Future performance-focused work can revisit GPU-resident OWAFRS if benchmarks
 show that OWAFRS aggregation is a practical bottleneck. That work should include
 benchmarks, memory tests, and dense/blockwise/GPU numerical-equivalence tests.

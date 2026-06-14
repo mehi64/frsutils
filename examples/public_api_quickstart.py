@@ -74,11 +74,6 @@ def run_approximation_example() -> np.ndarray:
     -------
     scores : ndarray of shape (6,)
         Positive-region scores from blockwise ITFRS execution.
-
-    Notes
-    -----
-    The example also checks dense/blockwise equivalence before returning the
-    canonical blockwise scores used by smoke tests.
     """
     X, y = make_demo_dataset()
 

@@ -1,6 +1,6 @@
-# Phase 4 - GPU-resident VQRS blockwise accumulator
+# GPU-resident VQRS blockwise accumulator
 
-Phase 4 extends the backend-resident approximation boundary from ITFRS to VQRS.
+This path extends the backend-resident approximation boundary from ITFRS to VQRS.
 It keeps the public API unchanged while allowing the VQRS blockwise accumulator
 path to stay on the selected backend when `backend="cupy"` is requested.
 
@@ -38,13 +38,13 @@ The existing metadata flag is reused:
 result.used_gpu_approximation_accumulators
 ```
 
-For Phase 4, this flag is `True` for blockwise VQRS with a CuPy backend. It is
-also `True` for the Phase 3 blockwise ITFRS CuPy path. It remains `False` for
+For this path, this flag is `True` for blockwise VQRS with a CuPy backend. It is
+also `True` for the blockwise ITFRS CuPy path. It remains `False` for
 OWAFRS because exact OWAFRS still uses a conservative NumPy row-buffer path.
 
 ## Explicit non-scope
 
-Phase 4 does not make OWAFRS approximation accumulators GPU-resident. OWAFRS
+This VQRS path does not make OWAFRS approximation accumulators GPU-resident. OWAFRS
 requires row-wise sorting and OWA-weighted aggregation, which has different
 memory/performance tradeoffs from ITFRS min/max reductions and VQRS sums.
 
@@ -62,8 +62,8 @@ CuPy similarity-block computation
 The main contract tests are:
 
 ```text
-tests/api/test_vqrs_blockwise_phase4_contract.py
-tests/api/test_itfrs_gpu_resident_phase3_contract.py
+tests/api/test_vqrs_blockwise_contract.py
+tests/api/test_itfrs_gpu_resident_contract.py
 ```
 
 The VQRS GPU-resident contract uses a NumPy-backed fake CuPy module so CPU-only
@@ -71,9 +71,9 @@ CI can verify the execution metadata and dense/blockwise numerical equivalence.
 Optional real CuPy/CUDA tests still cover the installed-CuPy path when available.
 
 
-## Phase 5 follow-up decision
+## OWAFRS follow-up decision
 
-Phase 5 finalizes the non-scope decision for OWAFRS GPU-resident accumulators.
+The current release finalizes the non-scope decision for OWAFRS GPU-resident accumulators.
 OWAFRS remains on the conservative NumPy row-buffer path for the current
 release/paper cycle. Future GPU-resident OWAFRS work would require a separate
 benchmark/spike focused on row-wise sorting, OWA-weighted aggregation, memory

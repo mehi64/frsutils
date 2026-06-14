@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 0 baseline tests for the current dense similarity-matrix contract."""
+"""Baseline tests for the dense similarity-matrix contract."""
 
 import numpy as np
 

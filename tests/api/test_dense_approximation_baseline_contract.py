@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 0 baseline tests for dense fuzzy-rough approximation outputs."""
+"""Baseline tests for dense fuzzy-rough approximation outputs."""
 
 import numpy as np
 import pytest
@@ -42,7 +42,7 @@ EXPECTED_BY_MODEL = {
 
 @pytest.mark.parametrize("model_name", ["itfrs", "vqrs", "owafrs"])
 def test_dense_approximation_baseline_exact_values(model_name):
-    """Public dense approximation output stays fixed for the small Phase 0 fixture."""
+    """Public dense approximation output stays fixed for the small dense fixture."""
     result = compute_approximations(
         X_BASELINE,
         Y_BASELINE,

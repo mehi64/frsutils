@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 2 contract tests for public execution metadata and scorer engine params."""
+"""Contract tests for public execution metadata and scorer engine params."""
 
 import numpy as np
 from sklearn.base import clone

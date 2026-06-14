@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 6 benchmark suite for dense/blockwise/GPU fuzzy-rough execution.
+"""Benchmark suite for dense/blockwise/GPU fuzzy-rough execution.
 
 This module supports performance measurement and is not part of the stable public API.
 """
@@ -492,7 +492,7 @@ def run_benchmark_suite(
     repeats: int,
     random_state: int,
 ) -> Dict[str, Any]:
-    """Execute the Phase 6 benchmark matrix.
+    """Execute the benchmark matrix.
         
         Parameters
         ----------
@@ -557,7 +557,7 @@ def run_benchmark_suite(
 
     return {
         "metadata": {
-            "benchmark_phase": "phase_6",
+            "benchmark_suite": "public_api_execution",
             "description": "Dense/blockwise/GPU execution benchmark suite for FRsutils fuzzy-rough approximations.",
             "python_version": platform.python_version(),
             "platform": platform.platform(),
@@ -648,7 +648,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
             Configured argparse parser.
         
     """
-    parser = argparse.ArgumentParser(description="Run FRsutils Phase 6 execution benchmarks.")
+    parser = argparse.ArgumentParser(description="Run FRsutils execution benchmarks.")
     parser.add_argument("--models", default="itfrs,vqrs,owafrs", help="Comma-separated model aliases.")
     parser.add_argument("--sample-sizes", default="128,256", help="Comma-separated positive sample sizes.")
     parser.add_argument("--n-features", type=int, default=8, help="Number of synthetic numeric features.")
@@ -706,7 +706,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     failed_count = sum(1 for row in report["results"] if row["status"] == "failed")
 
     print(
-        "FRsutils Phase 6 benchmark complete: "
+        "FRsutils benchmark complete: "
         f"{success_count} success, {skipped_count} skipped, {failed_count} failed."
     )
     if args.output_json is not None:

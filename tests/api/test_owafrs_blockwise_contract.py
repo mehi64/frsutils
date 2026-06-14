@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Phase 5 contract tests for exact blockwise OWAFRS approximation."""
+"""Contract tests for exact blockwise OWAFRS approximation."""
 
 import numpy as np
 import pytest

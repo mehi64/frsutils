@@ -1,6 +1,6 @@
-# Phase 3: Positive-region scorer API
+# Positive-region scorer API
 
-Phase 3 adds `FuzzyRoughPositiveRegionScorer` to the public `FRsutils.api` facade.
+FRsutils exposes `FuzzyRoughPositiveRegionScorer` to the public `FRsutils.api` facade.
 The scorer is intended for users and downstream libraries that want a reusable
 object-oriented API for fuzzy-rough positive-region scores.
 

@@ -128,7 +128,7 @@ def build_array_backend(backend: str = "numpy") -> ArrayBackend:
     """Resolve a supported array backend alias.
         
         NumPy and `auto` resolve to NumPy to preserve the stable CPU behavior from
-        earlier phases. CuPy is opt-in through `backend="cupy"` or `backend="cuda"`.
+        the dense NumPy reference behavior. CuPy is opt-in through `backend="cupy"` or `backend="cuda"`.
         
         Parameters
         ----------

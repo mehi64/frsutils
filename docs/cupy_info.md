@@ -38,9 +38,9 @@ row-buffer path. Do not describe OWAFRS as fully GPU-native.
 Regardless of backend, FRsutils public approximation results expose NumPy arrays:
 
 ```python
-result.lower_approximation
-result.upper_approximation
-result.boundary_region
+result.lower
+result.upper
+result.boundary
 result.positive_region
 ```
 
@@ -76,7 +76,7 @@ Safe wording for documentation, benchmark reports, and the JOSS paper:
 Run the backend contract tests with:
 
 ```bash
-python -m pytest tests/api/test_cupy_backend_phase6_contract.py -q -rs
+python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
 ```
 
 If CuPy or CUDA is not installed, real-CuPy tests should be skipped. Fake-CuPy
