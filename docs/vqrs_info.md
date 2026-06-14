@@ -50,3 +50,5 @@ VQRS supports:
 - optional CuPy similarity-block execution,
 - experimental GPU-resident blockwise accumulator execution for the VQRS
   approximation path, with final public output converted back to NumPy arrays.
+  The public boundary and positive-region arrays are derived from the returned
+  NumPy lower and upper approximation arrays.

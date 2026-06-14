@@ -2,8 +2,9 @@
 """Exact approximation engines for fuzzy-rough computations.
 
 This module contains dense-compatible blockwise approximation routines. The
-ITFRS and VQRS blockwise paths can use backend-resident accumulators when the
-similarity engine is configured with an optional CuPy backend.
+ITFRS and VQRS blockwise paths are the scalable backend-aware counterparts to
+their dense NumPy reference models and can use backend-resident accumulators
+when the similarity engine is configured with an optional CuPy backend.
 """
 
 from __future__ import annotations
@@ -14,12 +15,12 @@ from typing import Any, Mapping, Optional, Tuple
 import numpy as np
 
 from FRsutils.core.backends import is_cupy_backend
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from FRsutils.core.implicators import Implicator
 from FRsutils.core.owa_weights import OWAWeights
 from FRsutils.core.similarity_engine import BaseSimilarityEngine
 from FRsutils.core.tnorms import TNorm
 from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
+from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
 from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
@@ -62,9 +63,9 @@ class VQRSBlockwiseApproximation:
     upper : object
         Upper approximation values after the upper fuzzy quantifier.
     boundary : object
-        Boundary values computed as upper - lower.
+        Boundary values computed from the public NumPy upper/lower outputs.
     positive_region : object
-        Positive-region values, identical to lower by the base model contract.
+        Positive-region values copied from the public NumPy lower output.
     interim : object
         Raw VQRS ratio values before fuzzy quantifier application.
     execution_backend : object
@@ -195,46 +196,6 @@ def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type
     if not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
     return config if _is_nested_frs_config(config) else normalize_flat_config_to_nested(dict(config))
-
-
-def build_vqrs_components_from_config(config: Optional[Mapping[str, Any]]) -> Tuple[FuzzyQuantifier, FuzzyQuantifier, TNorm]:
-    """Build VQRS fuzzy quantifiers and fixed minimum T-norm from config.
-        
-        Dense VQRS currently uses a minimum T-norm internally. The blockwise path
-        mirrors that behavior exactly and resolves only the lower/upper fuzzy
-        quantifiers from the public flat or nested FRsutils config.
-        
-        Parameters
-        ----------
-        config : Optional[Mapping[str, Any]]
-            Optional flat or nested FRsutils config mapping.
-        
-        Returns
-        -------
-        Tuple[FuzzyQuantifier, FuzzyQuantifier, TNorm]
-            Tuple `(lb_fuzzy_quantifier, ub_fuzzy_quantifier, tnorm)`.
-        
-        Raises
-        ------
-        TypeError
-            If config sections cannot be resolved.
-        
-    """
-    nested = _as_nested_config(config, default_model_type="vqrs")
-    fr_cfg = nested.get("fr_model", {}) if isinstance(nested, Mapping) else {}
-    if not isinstance(fr_cfg, Mapping):
-        raise TypeError("nested config section 'fr_model' must be a mapping.")
-
-    lb_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("lb_fuzzy_quantifier"))
-    ub_fuzzy_quantifier = FuzzyQuantifier.create_from_spec(fr_cfg.get("ub_fuzzy_quantifier"))
-
-    if lb_fuzzy_quantifier is None:
-        lb_fuzzy_quantifier = FuzzyQuantifier.create("linear", alpha=0.1, beta=0.6)
-    if ub_fuzzy_quantifier is None:
-        ub_fuzzy_quantifier = FuzzyQuantifier.create("linear", alpha=0.1, beta=0.6)
-
-    tnorm = TNorm.create("minimum")
-    return lb_fuzzy_quantifier, ub_fuzzy_quantifier, tnorm
 
 
 def build_owafrs_components_from_config(
@@ -500,15 +461,17 @@ def compute_vqrs_blockwise(
 ) -> VQRSBlockwiseApproximation:
     """Compute exact VQRS approximations from similarity blocks.
         
-        This function is mathematically equivalent to the dense VQRS implementation:
-        it accumulates the same numerator `sum(min(S_ij, same_label_ij))` and
-        denominator `sum(S_ij) - 1` row by row, then applies the configured lower
-        and upper fuzzy quantifiers. When the similarity engine resolves
+        This function is the public scalable counterpart to the dense VQRS
+        reference model: it accumulates the same numerator
+        `sum(min(S_ij, same_label_ij))` and denominator `sum(S_ij) - 1` row by
+        row, then applies the configured lower and upper fuzzy quantifiers. When
+        the similarity engine resolves
         backend='cupy' and exposes iter_backend_blocks(), this Phase 4 path keeps
         similarity blocks, minimum T-norm values, numerator/denominator sums, and
         fuzzy-quantifier application backend-resident until the final public NumPy
-        conversion. It avoids storing the full n x n matrix in either CPU or GPU
-        memory.
+        conversion of lower, upper, and interim outputs. Boundary and positive
+        region outputs are derived from those public NumPy arrays. The function
+        avoids storing the full n x n matrix in either CPU or GPU memory.
         
         Parameters
         ----------
@@ -580,21 +543,17 @@ def compute_vqrs_blockwise(
 
     lower_acc = lb_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=lb_fuzzy_quantifier.validate_inputs)
     upper_acc = ub_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=ub_fuzzy_quantifier.validate_inputs)
-    boundary_acc = upper_acc - lower_acc
-    positive_region_acc = lower_acc.copy()
-
     if backend is not None:
         lower_out = backend.to_numpy(lower_acc)
         upper_out = backend.to_numpy(upper_acc)
-        boundary_out = backend.to_numpy(boundary_acc)
-        positive_region_out = backend.to_numpy(positive_region_acc)
         interim_out = backend.to_numpy(interim_acc)
     else:
         lower_out = np.asarray(lower_acc)
         upper_out = np.asarray(upper_acc)
-        boundary_out = np.asarray(boundary_acc)
-        positive_region_out = np.asarray(positive_region_acc)
         interim_out = np.asarray(interim_acc)
+
+    boundary_out = upper_out - lower_out
+    positive_region_out = lower_out.copy()
 
     return VQRSBlockwiseApproximation(
         lower=lower_out,

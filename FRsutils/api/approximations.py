@@ -403,11 +403,12 @@ def compute_approximations(
 ) -> FuzzyRoughApproximationResult:
     """Compute fuzzy-rough lower, upper, boundary, and positive-region values.
 
-        Dense execution uses the direct model path with a materialized similarity
-        matrix. Blockwise execution computes similarity blocks and model
-        reductions through the approximation-engine layer. Optional CuPy support
-        is internal to blockwise execution; returned public arrays are NumPy
-        arrays for downstream scientific Python compatibility.
+        Dense execution uses direct model classes with materialized similarity
+        matrices. For VQRS, that direct class is the dense NumPy reference path.
+        Blockwise execution computes similarity blocks and model reductions
+        through the approximation-engine layer. Optional CuPy support is internal
+        to blockwise execution; returned public arrays are NumPy arrays for
+        downstream scientific Python compatibility.
 
         Parameters
         ----------
