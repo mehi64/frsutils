@@ -9,7 +9,7 @@ This document describes the public execution metadata contract for dense and blo
 `FuzzyRoughApproximationResult` so downstream packages, tests, benchmark scripts,
 and paper artifacts can prove which execution path produced a result.
 
-FRsutils exposes explicit, stable result metadata:
+frsutils exposes explicit, stable result metadata:
 
 | Field | Meaning |
 | --- | --- |
@@ -27,7 +27,7 @@ The fields are also included in `FuzzyRoughApproximationResult.as_dict()`.
 `FuzzyRoughPositiveRegionScorer` now exposes the same execution controls:
 
 ```python
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import FuzzyRoughPositiveRegionScorer
 
 scorer = FuzzyRoughPositiveRegionScorer(
     model="itfrs",

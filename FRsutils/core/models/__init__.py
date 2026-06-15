@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Fuzzy-rough model implementations exposed by FRsutils."""
+"""Fuzzy-rough model implementations exposed by frsutils."""
 
 from .itfrs import ITFRS
 from .owafrs import OWAFRS

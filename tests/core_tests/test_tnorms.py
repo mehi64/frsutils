@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from FRsutils.core.tnorms import TNorm
+from frsutils.core.tnorms import TNorm
 from tests import synthetic_data_store as ds
 
 

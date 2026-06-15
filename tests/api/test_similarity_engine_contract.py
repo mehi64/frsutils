@@ -8,16 +8,16 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from FRsutils.api import (
+from frsutils import (
     BlockwiseSimilarityEngine,
     DenseSimilarityEngine,
     build_similarity_engine,
     build_similarity_matrix,
     normalize_flat_config_to_nested,
 )
-from FRsutils.core.similarity_engine import calculate_similarity_block
-from FRsutils.core.similarities import Similarity
-from FRsutils.core.tnorms import TNorm
+from frsutils.core.similarity_engine import calculate_similarity_block
+from frsutils.core.similarities import Similarity
+from frsutils.core.tnorms import TNorm
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
 
 

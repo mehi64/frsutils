@@ -3,7 +3,7 @@
 
 import numpy as np
 import pytest
-from FRsutils.core.owa_weights import (
+from frsutils.core.owa_weights import (
     ExponentialOWAWeights,
     HarmonicOWAWeights,
     LinearOWAWeights,

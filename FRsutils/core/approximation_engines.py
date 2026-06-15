@@ -16,12 +16,12 @@ from typing import Any, Mapping, Optional, Tuple
 
 import numpy as np
 
-from FRsutils.core.backends import is_cupy_backend
-from FRsutils.core.similarity_engine import BaseSimilarityEngine
-from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
-from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
-from FRsutils.core.models.owafrs_components import build_owafrs_components_from_config
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.backends import is_cupy_backend
+from frsutils.core.similarity_engine import BaseSimilarityEngine
+from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
+from frsutils.core.models.vqrs_components import build_vqrs_components_from_config
+from frsutils.core.models.owafrs_components import build_owafrs_components_from_config
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 @dataclass(frozen=True)
@@ -111,7 +111,7 @@ class OWAFRSBlockwiseApproximation:
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config already looks like FRsutils nested config.
+    """Return True when config already looks like frsutils nested config.
         
         Parameters
         ----------
@@ -157,7 +157,7 @@ def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
 
 
 def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type: str = "itfrs") -> Mapping[str, Any]:
-    """Normalize a flat or nested config into nested FRsutils form.
+    """Normalize a flat or nested config into nested frsutils form.
         
         Parameters
         ----------
@@ -169,7 +169,7 @@ def _as_nested_config(config: Optional[Mapping[str, Any]], *, default_model_type
         Returns
         -------
         Mapping[str, Any]
-            Nested FRsutils config mapping.
+            Nested frsutils config mapping.
         
         Raises
         ------

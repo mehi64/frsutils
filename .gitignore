@@ -7,7 +7,7 @@ build/
 *.tmp
 build/
 dist/
-FRsutils.egg-info/
+frsutils.egg-info/
 ~$ta_calculations.docx
 *.zip
 *.csv

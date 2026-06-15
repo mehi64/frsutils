@@ -1,10 +1,10 @@
 # Fuzzy Similarities in Fuzzy Logic
 
-This document provides a structured overview of fuzzy similarity functions as implemented in the FRsutils framework. These functions help quantify the degree of resemblance between instances in normalized feature spaces.
+This document provides a structured overview of fuzzy similarity functions as implemented in the frsutils framework. These functions help quantify the degree of resemblance between instances in normalized feature spaces.
 
 ## 1. Similarity Functions Overview and Properties
 
-Fuzzy similarity functions are used to evaluate how similar two fuzzy values or vectors are. In the FRsutils framework, a similarity function `sim(x, y)` is used together with a T-norm `T(a, b)` to aggregate similarities feature-wise.
+Fuzzy similarity functions are used to evaluate how similar two fuzzy values or vectors are. In the frsutils framework, a similarity function `sim(x, y)` is used together with a T-norm `T(a, b)` to aggregate similarities feature-wise.
 
 **Expected properties of similarity functions**:
 
@@ -33,14 +33,14 @@ Fuzzy similarity functions are used to evaluate how similar two fuzzy values or 
 
 ## 4. References
 
-1. **FRsutils Core Source** — See implementation in `similarities.py`.
+1. **frsutils Core Source** — See implementation in `similarities.py`.
 
 ---
 
 ## 5. Example Usage
 
 ```python
-from FRsutils.core.similarities import build_similarity_matrix
+from frsutils.core.similarities import build_similarity_matrix
 
 X = np.array([[0.1, 0.2], [0.2, 0.1]])
 

@@ -6,10 +6,10 @@ import types
 
 import numpy as np
 
-from FRsutils.api import build_similarity_matrix, compute_approximations
-from FRsutils.core.models.itfrs import ITFRS
-from FRsutils.core.tnorms import MinTNorm
-from FRsutils.core.implicators import LukasiewiczImplicator
+from frsutils import build_similarity_matrix, compute_approximations
+from frsutils.core.models.itfrs import ITFRS
+from frsutils.core.tnorms import MinTNorm
+from frsutils.core.implicators import LukasiewiczImplicator
 
 
 class _FakeCupy(types.SimpleNamespace):

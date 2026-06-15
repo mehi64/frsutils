@@ -1,7 +1,7 @@
 # Benchmark suite
 
 This document describes the reproducible benchmark suite for the dense, blockwise, and
-optional CuPy execution paths exposed through the public `FRsutils.api` facade.
+optional CuPy execution paths exposed through the public `frsutils` namespace.
 It does **not** change runtime approximation behavior. The goal is to make
 performance and equivalence claims measurable instead of relying on informal
 manual timing.

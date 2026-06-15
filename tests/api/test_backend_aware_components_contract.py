@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
-from FRsutils.core.implicators import Implicator
-from FRsutils.core.similarities import Similarity
-from FRsutils.core.similarity_engine import calculate_similarity_block
-from FRsutils.core.tnorms import TNorm
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from frsutils.core.implicators import Implicator
+from frsutils.core.similarities import Similarity
+from frsutils.core.similarity_engine import calculate_similarity_block
+from frsutils.core.tnorms import TNorm
 
 
 def test_similarity_components_expose_backend_formula_equivalent_to_numpy_call():

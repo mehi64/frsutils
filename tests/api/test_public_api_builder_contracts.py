@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from FRsutils.api import (
+from frsutils import (
     FuzzyRoughModel,
     build_fuzzy_rough_model,
     build_similarity_matrix,
@@ -13,10 +13,10 @@ from FRsutils.api import (
     normalize_flat_config_to_nested,
 )
 
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
-from FRsutils.core.implicators import Implicator
-from FRsutils.core.owa_weights import OWAWeights
-from FRsutils.core.tnorms import TNorm
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from frsutils.core.implicators import Implicator
+from frsutils.core.owa_weights import OWAWeights
+from frsutils.core.tnorms import TNorm
 
 
 X_SMALL = np.array(

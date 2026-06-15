@@ -8,7 +8,7 @@ import numbers
 
 import numpy as np
 from abc import abstractmethod
-from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
 
 
 class OWAWeights(RegistryFactoryMixin):

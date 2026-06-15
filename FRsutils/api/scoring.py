@@ -13,13 +13,13 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
-from FRsutils.api.approximations import compute_approximations
-from FRsutils.api.results import FuzzyRoughApproximationResult
+from .approximations import compute_approximations
+from .results import FuzzyRoughApproximationResult
 
 class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     """Estimate fuzzy-rough positive-region scores for fitted samples.
 
-    The scorer wraps :func:`FRsutils.api.compute_approximations` and stores the
+    The scorer wraps :func:`frsutils.compute_approximations` and stores the
     resulting lower, upper, boundary, and positive-region arrays as fitted
     attributes. It follows scikit-learn estimator conventions for cloning,
     ``get_params``, and ``set_params``.
@@ -34,7 +34,7 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
         Optional precomputed similarity matrix.
     config : Mapping or None, default=None
-        Optional flat or nested FRsutils configuration.
+        Optional flat or nested frsutils configuration.
     engine : {"dense", "blockwise"}, default="dense"
         Approximation execution engine.
     block_size : int, default=1024

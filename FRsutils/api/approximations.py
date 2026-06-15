@@ -13,10 +13,10 @@ from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
-from FRsutils.api.models import build_fuzzy_rough_model
-from FRsutils.api.results import FuzzyRoughApproximationResult
-from FRsutils.api.similarity import build_similarity_engine, build_similarity_matrix
-from FRsutils.core.approximation_engines import (
+from .models import build_fuzzy_rough_model
+from .results import FuzzyRoughApproximationResult
+from .similarity import build_similarity_engine, build_similarity_matrix
+from frsutils.core.approximation_engines import (
     compute_itfrs_blockwise,
     compute_owafrs_blockwise,
     compute_vqrs_blockwise,
@@ -125,7 +125,7 @@ def _as_validated_similarity_matrix(
     return sim
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config looks like FRsutils internal nested config.
+    """Return True when config looks like frsutils internal nested config.
 
     Parameters
     ----------
@@ -490,7 +490,7 @@ def compute_approximations(
     similarity_matrix : Optional[np.ndarray]
         Optional precomputed pairwise similarity matrix.
     config : Optional[Mapping[str, Any]]
-        Optional flat or nested FRsutils config mapping.
+        Optional flat or nested frsutils config mapping.
     return_similarity_matrix : bool
         If True, include the matrix in the result object.
     engine : str

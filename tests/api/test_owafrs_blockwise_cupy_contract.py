@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
 
 

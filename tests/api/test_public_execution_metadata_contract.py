@@ -4,7 +4,7 @@
 import numpy as np
 from sklearn.base import clone
 
-from FRsutils.api import FuzzyRoughPositiveRegionScorer, compute_approximations
+from frsutils import FuzzyRoughPositiveRegionScorer, compute_approximations
 
 
 X_META = np.array(

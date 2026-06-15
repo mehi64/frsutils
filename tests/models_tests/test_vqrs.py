@@ -3,10 +3,10 @@
 
 import pytest
 import numpy as np
-from FRsutils.core.models.vqrs import VQRS
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.core.models.vqrs import VQRS
+from frsutils.utils.logger.logger_util import get_logger
 from tests import synthetic_data_store as ds
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier, LinearFuzzyQuantifier, QuadraticFuzzyQuantifier
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier, LinearFuzzyQuantifier, QuadraticFuzzyQuantifier
 
 logger = get_logger("test")
 

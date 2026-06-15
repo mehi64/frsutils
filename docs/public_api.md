@@ -1,12 +1,12 @@
-# FRsutils public API
+# frsutils public API
 
-FRsutils exposes its stable user-facing API through `FRsutils.api`. Downstream code, examples, notebooks, and documentation should import from this module instead of importing directly from internal `FRsutils.core` modules.
+frsutils exposes its stable user-facing API through the package root, `frsutils`. Downstream code, examples, notebooks, and documentation should import from this namespace instead of importing directly from internal `frsutils.core` modules.
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 ```
 
-The package top level, `FRsutils`, is intentionally kept compact. This avoids turning internal implementation details into public API by accident.
+The package root, `frsutils`, exposes the intended stable public objects while keeping internal implementation details out of the public contract.
 
 ## Main capabilities
 
@@ -31,7 +31,7 @@ Supported fuzzy-rough model aliases are:
 
 ```python
 import numpy as np
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 X = np.array(
     [
@@ -63,7 +63,7 @@ For a runnable example, see `examples/public_api_quickstart.py`.
 `compute_approximations` is the main functional entry point.
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 result = compute_approximations(
     X,
@@ -107,7 +107,7 @@ result = compute_approximations(
 A precomputed similarity matrix can be supplied in dense mode:
 
 ```python
-from FRsutils.api import build_similarity_matrix, compute_approximations
+from frsutils import build_similarity_matrix, compute_approximations
 
 S = build_similarity_matrix(X, similarity="linear")
 result = compute_approximations(
@@ -156,7 +156,7 @@ S = result.similarity_matrix
 Wrapper functions are available when only one output is needed:
 
 ```python
-from FRsutils.api import (
+from frsutils import (
     compute_lower_approximation,
     compute_upper_approximation,
     compute_boundary_region,
@@ -198,7 +198,7 @@ Important metadata fields include:
 Use `build_similarity_matrix` for ordinary dense pairwise matrices:
 
 ```python
-from FRsutils.api import build_similarity_matrix
+from frsutils import build_similarity_matrix
 
 S = build_similarity_matrix(X, similarity="linear")
 ```
@@ -206,7 +206,7 @@ S = build_similarity_matrix(X, similarity="linear")
 Use `build_similarity_engine` when blockwise iteration is needed:
 
 ```python
-from FRsutils.api import build_similarity_engine
+from frsutils import build_similarity_engine
 
 engine = build_similarity_engine(
     X,
@@ -224,7 +224,7 @@ for block in engine.iter_blocks():
 `build_fuzzy_rough_model` constructs dense model objects from a precomputed similarity matrix and labels.
 
 ```python
-from FRsutils.api import build_fuzzy_rough_model, build_similarity_matrix
+from frsutils import build_fuzzy_rough_model, build_similarity_matrix
 
 S = build_similarity_matrix(X, similarity="linear")
 model = build_fuzzy_rough_model(
@@ -244,7 +244,7 @@ This builder supports the same model aliases as `compute_approximations`: `"itfr
 `set_params`.
 
 ```python
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import FuzzyRoughPositiveRegionScorer
 
 scorer = FuzzyRoughPositiveRegionScorer(
     model="owafrs",
@@ -274,7 +274,7 @@ result = compute_approximations(
 )
 ```
 
-Internally, FRsutils may normalize these flat parameters into a nested component configuration. Nested configuration is also accepted at the public API boundary:
+Internally, frsutils may normalize these flat parameters into a nested component configuration. Nested configuration is also accepted at the public API boundary:
 
 ```python
 config = {
@@ -321,18 +321,18 @@ Regardless of backend, public outputs remain NumPy arrays for compatibility with
 Recommended:
 
 ```python
-from FRsutils.api import compute_approximations
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import compute_approximations
+from frsutils import FuzzyRoughPositiveRegionScorer
 ```
 
 Avoid relying on internal modules in downstream user code:
 
 ```python
 # Avoid this in user-facing examples and downstream packages.
-from FRsutils.core.models.itfrs import ITFRS
+from frsutils.core.models.itfrs import ITFRS
 ```
 
-Internal modules may change more often than the canonical public API facade.
+Internal modules may change more often than the canonical public API namespace.
 
 ## JOSS and release documentation
 

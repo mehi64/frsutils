@@ -1,11 +1,11 @@
 # Paper and release claim boundaries
 
-This document records the wording that should be used when describing FRsutils
+This document records the wording that should be used when describing frsutils
 in a JOSS paper, release note, README section, or benchmark report.
 
 ## Safe project summary
 
-FRsutils is a scientific Python library for reusable fuzzy-rough set
+frsutils is a scientific Python library for reusable fuzzy-rough set
 computations. It provides backend-aware public APIs for similarity construction,
 fuzzy-rough lower and upper approximations, boundary regions, and positive-region
 scores. The currently documented model aliases are `itfrs`, `vqrs`, and
@@ -13,27 +13,27 @@ scores. The currently documented model aliases are `itfrs`, `vqrs`, and
 
 A safe short claim is:
 
-> FRsutils provides dense and exact blockwise fuzzy-rough approximation APIs for
+> frsutils provides dense and exact blockwise fuzzy-rough approximation APIs for
 > ITFRS, VQRS, and OWAFRS, with a stable NumPy output contract and optional CuPy
 > support in explicit blockwise execution paths.
 
 ## Public API scope
 
-Use `FRsutils.api` as the canonical import surface in papers, examples, and
+Use `frsutils` as the canonical import surface in papers, examples, and
 user-facing documentation:
 
 ```python
-from FRsutils.api import compute_approximations
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import compute_approximations
+from frsutils import FuzzyRoughPositiveRegionScorer
 ```
 
-Do not describe internal modules under `FRsutils.core` or `FRsutils.utils` as the
+Do not describe internal modules under `frsutils.core` or `frsutils.utils` as the
 stable public API. They may be useful for maintainers, but the JOSS-facing user
-entry point is the `FRsutils.api` facade.
+entry point is the `frsutils` namespace.
 
 ## Execution claim boundary
 
-FRsutils supports two main approximation execution modes through the public API:
+frsutils supports two main approximation execution modes through the public API:
 
 - `engine="dense"`: builds or consumes a full pairwise similarity matrix and uses
   the dense NumPy reference model implementations.
@@ -57,7 +57,7 @@ Use careful, model-specific wording:
 
 Avoid these claims unless they are later supported by benchmarks and tests:
 
-- “FRsutils is fully GPU-native.”
+- “frsutils is fully GPU-native.”
 - “All fuzzy-rough models run fully on the GPU.”
 - “CuPy always improves performance.”
 - “OWAFRS aggregation is GPU-resident.”
@@ -80,20 +80,20 @@ Prefer wording such as:
 
 ## Oversampling boundary
 
-FRsutils should be described as the fuzzy-rough core library. Fuzzy-rough
+frsutils should be described as the fuzzy-rough core library. Fuzzy-rough
 oversampling algorithms such as FRSMOTE live in the standalone downstream
-`frsampling` package and depend on FRsutils through `FRsutils.api`.
+`frsampling` package and depend on the public `frsutils` namespace.
 
-Do not present FRSMOTE as part of the stable FRsutils core public API unless the
+Do not present FRSMOTE as part of the stable frsutils core public API unless the
 project intentionally changes that boundary later.
 
 ## Recommended JOSS phrasing
 
 A compact JOSS-facing paragraph:
 
-> FRsutils is a Python library for fuzzy-rough set computations, including
+> frsutils is a Python library for fuzzy-rough set computations, including
 > similarity construction, lower and upper approximations, boundary regions, and
-> positive-region scores. It provides a compact public API through `FRsutils.api`,
+> positive-region scores. It provides a compact public API through `frsutils`,
 > supports ITFRS, VQRS, and OWAFRS model aliases, and offers dense as well as
 > exact blockwise execution. Optional CuPy-backed blockwise execution is available
 > for selected internal steps while preserving NumPy arrays as the public output

@@ -1,13 +1,13 @@
-<img title="" src="logo/logo.png" alt="FRsutils Logo" width="250">
+<img title="" src="logo/logo.png" alt="frsutils Logo" width="250">
 
-# FRsutils
+# frsutils
 
-FRsutils is a Python library for reusable fuzzy-rough set utilities. The package focuses on fuzzy-rough core building blocks such as similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
+frsutils is a Python library for reusable fuzzy-rough set utilities. The package focuses on fuzzy-rough core building blocks such as similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
 approximations, and positive-region computation.
 
 # For Developers
 
-If you are extending FRsutils, start with the public compatibility boundary in
+If you are extending frsutils, start with the public compatibility boundary in
 [`docs/public_api_contract.md`](docs/public_api_contract.md), then follow the
 release and documentation checks in
 [`docs/release_checklist.md`](docs/release_checklist.md),
@@ -31,7 +31,7 @@ pip install -e .
 
 ## Core requirements
 
-FRsutils core intentionally keeps the mandatory dependency set small, but the
+frsutils core intentionally keeps the mandatory dependency set small, but the
 public API includes an sklearn-style positive-region scorer, so scikit-learn is
 part of the runtime contract:
 
@@ -45,7 +45,7 @@ Install these only when you need the related workflows:
 
 - `pytest` for tests
 - `pandas`, `openpyxl` for some dataset utilities
-- `colorlog` for colored logging; FRsutils falls back to standard logging if it
+- `colorlog` for colored logging; frsutils falls back to standard logging if it
   is not installed
 - `matplotlib` for plotting examples/tests
 - `cupy-cuda12x` or another CUDA-compatible CuPy wheel for explicit
@@ -53,7 +53,7 @@ Install these only when you need the related workflows:
 
 # Fuzzy-rough set utilities
 
-FRsutils provides reusable fuzzy-rough set calculations used in research,
+frsutils provides reusable fuzzy-rough set calculations used in research,
 including:
 
 - lower approximation
@@ -63,13 +63,13 @@ including:
 
 ## Public API quickstart
 
-The canonical user-facing API is `FRsutils.api`. End users, notebooks, examples, and downstream packages should import from this facade instead of importing directly from internal `FRsutils.core` or `FRsutils.utils` modules. As an example: 
+The canonical user-facing API is the package root, `frsutils`. End users, notebooks, examples, and downstream packages should import from this namespace instead of importing directly from internal `frsutils.core` or `frsutils.utils` modules. As an example:
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 ```
 
-The package top level, `FRsutils`, is intentionally kept compact so internal implementation details do not become public API by accident.
+The package root, `frsutils`, exposes the intended stable public objects while keeping internal implementation details out of the public contract.
 
 The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough approximations, and read the named fields from the returned result object.
 
@@ -78,9 +78,9 @@ The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough
 ```python
 import numpy as np
 
-from FRsutils.api import compute_approximations, compute_positive_region
+from frsutils import compute_approximations, compute_positive_region
 
-# FRsutils expects numeric feature values on a comparable scale. In real
+# frsutils expects numeric feature values on a comparable scale. In real
 # experiments, normalize or scale your data before calling the fuzzy-rough API.
 X = np.array(
     [
@@ -122,7 +122,7 @@ For reusable fitted scoring workflows, use the sklearn-style positive-region sco
 ```python
 import numpy as np
 
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import FuzzyRoughPositiveRegionScorer
 
 X = np.array(
     [
@@ -150,12 +150,12 @@ print(result.lower)
 print(result.upper)
 ```
 
-Downstream packages can reuse a precomputed similarity matrix through the public API without importing from FRsutils internals:
+Downstream packages can reuse a precomputed similarity matrix through the public API without importing from frsutils internals:
 
 ```python
 import numpy as np
 
-from FRsutils.api import build_similarity_matrix, compute_positive_region
+from frsutils import build_similarity_matrix, compute_positive_region
 
 X = np.array(
     [
@@ -187,11 +187,11 @@ A runnable version of the quickstart is available at
 
 ## Execution engines and backend status
 
-FRsutils now exposes dense and exact blockwise execution through the public API.
+frsutils now exposes dense and exact blockwise execution through the public API.
 Dense mode preserves the historical full-matrix behavior. Blockwise mode avoids materializing the full `n x n` similarity matrix for approximation computation and is available for ITFRS, VQRS, and OWAFRS.
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 result = compute_approximations(
     X,
@@ -221,7 +221,7 @@ The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`, `b
 
 ## Benchmark suite
 
-FRsutils includes a reproducible benchmark harness for the public approximation API:
+frsutils includes a reproducible benchmark harness for the public approximation API:
 
 ```bash
 python benchmarks/benchmark_fuzzy_rough_execution.py     --models itfrs,vqrs,owafrs     --sample-sizes 128,256,512     --n-features 8     --block-sizes 64,128     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy     --repeats 3     --output-json benchmark_results.json     --output-csv benchmark_results.csv
@@ -239,8 +239,8 @@ python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
 ```
 
 Use the wording in [`docs/paper_claims.md`](docs/paper_claims.md) when describing
-FRsutils in a release note, software paper, or benchmark report. The safe claim
-is that FRsutils provides dense and exact blockwise fuzzy-rough approximation
+frsutils in a release note, software paper, or benchmark report. The safe claim
+is that frsutils provides dense and exact blockwise fuzzy-rough approximation
 APIs, optional CuPy-accelerated similarity blocks, and experimental
 CuPy-resident blockwise approximation accumulators for ITFRS/VQRS. Public
 outputs remain NumPy arrays, and OWAFRS remains on the conservative exact
@@ -289,17 +289,17 @@ Before tagging or submitting, use
 
 ## Fuzzy-rough oversampling boundary
 
-Fuzzy-rough oversampling algorithms are no longer part of FRsutils core. They
+Fuzzy-rough oversampling algorithms are no longer part of frsutils core. They
 live in the standalone `frsampling` package, which depends on
-FRsutils through the public `FRsutils.api` facade. FRsutils intentionally does
+frsutils through the public `frsutils` namespace. frsutils intentionally does
 not provide old FRSMOTE compatibility wrappers.
 
 ```text
-frsampling  --->  FRsutils.api
-FRsutils    -X->  frsampling
+frsampling  --->  frsutils
+frsutils    -X->  frsampling
 ```
 
-FRsutils should be cited/used as the fuzzy-rough core engine: similarities,
+frsutils should be cited/used as the fuzzy-rough core engine: similarities,
 t-norms, implicators, fuzzy quantifiers, approximation models, lower/upper
 approximation, and positive region. Oversampling algorithms such as FRSMOTE and
 future FRADASYN belong to the downstream oversampling package.
@@ -316,9 +316,9 @@ future FRADASYN belong to the downstream oversampling package.
 
 ## Docs
 
-- We use Doxygen-style Python docstrings and documents are generated by Doxygen.
+- We use compact NumPy-style Python docstrings and keep longer examples in README/docs.
 - To see online documentation, please visit
-  [online documentation](https://mehi64.github.io/FRsutils/).
+  [online documentation](https://mehi64.github.io/frsutils/).
 
 ## How to run tests
 
@@ -353,10 +353,10 @@ python -m pytest tests/models_tests -m slow -o addopts="" -q
 ```
 
 For the standalone oversampling package, run from the `frsampling` repository
-root after making FRsutils importable:
+root after making frsutils importable:
 
 ```bash
-PYTHONPATH="$PWD/src:../FRsutils" python -m pytest tests -q
+PYTHONPATH="$PWD/src:../frsutils" python -m pytest tests -q
 ```
 
 For more information on test procedures, please refer to
@@ -390,16 +390,16 @@ JOSS paper DOI as the preferred citation.
 
 **APA**:
 
-> Mehran Amiri. (*2026*). *FRsutils: Fuzzy-Rough Set Utilities for Python*
-> (Version 0.0.3) [Computer software]. https://github.com/mehi64/FRsutils
+> Mehran Amiri. (*2026*). *frsutils: Fuzzy-Rough Set Utilities for Python*
+> (Version 0.0.3) [Computer software]. https://github.com/mehi64/frsutils
 
 **BibTeX**:
 
 ```bibtex
-@software{Amiri_FRsutils_2026,
+@software{Amiri_frsutils_2026,
   author = {Amiri, Mehran},
-  title = {FRsutils: Fuzzy-Rough Set Utilities for Python},
-  url = {https://github.com/mehi64/FRsutils},
+  title = {frsutils: Fuzzy-Rough Set Utilities for Python},
+  url = {https://github.com/mehi64/frsutils},
   version = {0.0.3},
   year = {2026}
 }

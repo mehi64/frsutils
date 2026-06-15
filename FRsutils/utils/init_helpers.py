@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Flat-to-nested configuration normalization helpers for FRsutils components.
+"""Flat-to-nested configuration normalization helpers for frsutils components.
 
-This module provides shared utility behavior used by FRsutils components.
+This module provides shared utility behavior used by frsutils components.
 """
 
 from __future__ import annotations

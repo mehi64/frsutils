@@ -1,6 +1,6 @@
 import numpy as np
 
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 similarity_mat = np.array([
             [1.00, 0.54, 0.37, 0.19, 0.10],

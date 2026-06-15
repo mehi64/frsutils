@@ -4,12 +4,12 @@
 This module belongs to the core fuzzy-rough computation layer.
 """
 
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-import FRsutils.core.tnorms as tn
-import FRsutils.core.owa_weights as owa_weights
-import FRsutils.core.implicators as imp
-from FRsutils.core.models.owafrs_components import build_owafrs_components_from_config
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+import frsutils.core.tnorms as tn
+import frsutils.core.owa_weights as owa_weights
+import frsutils.core.implicators as imp
+from frsutils.core.models.owafrs_components import build_owafrs_components_from_config
+from frsutils.utils.logger.logger_util import get_logger
 import numpy as np
 
 
@@ -21,7 +21,7 @@ class OWAFRS(FuzzyRoughModel):
     similarity matrix, class labels, an upper T-norm, a lower implicator, and
     lower/upper OWA weighting strategies. Scalable blockwise execution and
     optional CuPy-backed similarity blocks are handled outside this class by
-    :mod:`FRsutils.core.approximation_engines`.
+    :mod:`frsutils.core.approximation_engines`.
 
     Parameters
     ----------

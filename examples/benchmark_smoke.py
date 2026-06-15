@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Smoke example for running a tiny FRsutils benchmark suite.
+"""Smoke example for running a tiny frsutils benchmark suite.
 
 This script writes JSON and CSV benchmark artifacts and is not part of the
 stable Python API.
@@ -32,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser : argparse.ArgumentParser
         Configured argument parser.
     """
-    parser = argparse.ArgumentParser(description="Run a tiny FRsutils benchmark smoke example.")
+    parser = argparse.ArgumentParser(description="Run a tiny frsutils benchmark smoke example.")
     parser.add_argument(
         "--output-dir",
         default="benchmark_smoke_output",
@@ -74,7 +74,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     write_csv_report(report, csv_path)
 
     successful_rows = [row for row in report["results"] if row["status"] == "success"]
-    print("FRsutils benchmark smoke complete")
+    print("frsutils benchmark smoke complete")
     print(f"rows={len(report['results'])}")
     print(f"successful_rows={len(successful_rows)}")
     print(f"json={json_path}")

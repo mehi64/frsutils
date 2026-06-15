@@ -1,21 +1,21 @@
 # Positive-region scorer API
 
-FRsutils exposes `FuzzyRoughPositiveRegionScorer` to the public `FRsutils.api` facade.
+frsutils exposes `FuzzyRoughPositiveRegionScorer` through the public `frsutils` namespace.
 The scorer is intended for users and downstream libraries that want a reusable
 object-oriented API for fuzzy-rough positive-region scores.
 
 ## Public contract
 
 ```python
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import FuzzyRoughPositiveRegionScorer
 
 scorer = FuzzyRoughPositiveRegionScorer(model="itfrs", similarity="linear")
 scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
 
-The scorer depends only on public FRsutils task APIs internally. Downstream
-packages should continue to import it from `FRsutils.api`, not from deep internal
+The scorer depends only on public frsutils task APIs internally. Downstream
+packages should continue to import it from `frsutils`, not from deep internal
 paths.
 
 ## Current scope

@@ -20,7 +20,7 @@ Assume OWA weights are represented by OWA=<w1, w2, w3, ..., wn> where OWA vector
 
 ## 2. OWA Strategy Table
 
-| Name         | Formula Example (Lower)                         | Parameters        | Aliases         |Tested and working in FRsutils|
+| Name         | Formula Example (Lower)                         | Parameters        | Aliases         |Tested and working in frsutils|
 |--------------|--------------------------------------------------|-------------------|-----------------|-------------------|
 | **Linear**   | w_i = 2i / (n(n+1))                              | None              | linear          |yes|
 | **Exponential** | w_i ∝ base^i                                 | base > 1          | exponential, exp|yes, **but there is no reference that I used to implement the method from**|

@@ -1,13 +1,13 @@
 # CuPy and backend execution
 
-CuPy support in FRsutils is optional and experimental. The stable backend is
+CuPy support in frsutils is optional and experimental. The stable backend is
 NumPy, and the public API always returns NumPy arrays so results remain easy to
 use with scientific Python, plotting tools, and scikit-learn-style workflows.
 
 Use CuPy only through explicit blockwise execution:
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 result = compute_approximations(
     X,
@@ -35,7 +35,7 @@ row-buffer path. Do not describe OWAFRS as fully GPU-native.
 
 ## Public result contract
 
-Regardless of backend, FRsutils public approximation results expose NumPy arrays:
+Regardless of backend, frsutils public approximation results expose NumPy arrays:
 
 ```python
 result.lower
@@ -64,7 +64,7 @@ remain false in the current implementation.
 
 Safe wording for documentation, benchmark reports, and the JOSS paper:
 
-> FRsutils provides dense NumPy and exact blockwise fuzzy-rough approximation
+> frsutils provides dense NumPy and exact blockwise fuzzy-rough approximation
 > APIs. Optional CuPy-backed blockwise execution is available for similarity
 > blocks, with experimental GPU-resident approximation accumulators for ITFRS
 > and VQRS. Public outputs remain NumPy arrays. OWAFRS uses GPU-backed

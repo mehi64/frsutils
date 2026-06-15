@@ -4,8 +4,8 @@
 import numpy as np
 import pytest
 
-from FRsutils.api import build_similarity_engine, build_similarity_matrix, compute_approximations
-from FRsutils.core.backends import build_array_backend
+from frsutils import build_similarity_engine, build_similarity_matrix, compute_approximations
+from frsutils.core.backends import build_array_backend
 
 
 X_GPU = np.array(

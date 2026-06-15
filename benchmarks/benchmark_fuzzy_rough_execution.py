@@ -28,7 +28,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from FRsutils.api import compute_approximations  # noqa: E402
+from frsutils import compute_approximations  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -40,9 +40,9 @@ class BenchmarkScenario:
     name : object
         Public scenario name written to reports.
     engine : object
-        FRsutils approximation engine alias.
+        frsutils approximation engine alias.
     backend : object
-        FRsutils backend alias.
+        frsutils backend alias.
     uses_block_size : object
         True if the scenario should be expanded over block sizes.
     """
@@ -74,9 +74,9 @@ class BenchmarkCaseResult:
     backend : object
         Requested backend alias.
     resolved_backend : object
-        Backend reported by FRsutils result metadata.
+        Backend reported by frsutils result metadata.
     engine : object
-        Execution engine reported by FRsutils result metadata.
+        Execution engine reported by frsutils result metadata.
     repeats : object
         Number of timed repetitions attempted.
     median_runtime_seconds : object
@@ -340,7 +340,7 @@ def make_synthetic_dataset(
         
         The generator creates two mildly separated classes while keeping all features
         in a comparable numeric range. It intentionally avoids scikit-learn so the
-        benchmark script has no extra runtime dependency beyond FRsutils itself.
+        benchmark script has no extra runtime dependency beyond frsutils itself.
         
         Parameters
         ----------
@@ -664,7 +664,7 @@ def _execute_once(
     scenario: BenchmarkScenario,
     block_size: Optional[int],
 ):
-    """Execute one FRsutils approximation case through the public API.
+    """Execute one frsutils approximation case through the public API.
         
         Parameters
         ----------
@@ -1142,7 +1142,7 @@ def run_benchmark_suite(
     return {
         "metadata": {
             "benchmark_suite": "public_api_execution",
-            "description": "Dense/blockwise/GPU execution benchmark suite for FRsutils fuzzy-rough approximations.",
+            "description": "Dense/blockwise/GPU execution benchmark suite for frsutils fuzzy-rough approximations.",
             "python_version": platform.python_version(),
             "platform": platform.platform(),
             "numpy_version": np.__version__,
@@ -1326,7 +1326,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
             Configured argparse parser.
         
     """
-    parser = argparse.ArgumentParser(description="Run FRsutils execution benchmarks.")
+    parser = argparse.ArgumentParser(description="Run frsutils execution benchmarks.")
     parser.add_argument("--models", default="itfrs,vqrs,owafrs", help="Comma-separated model aliases.")
     parser.add_argument(
         "--sample-sizes",
@@ -1531,7 +1531,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
 
     print(
-        "FRsutils benchmark complete: "
+        "frsutils benchmark complete: "
         f"{success_count} success, {skipped_count} skipped, {failed_count} failed."
     )
     if args.output_json is not None:

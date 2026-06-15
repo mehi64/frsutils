@@ -1,14 +1,14 @@
 # Submit readiness report
 
-Use this file to record the final validation evidence before submitting FRsutils
+Use this file to record the final validation evidence before submitting frsutils
 for JOSS review or tagging a release candidate.
 
 ## Release candidate identity
 
-- Package name: `FRsutils`
+- Package name: `frsutils`
 - Package version: `0.0.3`
 - License: `BSD-3-Clause`
-- Public API boundary: `FRsutils.api`
+- Public API boundary: `frsutils`
 - JOSS paper files: `paper.md`, `paper.bib`
 
 ## Required final commands
@@ -20,10 +20,9 @@ outcome in the release notes or pull request before submission.
 
 ```bash
 python - <<'PY'
-import FRsutils
-import FRsutils.api as api
-print("FRsutils import: OK")
-print("public API objects:", sorted(api.__all__))
+import frsutils
+print("frsutils import: OK")
+print("public API objects:", sorted(frsutils.__all__))
 PY
 ```
 

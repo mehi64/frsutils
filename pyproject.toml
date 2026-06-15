@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "FRsutils"
+name = "frsutils"
 version = "0.0.3"
 requires-python = ">=3.10"
 description = "Fuzzy-rough set utilities for Python."
@@ -52,7 +52,11 @@ gpu-cuda11x = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/mehi64/FRsutils"
-"Documentation" = "https://mehi64.github.io/FRsutils/"
-"Source" = "https://github.com/mehi64/FRsutils"
-"Issues" = "https://github.com/mehi64/FRsutils/issues"
+"Homepage" = "https://github.com/mehi64/frsutils"
+"Documentation" = "https://mehi64.github.io/frsutils/"
+"Source" = "https://github.com/mehi64/frsutils"
+"Issues" = "https://github.com/mehi64/frsutils/issues"
+
+[tool.setuptools.packages.find]
+include = ["frsutils*"]
+exclude = ["tests*", "examples*", "benchmarks*"]

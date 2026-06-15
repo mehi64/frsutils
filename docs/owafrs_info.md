@@ -7,7 +7,7 @@ aggregations and useful for noisy or uncertain data.
 
 ## Implementation contract
 
-`FRsutils.core.models.OWAFRS` is the dense NumPy reference implementation. It
+`frsutils.core.models.OWAFRS` is the dense NumPy reference implementation. It
 expects a fully materialized similarity matrix, a one-dimensional label vector,
 an upper T-norm, a lower implicator, and lower and upper OWA weighting
 strategies.
@@ -19,14 +19,14 @@ comparisons.
 The public approximation API also provides exact blockwise OWAFRS execution:
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 result = compute_approximations(X, y, model="owafrs", engine="blockwise")
 ```
 
 ## Approximation outputs
 
-FRsutils reports the following public outputs:
+frsutils reports the following public outputs:
 
 ```text
 boundary_region = upper_approximation - lower_approximation

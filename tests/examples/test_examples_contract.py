@@ -20,7 +20,7 @@ def test_public_api_quickstart_runs_from_source_checkout():
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "FRsutils public API quickstart" in completed.stdout
+    assert "frsutils public API quickstart" in completed.stdout
     assert "dense/blockwise equivalence: OK" in completed.stdout
 
 
@@ -39,6 +39,6 @@ def test_benchmark_smoke_example_writes_outputs(tmp_path):
     )
 
     assert completed.returncode == 0, completed.stderr
-    assert "FRsutils benchmark smoke complete" in completed.stdout
+    assert "frsutils benchmark smoke complete" in completed.stdout
     assert (output_dir / "benchmark_smoke.json").exists()
     assert (output_dir / "benchmark_smoke.csv").exists()

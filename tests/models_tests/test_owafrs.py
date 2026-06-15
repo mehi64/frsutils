@@ -3,14 +3,14 @@
 
 import pytest
 import numpy as np
-from FRsutils.core.models.owafrs import OWAFRS
-from FRsutils.core.tnorms import MinTNorm
-from FRsutils.core.implicators import LukasiewiczImplicator
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.core.models.owafrs import OWAFRS
+from frsutils.core.tnorms import MinTNorm
+from frsutils.core.implicators import LukasiewiczImplicator
+from frsutils.utils.logger.logger_util import get_logger
 from tests import synthetic_data_store as ds
-from FRsutils.core.tnorms import TNorm
-from FRsutils.core.implicators import Implicator
-import FRsutils.core.owa_weights as oww
+from frsutils.core.tnorms import TNorm
+from frsutils.core.implicators import Implicator
+import frsutils.core.owa_weights as oww
 
 pytestmark = pytest.mark.slow
 

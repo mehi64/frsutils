@@ -3,9 +3,9 @@
 
 import numpy as np
 import pytest
-from FRsutils.core.implicators import Implicator
+from frsutils.core.implicators import Implicator
 from tests import synthetic_data_store as ds
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.utils.logger.logger_util import get_logger
 
 logger = get_logger(env="test", experiment_name="test_implicators")
 call_testsets = ds.get_implicator_scalar_testsets()

@@ -10,17 +10,17 @@ from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 
 # Import concrete model modules/classes so their @FuzzyRoughModel.register(...)
 # decorators run before public registry lookup is used by downstream packages.
-from FRsutils.core.models.itfrs import ITFRS
-from FRsutils.core.models.owafrs import OWAFRS
-from FRsutils.core.models.vqrs import VQRS
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.models.itfrs import ITFRS
+from frsutils.core.models.owafrs import OWAFRS
+from frsutils.core.models.vqrs import VQRS
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config already looks like FRsutils internal nested config.
+    """Return True when config already looks like frsutils internal nested config.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def _resolve_model_type(
     external_config : Mapping[str, Any]
         Flat-or-mixed public config snapshot.
     nested_config : Mapping[str, Any]
-        Nested FRsutils config snapshot.
+        Nested frsutils config snapshot.
 
     Returns
     -------
@@ -193,7 +193,7 @@ def build_fuzzy_rough_model(
     This is the recommended public construction point for downstream packages.
     It accepts:
     - flat sklearn-style params, e.g. `type="itfrs"`, `ub_tnorm_name="minimum"`
-    - nested FRsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
+    - nested frsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
 
     Parameters
     ----------
@@ -248,7 +248,7 @@ def build_fuzzy_rough_model(
 
     # Keep the original flat/mixed config for backwards-compatible `from_config`
     # paths, and pass nested config through the private key already used
-    # internally by FRsutils model constructors.
+    # internally by frsutils model constructors.
     constructor_config = dict(external_config)
     constructor_config["type"] = resolved_type
     constructor_config["_nested_config"] = nested_config

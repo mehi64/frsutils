@@ -6,7 +6,7 @@ import pytest
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 
-from FRsutils.api import (
+from frsutils import (
     FuzzyRoughApproximationResult,
     FuzzyRoughPositiveRegionScorer,
     build_similarity_matrix,

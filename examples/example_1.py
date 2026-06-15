@@ -1,8 +1,8 @@
 import numpy as np
 
-from FRsutils.api import compute_approximations, compute_positive_region
+from frsutils import compute_approximations, compute_positive_region
 
-# FRsutils expects numeric feature values on a comparable scale. In real
+# frsutils expects numeric feature values on a comparable scale. In real
 # experiments, normalize or scale your data before calling the fuzzy-rough API.
 X = np.array(
     [

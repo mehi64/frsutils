@@ -1,15 +1,15 @@
-# FRsutils release and JOSS readiness checklist
+# frsutils release and JOSS readiness checklist
 
-Use this checklist before tagging a release or submitting FRsutils for JOSS
+Use this checklist before tagging a release or submitting frsutils for JOSS
 review.
 
 ## 1. Public API checks
 
-- [ ] The canonical import path is documented as `FRsutils.api`.
-- [ ] User-facing examples avoid importing from internal `FRsutils.core` modules.
-- [ ] `FRsutils.api.__all__` exposes the intended public objects only.
-- [ ] Top-level `FRsutils` remains compact and does not accidentally expose the
-      full public facade.
+- [ ] The canonical import path is documented as `frsutils`.
+- [ ] User-facing examples avoid importing from internal `frsutils.core` modules.
+- [ ] `frsutils.__all__` exposes the intended public objects only.
+- [ ] Top-level `frsutils` exposes the intended public objects only and does
+      not accidentally expose internal implementation modules.
 - [ ] `examples/public_api_quickstart.py` runs successfully.
 
 Recommended command:
@@ -57,7 +57,7 @@ python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
 
 ## 4. Documentation checks
 
-- [ ] `README.md` contains a working quickstart using `FRsutils.api`.
+- [ ] `README.md` contains a working quickstart using `frsutils`.
 - [ ] `docs/public_api.md` matches the current public API.
 - [ ] `examples/public_api_quickstart.py` runs successfully.
 - [ ] `tests/api/test_public_api_examples_smoke.py` passes.
@@ -100,7 +100,7 @@ See `docs/joss_metadata_check.md` for a detailed metadata checklist. At minimum:
 - [ ] The AI usage disclosure is accurate for the submitted version.
 - [ ] The paper does not overstate CuPy/GPU support.
 - [ ] The paper describes oversampling algorithms as downstream usage rather than
-      part of the FRsutils core package.
+      part of the frsutils core package.
 
 Recommended local citation-key sanity check:
 
@@ -164,4 +164,4 @@ Before submitting or coordinating the FRSMOTE paper citation, follow
 `docs/joss_final_submission_checklist.md`. It records the author-only steps that
 cannot be completed by automated tests, including affiliation confirmation,
 release tagging, software DOI creation, JOSS submission, and the citation plan
-for papers that need to reference FRsutils before the JOSS article is accepted.
+for papers that need to reference frsutils before the JOSS article is accepted.

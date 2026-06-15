@@ -3,16 +3,16 @@
 
 import numpy as np
 import pytest
-from FRsutils.core.similarities import (
+from frsutils.core.similarities import (
     GaussianSimilarity,
     LinearSimilarity,
     Similarity,
     build_similarity_matrix,
     calculate_similarity_matrix,
 )
-from FRsutils.core.tnorms import TNorm
+from frsutils.core.tnorms import TNorm
 from tests import synthetic_data_store as ds
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.utils.logger.logger_util import get_logger
 
 
 logger = get_logger(env="test",

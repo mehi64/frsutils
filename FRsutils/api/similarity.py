@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Public similarity-matrix construction API for FRsutils.
+"""Public similarity-matrix construction API for frsutils.
 
 This module belongs to the stable public API layer.
 """
@@ -10,12 +10,12 @@ from typing import Any, Mapping, Optional
 
 import numpy as np
 
-from FRsutils.core.similarities import (
+from frsutils.core.similarities import (
     Similarity,
     build_similarity_matrix as _core_build_similarity_matrix,
     calculate_similarity_matrix as _core_calculate_similarity_matrix,
 )
-from FRsutils.core.similarity_engine import (
+from frsutils.core.similarity_engine import (
     BaseSimilarityEngine,
     BlockwiseSimilarityEngine,
     DenseSimilarityEngine,
@@ -89,14 +89,14 @@ def build_similarity_matrix(
     This is the stable public entry point for users and downstream packages.
     It accepts:
     - flat sklearn-style params, e.g. `similarity="gaussian"`
-    - nested FRsutils config, e.g. `{"similarity": {"name": ...}}`
+    - nested frsutils config, e.g. `{"similarity": {"name": ...}}`
 
     Parameters
     ----------
     X : Any
         Normalized 2D feature matrix.
     config : Optional[Mapping[str, Any]]
-        Optional flat or nested FRsutils config mapping.
+        Optional flat or nested frsutils config mapping.
     flat_config : Any
         Additional flat configuration values.
 
@@ -148,7 +148,7 @@ def build_similarity_engine(
     block_size : int
         Positive block size for blockwise engines.
     config : Optional[Mapping[str, Any]]
-        Optional flat or nested FRsutils config mapping.
+        Optional flat or nested frsutils config mapping.
     backend : str
         Backend alias. Use "numpy"/"auto" or explicit optional "cupy".
     flat_config : Any

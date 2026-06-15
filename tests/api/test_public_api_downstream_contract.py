@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Contract tests for downstream packages that depend on FRsutils.api."""
+"""Contract tests for downstream packages that depend on frsutils."""
 
 import numpy as np
 
-from FRsutils.api import (
+from frsutils import (
     build_fuzzy_rough_model,
     build_similarity_matrix,
     compute_approximations,
@@ -59,7 +59,7 @@ def test_public_api_star_import_exposes_expected_facade_names():
     """The canonical facade exposes the stable user-facing names via __all__."""
     namespace = {}
 
-    exec("from FRsutils.api import *", namespace)
+    exec("from frsutils import *", namespace)
 
     expected_names = {
         "compute_approximations",
@@ -80,25 +80,34 @@ def test_public_api_star_import_exposes_expected_facade_names():
     assert expected_names <= set(namespace)
 
 
-def test_top_level_package_keeps_public_api_under_api_namespace():
-    """The package root stays compact while FRsutils.api remains canonical."""
-    import FRsutils
+def test_top_level_package_exposes_public_api_names():
+    """The package root exposes the stable user-facing API."""
+    import frsutils
 
-    assert hasattr(FRsutils, "api")
-    assert FRsutils.__all__ == [
-        "api",
-        "tnorms",
-        "implicators",
-        "similarities",
-        "itfrs",
-    ]
-    assert not hasattr(FRsutils, "compute_approximations")
-    assert not hasattr(FRsutils, "build_fuzzy_rough_model")
+    expected_names = {
+        "compute_approximations",
+        "compute_lower_approximation",
+        "compute_upper_approximation",
+        "compute_boundary_region",
+        "compute_positive_region",
+        "build_similarity_matrix",
+        "build_similarity_engine",
+        "build_fuzzy_rough_model",
+        "FuzzyRoughApproximationResult",
+        "FuzzyRoughPositiveRegionScorer",
+        "ITFRS",
+        "VQRS",
+        "OWAFRS",
+    }
+
+    assert hasattr(frsutils, "api")
+    assert expected_names <= set(frsutils.__all__)
+    assert expected_names <= set(dir(frsutils))
 
 
 def test_public_api_does_not_expose_internal_constructor_utilities():
     """Downstream users should not depend on internal construction helpers."""
-    import FRsutils.api as public_api
+    import frsutils as public_api
 
     internal_names = {
         "LazyConstructibleMixin",

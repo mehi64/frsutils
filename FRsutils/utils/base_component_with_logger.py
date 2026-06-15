@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Base component helper with logger initialization support.
 
-This module provides shared utility behavior used by FRsutils components.
+This module provides shared utility behavior used by frsutils components.
 """
 
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.utils.logger.logger_util import get_logger
 
 class BaseComponentWithLogger:
     """Base class to provide logger injection and access.
@@ -31,7 +31,7 @@ class BaseComponentWithLogger:
     @classmethod
     def get_logger(cls):
         """Return the logger associated with this component."""
-        from FRsutils.utils.logger.logger_util import get_logger
+        from frsutils.utils.logger.logger_util import get_logger
         return get_logger()
 
     @staticmethod

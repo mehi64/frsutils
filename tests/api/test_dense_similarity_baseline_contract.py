@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from FRsutils.api import build_similarity_matrix, normalize_flat_config_to_nested
+from frsutils import build_similarity_matrix, normalize_flat_config_to_nested
 
 
 X_ONE_FEATURE = np.array([[0.0], [0.1], [0.8], [0.9]], dtype=float)

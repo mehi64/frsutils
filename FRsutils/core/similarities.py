@@ -7,9 +7,9 @@ This module belongs to the core fuzzy-rough computation layer.
 from typing import Callable, Optional, Dict, Any
 import numpy as np
 from abc import abstractmethod
-from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
-from FRsutils.core.tnorms import TNorm
+from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.tnorms import TNorm
 
 
 class Similarity(RegistryFactoryMixin):

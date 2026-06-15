@@ -1,6 +1,6 @@
 import numpy as np
 
-from FRsutils.api import FuzzyRoughPositiveRegionScorer
+from frsutils import FuzzyRoughPositiveRegionScorer
 
 X = np.array(
     [

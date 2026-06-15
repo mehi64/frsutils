@@ -6,8 +6,8 @@ This module belongs to the core fuzzy-rough computation layer.
 
 from abc import abstractmethod
 import numpy as np
-from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
-from FRsutils.utils.base_component_with_logger import BaseComponentWithLogger
+from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+from frsutils.utils.base_component_with_logger import BaseComponentWithLogger
 
 
 class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):

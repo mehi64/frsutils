@@ -1,7 +1,7 @@
 # Backend execution status
 
-This page summarizes the execution paths currently supported by FRsutils through
-the canonical public API, `FRsutils.api`.
+This page summarizes the execution paths currently supported by frsutils through
+the canonical public API, `frsutils`.
 
 ## Execution modes
 
@@ -24,7 +24,7 @@ returned as NumPy arrays.
 
 ## Notes for users
 
-- Use `FRsutils.api.compute_approximations` as the primary public entry point.
+- Use `frsutils.compute_approximations` as the primary public entry point.
 - Use `engine="dense"` when you want the simplest reference path.
 - Use `engine="blockwise"` when full similarity-matrix materialization is too
   expensive or when testing optional backend behavior.
@@ -33,7 +33,7 @@ returned as NumPy arrays.
 
 ## Notes for maintainers
 
-The direct model classes in `FRsutils.core.models` are dense NumPy reference
+The direct model classes in `frsutils.core.models` are dense NumPy reference
 implementations. Backend-aware execution belongs in the similarity and
 approximation engines behind the public API. This separation keeps the scientific
 reference implementations simple while allowing scalable execution paths to

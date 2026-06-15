@@ -54,12 +54,12 @@ Check `paper.md` and bibliography files:
 - [x] `paper.md` exists at the repository root.
 - [ ] Author affiliations are correct.
 - [x] The statement of need focuses on fuzzy-rough set utilities.
-- [x] The paper describes `FRsutils.api` as the canonical user-facing API.
+- [x] The paper describes `frsutils` as the canonical user-facing API.
 - [x] The paper does not describe internal modules as stable public API.
 - [x] Backend/CuPy claims match `docs/paper_claims.md`.
 - [x] OWAFRS is not described as having GPU-resident approximation accumulators.
 - [x] Oversampling algorithms are described as downstream usage, not as part of
-      the FRsutils core package, unless the project scope changes.
+      the frsutils core package, unless the project scope changes.
 
 ## Documentation links
 

@@ -1,9 +1,9 @@
-# FRsutils Public API Contract
+# frsutils Public API Contract
 
-FRsutils exposes its stable user-facing and downstream-package API through:
+frsutils exposes its stable user-facing and downstream-package API through:
 
 ```python
-from FRsutils.api import ...
+from frsutils import ...
 ```
 
 This document defines the public compatibility boundary for users, examples,
@@ -11,7 +11,7 @@ tests, and downstream packages such as `frsampling`.
 
 ## Purpose
 
-FRsutils is the fuzzy-rough core package. It provides reusable fuzzy-rough
+frsutils is the fuzzy-rough core package. It provides reusable fuzzy-rough
 building blocks and task-oriented helpers for:
 
 - similarity-matrix construction,
@@ -22,7 +22,7 @@ building blocks and task-oriented helpers for:
 - reusable positive-region scoring workflows,
 - fuzzy-rough model construction for advanced users and downstream packages.
 
-Oversampling algorithms such as FRSMOTE are intentionally outside FRsutils core
+Oversampling algorithms such as FRSMOTE are intentionally outside frsutils core
 and should live in downstream packages such as `frsampling`.
 
 ## Stable task-level API
@@ -31,7 +31,7 @@ These names are the preferred public API for normal users and documentation
 examples:
 
 ```python
-from FRsutils.api import (
+from frsutils import (
     FuzzyRoughApproximationResult,
     FuzzyRoughPositiveRegionScorer,
     build_similarity_matrix,
@@ -157,13 +157,13 @@ CuPy similarity-block computation.
 
 ## Benchmark and execution-reporting contract
 
-FRsutils includes a public-API benchmark harness at:
+frsutils includes a public-API benchmark harness at:
 
 ```text
 benchmarks/benchmark_fuzzy_rough_execution.py
 ```
 
-The benchmark script intentionally depends on `FRsutils.api` rather than private
+The benchmark script intentionally depends on `frsutils` rather than private
 core modules. This keeps benchmark results aligned with the same compatibility
 boundary used by downstream packages such as `frsampling`.
 
@@ -182,7 +182,7 @@ The following names are public but intended mainly for advanced users,
 experiments, and downstream packages:
 
 ```python
-from FRsutils.api import (
+from frsutils import (
     build_fuzzy_rough_model,
     get_fuzzy_rough_model_class,
     list_fuzzy_rough_models,
@@ -197,7 +197,7 @@ Use this only when a downstream package needs a constructed fuzzy-rough model
 object rather than task-level approximation arrays.
 
 ```python
-from FRsutils.api import build_fuzzy_rough_model, build_similarity_matrix
+from frsutils import build_fuzzy_rough_model, build_similarity_matrix
 
 similarity_matrix = build_similarity_matrix(X, similarity="linear")
 model = build_fuzzy_rough_model(
@@ -209,7 +209,7 @@ model = build_fuzzy_rough_model(
 
 ## Semi-internal exports
 
-Some low-level classes and helpers may be importable from `FRsutils.api` for
+Some low-level classes and helpers may be importable from `frsutils` for
 inspection, backwards compatibility, or advanced experimentation:
 
 - `Similarity`
@@ -238,26 +238,26 @@ GPU-native OWAFRS support before sorting and memory benchmarks exist.
 
 ## Downstream-package rule
 
-Downstream packages should depend on `FRsutils.api` only:
+Downstream packages should depend on `frsutils` only:
 
 ```python
-from FRsutils.api import build_similarity_matrix, compute_positive_region
+from frsutils import build_similarity_matrix, compute_positive_region
 ```
 
 They should not import from deep internal paths such as:
 
 ```python
-from FRsutils.core.models.itfrs import ITFRS
-from FRsutils.core.similarities import build_similarity_matrix
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.models.itfrs import ITFRS
+from frsutils.core.similarities import build_similarity_matrix
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 ```
 
-The `FRsutils.api` namespace is the compatibility boundary. Internal modules may
+The `frsutils` namespace is the compatibility boundary. Internal modules may
 change between releases.
 
 ## Configuration policy
 
-FRsutils keeps external parameters flat and sklearn-friendly, while internal
+frsutils keeps external parameters flat and sklearn-friendly, while internal
 code may normalize those parameters into nested component configuration.
 
 Preferred public style:
@@ -285,7 +285,7 @@ implementation status and model-specific backend boundary.
 ## Versioning expectation
 
 For pre-1.0 releases, the public API may still evolve. However, changes to
-`FRsutils.api` should be treated as compatibility-relevant and should be covered
+`frsutils` should be treated as compatibility-relevant and should be covered
 by public API tests.
 
 When changing the public API, update:
@@ -299,11 +299,11 @@ When changing the public API, update:
 
 The repository should keep tests that verify:
 
-1. public imports work from `FRsutils.api`,
+1. public imports work from `frsutils`,
 2. `compute_approximations` returns a named result object,
 3. `compute_positive_region` matches `compute_approximations(...).positive_region`,
 4. a precomputed similarity matrix can feed approximation helpers,
-5. downstream-style code can use only `FRsutils.api` without importing internals.
+5. downstream-style code can use only `frsutils` without importing internals.
 
 ## Execution metadata
 
@@ -327,13 +327,13 @@ parameter compatibility.
 
 The release-hardening docs freeze the wording that should be used in releases and software-paper
 material. Public examples and downstream packages should continue to depend on
-`FRsutils.api`; private `FRsutils.core` modules are not part of the stable
+`frsutils`; private `frsutils.core` modules are not part of the stable
 compatibility boundary.
 
 Safe release claim:
 
 ```text
-FRsutils provides dense and exact blockwise fuzzy-rough approximation APIs with
+frsutils provides dense and exact blockwise fuzzy-rough approximation APIs with
 optional CuPy-accelerated similarity blocks and experimental CuPy-resident
 ITFRS/VQRS blockwise approximation accumulators. Public outputs remain NumPy
 arrays, and OWAFRS remains on the conservative exact blockwise NumPy row-buffer
