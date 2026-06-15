@@ -52,4 +52,3 @@ similarity_matrix = build_similarity_matrix(
 )
 print(similarity_matrix)
 ```
-

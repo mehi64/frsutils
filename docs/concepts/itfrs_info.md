@@ -1,14 +1,11 @@
 # ITFRS model
 
-ITFRS stands for Implicator/T-norm Fuzzy-Rough Sets. In frsutils, ITFRS computes
-lower and upper approximation degrees from a fuzzy similarity relation and class
+ITFRS stands for Implicator/T-norm Fuzzy-Rough Sets. In frsutils, ITFRS computes lower and upper approximation degrees from a fuzzy similarity relation and class
 labels using a lower implicator and an upper T-norm.
 
 ## Implementation contract
 
-`frsutils.core.models.ITFRS` is the dense NumPy reference implementation. It
-expects a fully materialized similarity matrix, a one-dimensional label vector,
-an upper T-norm, and a lower implicator.
+`frsutils.core.models.ITFRS` is the dense NumPy reference implementation. It expects a fully materialized similarity matrix, a one-dimensional label vector, an upper T-norm, and a lower implicator.
 
 The public approximation API also provides exact blockwise ITFRS execution:
 
@@ -36,5 +33,4 @@ ITFRS supports:
 - dense NumPy execution,
 - exact blockwise NumPy execution,
 - optional CuPy-backed similarity blocks,
-- experimental GPU-resident blockwise approximation accumulators, with final
-  public output converted back to NumPy arrays.
+- experimental GPU-resident blockwise approximation accumulators, with final public output converted back to NumPy arrays.
