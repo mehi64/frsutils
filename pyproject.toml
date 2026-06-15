@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "frsutils"
-version = "0.0.3"
+version = "0.0.4"
 requires-python = ">=3.10"
 description = "Fuzzy-rough set utilities for Python."
 authors = [{ name = "Mehran Amiri", email = "meam64@gmail.com" }]
@@ -53,7 +53,7 @@ gpu-cuda11x = [
 
 [project.urls]
 "Homepage" = "https://github.com/mehi64/frsutils"
-"Documentation" = "https://mehi64.github.io/frsutils/"
+"Documentation" = "https://github.com/mehi64/frsutils#readme"
 "Source" = "https://github.com/mehi64/frsutils"
 "Issues" = "https://github.com/mehi64/frsutils/issues"
 

@@ -1,4 +1,4 @@
-<img title="" src="logo/logo.png" alt="frsutils Logo" width="250">
+<img title="" src="https://raw.githubusercontent.com/mehi64/frsutils/main/logo/logo.png" alt="frsutils Logo" width="250">
 
 # frsutils
 
