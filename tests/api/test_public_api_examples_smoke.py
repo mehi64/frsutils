@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Smoke tests for canonical FRsutils public API examples."""
+"""Smoke tests for canonical frsutils public API examples."""
 
 from __future__ import annotations
 
@@ -31,4 +31,4 @@ def test_public_api_quickstart_scorer_example_returns_scores():
 def test_public_api_quickstart_main_runs(capsys):
     assert main() == 0
     captured = capsys.readouterr()
-    assert "FRsutils public API quickstart" in captured.out
+    assert "frsutils public API quickstart" in captured.out

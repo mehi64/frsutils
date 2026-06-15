@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 import numpy as np
 import pytest
 
-from FRsutils.api import FuzzyRoughApproximationResult, compute_approximations
+from frsutils import FuzzyRoughApproximationResult, compute_approximations
 from tests._fake_cupy_backend import install_fake_cupy_module
 
 

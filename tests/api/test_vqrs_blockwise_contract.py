@@ -7,7 +7,7 @@ import types
 import numpy as np
 import pytest
 
-from FRsutils.api import build_similarity_matrix, compute_approximations, compute_positive_region
+from frsutils import build_similarity_matrix, compute_approximations, compute_positive_region
 
 
 class _FakeCupy(types.SimpleNamespace):

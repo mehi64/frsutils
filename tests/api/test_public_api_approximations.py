@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Tests for FRsutils public approximation API."""
+"""Tests for frsutils public approximation API."""
 
 import numpy as np
 import pytest
 
-from FRsutils.api import (
+from frsutils import (
     FuzzyRoughApproximationResult,
     build_similarity_matrix,
     compute_approximations,

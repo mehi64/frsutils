@@ -4,11 +4,11 @@
 import numpy as np
 import pytest
 
-from FRsutils.core.implicators import LukasiewiczImplicator
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-from FRsutils.core.models.itfrs import ITFRS
-from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
-from FRsutils.core.tnorms import MinTNorm, TNorm, YagerTNorm
+from frsutils.core.implicators import LukasiewiczImplicator
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.itfrs import ITFRS
+from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
+from frsutils.core.tnorms import MinTNorm, TNorm, YagerTNorm
 
 
 SIMILARITY_MATRIX = np.array(

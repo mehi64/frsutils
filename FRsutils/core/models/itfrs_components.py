@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional, Tuple
 
-from FRsutils.core.implicators import Implicator
-from FRsutils.core.tnorms import TNorm
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.implicators import Implicator
+from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when a mapping already uses FRsutils nested sections."""
+    """Return True when a mapping already uses frsutils nested sections."""
     return isinstance(config.get("fr_model"), Mapping) or isinstance(config.get("similarity"), Mapping)
 
 
@@ -37,7 +37,7 @@ def _as_itfrs_nested_config(
     Parameters
     ----------
     config : Mapping or None
-        Flat config, nested FRsutils config, or a mapping containing the private
+        Flat config, nested frsutils config, or a mapping containing the private
         ``_nested_config`` key used by public model builders.
     require_explicit_components : bool
         If True, missing ITFRS operators are reported by the caller instead of
@@ -46,7 +46,7 @@ def _as_itfrs_nested_config(
     Returns
     -------
     Mapping[str, Any]
-        Nested FRsutils configuration.
+        Nested frsutils configuration.
     """
     if config is None:
         if require_explicit_components:
@@ -81,7 +81,7 @@ def build_itfrs_components_from_config(
     Parameters
     ----------
     config : Mapping or None
-        Flat ITFRS config, nested FRsutils config, or a mapping containing the
+        Flat ITFRS config, nested frsutils config, or a mapping containing the
         private ``_nested_config`` key used by public builders.
     require_explicit_components : bool, default=False
         If True, missing ``ub_tnorm`` or ``lb_implicator`` specs raise

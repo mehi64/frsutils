@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Canonical public API facade for FRsutils.
+"""Structured public API submodule for frsutils.
 
-Import user-facing fuzzy-rough utilities from this module rather than from
-internal ``FRsutils.core`` modules.
+The package root is the canonical user-facing import surface. This submodule
+contains the same public objects in a grouped namespace for maintainers and
+advanced users who prefer an explicit facade module.
 """
 
-from FRsutils.api.approximations import (
+from .approximations import (
     compute_approximations,
     compute_boundary_region,
     compute_lower_approximation,
@@ -13,14 +14,14 @@ from FRsutils.api.approximations import (
     compute_upper_approximation,
 )
 
-from FRsutils.api.config import (
+from .config import (
     apply_config_aliases,
     extract_prefixed_params,
     normalize_flat_config_to_nested,
 )
-from FRsutils.api.results import FuzzyRoughApproximationResult
-from FRsutils.api.scoring import FuzzyRoughPositiveRegionScorer
-from FRsutils.api.models import (
+from .results import FuzzyRoughApproximationResult
+from .scoring import FuzzyRoughPositiveRegionScorer
+from .models import (
     FuzzyRoughModel,
     ITFRS,
     OWAFRS,
@@ -29,7 +30,7 @@ from FRsutils.api.models import (
     get_fuzzy_rough_model_class,
     list_fuzzy_rough_models,
 )
-from FRsutils.api.similarity import (
+from .similarity import (
     BaseSimilarityEngine,
     BlockwiseSimilarityEngine,
     DenseSimilarityEngine,

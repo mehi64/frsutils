@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Result containers returned by FRsutils public APIs.
+"""Result containers returned by frsutils public APIs.
 
 This module belongs to the stable public API layer.
 """

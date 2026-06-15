@@ -8,7 +8,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from FRsutils.api import (
+from frsutils import (
     build_similarity_matrix,
     compute_approximations,
     compute_boundary_region,

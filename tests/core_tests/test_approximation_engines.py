@@ -8,7 +8,7 @@ from dataclasses import FrozenInstanceError
 import numpy as np
 import pytest
 
-from FRsutils.core.approximation_engines import (
+from frsutils.core.approximation_engines import (
     ITFRSBlockwiseApproximation,
     OWAFRSBlockwiseApproximation,
     VQRSBlockwiseApproximation,
@@ -23,11 +23,11 @@ from FRsutils.core.approximation_engines import (
     build_owafrs_components_from_config,
     build_vqrs_components_from_config,
 )
-from FRsutils.core.fuzzy_quantifiers import LinearFuzzyQuantifier, QuadraticFuzzyQuantifier
-from FRsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
-from FRsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
-from FRsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
-from FRsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
+from frsutils.core.fuzzy_quantifiers import LinearFuzzyQuantifier, QuadraticFuzzyQuantifier
+from frsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
+from frsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
+from frsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
+from frsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
 
 
 class FakeArrayNamespace:

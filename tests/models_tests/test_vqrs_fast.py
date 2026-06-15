@@ -4,13 +4,13 @@
 import numpy as np
 import pytest
 
-from FRsutils.core.fuzzy_quantifiers import (
+from frsutils.core.fuzzy_quantifiers import (
     FuzzyQuantifier,
     LinearFuzzyQuantifier,
     QuadraticFuzzyQuantifier,
 )
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-from FRsutils.core.models.vqrs import VQRS
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.vqrs import VQRS
 
 
 VQRS_SIMILARITY_MATRIX = np.array(
@@ -287,9 +287,9 @@ def test_dense_vqrs_from_dict_rejects_invalid_quantifier_spec():
     with pytest.raises((KeyError, ValueError, TypeError)):
         VQRS.from_dict(data, similarity_matrix=VQRS_SIMILARITY_MATRIX.copy(), labels=VQRS_LABELS)
 
-from FRsutils.core.approximation_engines import compute_vqrs_blockwise
-from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
-from FRsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
+from frsutils.core.approximation_engines import compute_vqrs_blockwise
+from frsutils.core.models.vqrs_components import build_vqrs_components_from_config
+from frsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
 
 
 class _PrecomputedSimilarityEngine(BaseSimilarityEngine):
@@ -370,7 +370,7 @@ def test_vqrs_shared_component_builder_supports_legacy_alpha_beta_aliases():
 
 
 def test_vqrs_shared_component_builder_supports_nested_config():
-    """Nested FRsutils config should build the same VQRS quantifiers as dense config."""
+    """Nested frsutils config should build the same VQRS quantifiers as dense config."""
     nested_config = {
         "fr_model": {
             "type": "vqrs",

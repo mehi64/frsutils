@@ -11,10 +11,10 @@ from typing import Any, Dict, Iterator, Mapping, Optional, Tuple
 
 import numpy as np
 
-from FRsutils.core.backends import ArrayBackend, build_array_backend, is_cupy_backend
-from FRsutils.core.similarities import Similarity, build_similarity_matrix
-from FRsutils.core.tnorms import TNorm
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.backends import ArrayBackend, build_array_backend, is_cupy_backend
+from frsutils.core.similarities import Similarity, build_similarity_matrix
+from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 @dataclass(frozen=True)
@@ -102,7 +102,7 @@ def _validate_block_size(block_size: int) -> int:
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config already looks like a nested FRsutils config.
+    """Return True when config already looks like a nested frsutils config.
         
         Parameters
         ----------
@@ -165,7 +165,7 @@ def build_similarity_components(
 ) -> Tuple[Similarity, TNorm, Dict[str, Any]]:
     """Build similarity and T-norm components from flat or nested config.
         
-        This mirrors `FRsutils.core.similarities.build_similarity_matrix` component
+        This mirrors `frsutils.core.similarities.build_similarity_matrix` component
         resolution so blockwise engines remain equivalent to the dense path.
         
         Parameters

@@ -7,7 +7,7 @@ This module belongs to the core fuzzy-rough computation layer.
 from typing import Any
 import numpy as np
 from abc import abstractmethod
-from FRsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
 
 
 class TNorm(RegistryFactoryMixin):

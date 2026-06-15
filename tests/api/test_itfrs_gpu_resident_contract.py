@@ -6,8 +6,7 @@ import types
 
 import numpy as np
 
-from FRsutils.api import compute_approximations
-from FRsutils.api.similarity import build_similarity_engine
+from frsutils import build_similarity_engine, compute_approximations
 
 
 class _FakeCupy(types.SimpleNamespace):

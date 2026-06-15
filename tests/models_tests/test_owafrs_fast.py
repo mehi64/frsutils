@@ -4,11 +4,11 @@
 import numpy as np
 import pytest
 
-from FRsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-from FRsutils.core.models.owafrs import OWAFRS
-from FRsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
-from FRsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
+from frsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.owafrs import OWAFRS
+from frsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
+from frsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
 
 
 def _small_similarity_matrix():

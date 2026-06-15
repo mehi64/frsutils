@@ -10,11 +10,11 @@ import pytest
 # Robust imports
 # ---------------------------------------------------------------------
 # In the project, this module typically lives at:
-#   FRsutils/utils/constructor_utils/lazy_constructible_mixin.py
+#   frsutils/utils/constructor_utils/lazy_constructible_mixin.py
 # The fallback allows running tests in environments where that package path
 # is not available (e.g., a sandbox with the file at repo root).
 try:
-    from FRsutils.utils.constructor_utils.lazy_constructible_mixin import (
+    from frsutils.utils.constructor_utils.lazy_constructible_mixin import (
         LazyConstructibleMixin,
         LifecycleState,
     )

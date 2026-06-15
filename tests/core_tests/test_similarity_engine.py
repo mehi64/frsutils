@@ -11,9 +11,9 @@ import sys
 import numpy as np
 import pytest
 
-from FRsutils.core.backends import ArrayBackend, build_array_backend
-from FRsutils.core.similarities import Similarity, build_similarity_matrix
-from FRsutils.core.similarity_engine import (
+from frsutils.core.backends import ArrayBackend, build_array_backend
+from frsutils.core.similarities import Similarity, build_similarity_matrix
+from frsutils.core.similarity_engine import (
     BaseSimilarityEngine,
     BlockwiseSimilarityEngine,
     DenseSimilarityEngine,
@@ -26,8 +26,8 @@ from FRsutils.core.similarity_engine import (
     build_similarity_engine,
     calculate_similarity_block,
 )
-from FRsutils.core.tnorms import TNorm
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
 
 

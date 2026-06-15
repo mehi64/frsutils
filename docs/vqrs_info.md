@@ -1,6 +1,6 @@
 # VQRS model
 
-VQRS stands for Vaguely Quantified Rough Sets. In FRsutils, VQRS uses fuzzy
+VQRS stands for Vaguely Quantified Rough Sets. In frsutils, VQRS uses fuzzy
 quantifiers to compute lower and upper approximation degrees from a fuzzy
 similarity relation and class labels.
 
@@ -13,21 +13,21 @@ lower and upper approximation interpretations are.
 
 ## Implementation contract
 
-`FRsutils.core.models.VQRS` is the dense NumPy reference implementation. It
+`frsutils.core.models.VQRS` is the dense NumPy reference implementation. It
 expects a fully materialized similarity matrix, a one-dimensional label vector,
 and lower and upper fuzzy quantifiers.
 
 The public approximation API also provides exact blockwise VQRS execution:
 
 ```python
-from FRsutils.api import compute_approximations
+from frsutils import compute_approximations
 
 result = compute_approximations(X, y, model="vqrs", engine="blockwise")
 ```
 
 ## Approximation outputs
 
-FRsutils reports the following public outputs:
+frsutils reports the following public outputs:
 
 ```text
 boundary_region = upper_approximation - lower_approximation

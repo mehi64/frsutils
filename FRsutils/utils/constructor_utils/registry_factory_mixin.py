@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Registry-backed factory mixin for named component construction.
 
-This module provides shared utility behavior used by FRsutils components.
+This module provides shared utility behavior used by frsutils components.
 """
 
 import inspect

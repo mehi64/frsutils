@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Quickstart example for the canonical FRsutils public API.
+"""Quickstart example for the canonical frsutils public API.
 
-This script demonstrates the stable ``FRsutils.api`` import path. It is intended
+This script demonstrates the stable ``frsutils`` root import path. It is intended
 for examples and smoke tests, not as part of the stable Python API.
 """
 
@@ -19,7 +19,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from FRsutils.api import (  # noqa: E402
+from frsutils import (  # noqa: E402
     FuzzyRoughPositiveRegionScorer,
     compute_approximations,
     compute_positive_region,
@@ -154,7 +154,7 @@ def main() -> int:
     exit_code : int
         Process exit code.
     """
-    print("FRsutils public API quickstart")
+    print("frsutils public API quickstart")
     run_approximation_example()
     run_scorer_example()
     return 0

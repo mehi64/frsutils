@@ -6,9 +6,9 @@ import types
 
 import numpy as np
 
-from FRsutils.api import build_similarity_matrix, compute_approximations
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
-from FRsutils.core.models.vqrs import VQRS
+from frsutils import build_similarity_matrix, compute_approximations
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from frsutils.core.models.vqrs import VQRS
 
 
 class _FakeCupy(types.SimpleNamespace):

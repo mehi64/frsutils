@@ -7,10 +7,10 @@ for public workflows belongs to the blockwise approximation-engine layer.
 """
 
 import numpy as np
-import FRsutils.core.tnorms as tn
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-from FRsutils.core.models.vqrs_components import build_vqrs_components_from_config
+import frsutils.core.tnorms as tn
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.vqrs_components import build_vqrs_components_from_config
 
 
 
@@ -38,8 +38,8 @@ class VQRS(FuzzyRoughModel):
     -----
     This class is the dense NumPy reference implementation. Public blockwise
     execution, including optional CuPy-backed accumulators, is implemented in
-    :mod:`FRsutils.core.approximation_engines` and exposed through
-    :func:`FRsutils.api.compute_approximations`.
+    :mod:`frsutils.core.approximation_engines` and exposed through
+    :func:`frsutils.compute_approximations`.
     """
     def __init__(self, 
                  similarity_matrix: np.ndarray, 

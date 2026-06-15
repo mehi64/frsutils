@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Project logger factory and logging-directory setup helpers.
 
-This module provides shared utility behavior used by FRsutils components.
+This module provides shared utility behavior used by frsutils components.
 """
 
 # only get_logger is available for import, not _TinyLogger.
@@ -158,7 +158,7 @@ class _TinyLogger:
         # Avoid duplicate handlers
         if not self.logger.handlers:
             # Prefer colorized console output when colorlog is installed, but keep
-            # FRsutils importable in minimal environments used by downstream packages.
+            # frsutils importable in minimal environments used by downstream packages.
             if colorlog is not None:
                 console_formatter = colorlog.ColoredFormatter(
                     "%(log_color)s%(asctime)s [%(levelname)s] %(filename)s:%(funcName)s:%(lineno)d - %(message)s",

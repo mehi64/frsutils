@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Optional, Tuple
 
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier
-from FRsutils.core.tnorms import TNorm
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
+from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 _DEFAULT_LB_FUZZY_QUANTIFIER = {
@@ -25,7 +25,7 @@ _DEFAULT_UB_FUZZY_QUANTIFIER = {
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when a mapping already uses FRsutils nested sections."""
+    """Return True when a mapping already uses frsutils nested sections."""
     return isinstance(config.get("fr_model"), Mapping) or isinstance(config.get("similarity"), Mapping)
 
 
@@ -39,7 +39,7 @@ def _as_vqrs_nested_config(
     Parameters
     ----------
     config : Mapping or None
-        Flat VQRS config, nested FRsutils config, or a mapping containing the
+        Flat VQRS config, nested frsutils config, or a mapping containing the
         private ``_nested_config`` key used by public builders.
     require_explicit_components : bool
         If True, missing lower or upper fuzzy quantifier specs are reported by
@@ -48,7 +48,7 @@ def _as_vqrs_nested_config(
     Returns
     -------
     Mapping[str, Any]
-        Nested FRsutils configuration.
+        Nested frsutils configuration.
     """
     if config is None:
         if require_explicit_components:
@@ -86,7 +86,7 @@ def build_vqrs_components_from_config(
     Parameters
     ----------
     config : Mapping or None
-        Flat VQRS config, nested FRsutils config, or a mapping containing the
+        Flat VQRS config, nested frsutils config, or a mapping containing the
         private ``_nested_config`` key used by public builders.
     require_explicit_components : bool, default=False
         If True, missing lower or upper fuzzy quantifier specs raise

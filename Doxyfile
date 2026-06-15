@@ -1,8 +1,8 @@
 # Doxyfile 1.9.x config for Python documentation generation
 
 # Project settings
-PROJECT_NAME           = "FRsūtil̲s"
-PROJECT_BRIEF          = "A fuzzy-rough reasoning utilities library"
+PROJECT_NAME           = "frsutils"
+PROJECT_BRIEF          = "Fuzzy-rough set utilities for Python"
 OUTPUT_DIRECTORY       = docs
 OUTPUT_LANGUAGE        = English
 

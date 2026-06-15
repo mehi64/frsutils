@@ -17,8 +17,8 @@ likely to read first:
 - `examples/public_api_quickstart.py`
 - `docs/submit_readiness_report.md`
 
-The canonical user-facing import path is `FRsutils.api`. Examples and user
-documentation should avoid importing from internal `FRsutils.core` modules unless
+The canonical user-facing import path is `frsutils`. Examples and user
+documentation should avoid importing from internal `frsutils.core` modules unless
 explicitly explaining implementation details.
 
 ## Fast documentation smoke commands
@@ -92,9 +92,9 @@ when CuPy/CUDA is unavailable.
 
 Before publishing, check the following manually:
 
-- README quickstart imports from `FRsutils.api`.
+- README quickstart imports from `frsutils`.
 - `docs/public_api.md` matches the current public API names.
-- Examples do not rely on internal `FRsutils.core` imports.
+- Examples do not rely on internal `frsutils.core` imports.
 - Backend wording does not claim full GPU-native execution.
 - ITFRS and VQRS may claim CuPy-backed blockwise approximation accumulators.
 - OWAFRS only claims CuPy-backed similarity blocks, not GPU-resident OWAFRS
@@ -111,7 +111,7 @@ Before publishing, check the following manually:
 After this smoke check passes, documentation, examples, public API tests, and
 core approximation engine tests should tell the same story:
 
-- `FRsutils.api` is the stable public facade.
+- `frsutils` is the stable public namespace.
 - Dense NumPy execution is the stable baseline.
 - Blockwise execution is exact and available through the public API.
 - CuPy support is optional and model-specific.

@@ -3,8 +3,8 @@
 
 import numpy as np
 
-from FRsutils.core.similarities import build_similarity_matrix
-from FRsutils.utils.init_helpers import normalize_flat_config_to_nested
+from frsutils.core.similarities import build_similarity_matrix
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 def test_build_similarity_matrix_from_flat_params():

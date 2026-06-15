@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Lazy construction mixin for configurable FRsutils components.
+"""Lazy construction mixin for configurable frsutils components.
 
-This module provides shared utility behavior used by FRsutils components.
+This module provides shared utility behavior used by frsutils components.
 """
 
 from enum import Enum, auto
 from abc import ABC, abstractmethod
 
 class LifecycleState(Enum):
-    """LifecycleState component for FRsutils fuzzy-rough computations."""
+    """LifecycleState component for frsutils fuzzy-rough computations."""
     UNCONFIGURED = auto()
     CONFIGURED = auto()
     BUILT = auto()
 
 class LazyConstructibleMixin(ABC):
-    """LazyConstructibleMixin component for FRsutils fuzzy-rough computations."""
+    """LazyConstructibleMixin component for frsutils fuzzy-rough computations."""
     _ALLOWED_TRANSITIONS = {
         LifecycleState.UNCONFIGURED: [LifecycleState.CONFIGURED],
         LifecycleState.CONFIGURED: [LifecycleState.CONFIGURED, LifecycleState.BUILT],

@@ -6,10 +6,10 @@ similarity matrix. Backend-aware blockwise execution is provided by the
 public approximation API and the approximation-engine layer.
 """
 
-from FRsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-import FRsutils.core.tnorms as tn
-import FRsutils.core.implicators as imp
-from FRsutils.core.models.itfrs_components import build_itfrs_components_from_config
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+import frsutils.core.tnorms as tn
+import frsutils.core.implicators as imp
+from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
 import numpy as np
 
 

@@ -3,8 +3,8 @@
 
 import pytest
 import numpy as np
-from FRsutils.core.fuzzy_quantifiers import FuzzyQuantifier, validate_range_0_1
-from FRsutils.utils.logger.logger_util import get_logger
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier, validate_range_0_1
+from frsutils.utils.logger.logger_util import get_logger
 
 
 logger = get_logger(env="test",

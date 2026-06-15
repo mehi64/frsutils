@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from FRsutils.api import build_similarity_matrix, compute_approximations
-from FRsutils.core.implicators import LukasiewiczImplicator
-from FRsutils.core.models.owafrs import OWAFRS
-from FRsutils.core.owa_weights import OWAWeights
-from FRsutils.core.tnorms import MinTNorm
+from frsutils import build_similarity_matrix, compute_approximations
+from frsutils.core.implicators import LukasiewiczImplicator
+from frsutils.core.models.owafrs import OWAFRS
+from frsutils.core.owa_weights import OWAWeights
+from frsutils.core.tnorms import MinTNorm
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
 
 

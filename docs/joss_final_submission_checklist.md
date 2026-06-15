@@ -1,4 +1,4 @@
-# FRsutils final JOSS submission checklist
+# frsutils final JOSS submission checklist
 
 Use this checklist for the final human steps after the repository files in this
 release candidate have been copied into the working branch. It records the tasks
@@ -11,7 +11,7 @@ that require author judgment, external services, credentials, or local hardware.
       `Independent researcher`.
 - [ ] Confirm the `AI usage disclosure` accurately describes how generative AI
       was used for software, documentation, and paper preparation.
-- [ ] Confirm the paper claims match the package scope: FRsutils is the
+- [ ] Confirm the paper claims match the package scope: frsutils is the
       fuzzy-rough core library; FRSMOTE belongs to the downstream `frsampling`
       package.
 - [ ] Confirm the CuPy/GPU wording is conservative: ITFRS and VQRS may use
@@ -93,16 +93,16 @@ PY
 
 The final JOSS article DOI is assigned only after acceptance, so do not cite a
 future JOSS DOI in the FRSMOTE paper before acceptance. Use a software release
-DOI for FRsutils instead.
+DOI for frsutils instead.
 
 Recommended path:
 
-- [ ] Create a release tag for FRsutils, for example `v0.1.0` or the version you
+- [ ] Create a release tag for frsutils, for example `v0.1.0` or the version you
       decide to submit.
 - [ ] Archive that release with Zenodo or another research-software archive.
 - [ ] Use the software archive DOI in the FRSMOTE paper citation.
 - [ ] If the JOSS submission is already open, optionally add a note in the
-      FRSMOTE paper such as: `FRsutils has been submitted to JOSS and is under
+      FRSMOTE paper such as: `frsutils has been submitted to JOSS and is under
       open review.`
 - [ ] After JOSS acceptance, update the FRSMOTE paper citation if timing allows
       so it cites the published JOSS DOI as well as, or instead of, the software
