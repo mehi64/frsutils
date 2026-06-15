@@ -1,28 +1,25 @@
 # FRsutils public API
 
-FRsutils exposes its stable user-facing API through `FRsutils.api`.
-Downstream code, examples, notebooks, and documentation should import from this
-module instead of importing directly from internal `FRsutils.core` modules.
+FRsutils exposes its stable user-facing API through `FRsutils.api`. Downstream code, examples, notebooks, and documentation should import from this module instead of importing directly from internal `FRsutils.core` modules.
 
 ```python
 from FRsutils.api import compute_approximations
 ```
 
-The package top level, `FRsutils`, is intentionally kept compact. This avoids
-turning internal implementation details into public API by accident.
+The package top level, `FRsutils`, is intentionally kept compact. This avoids turning internal implementation details into public API by accident.
 
 ## Main capabilities
 
 The public API is organized around a small set of task-oriented entry points:
 
-| Task | Public API |
-| --- | --- |
-| Compute lower, upper, boundary, and positive-region values | `compute_approximations` |
-| Compute only one approximation output | `compute_lower_approximation`, `compute_upper_approximation`, `compute_boundary_region`, `compute_positive_region` |
-| Build a pairwise similarity matrix | `build_similarity_matrix` |
-| Build a dense or blockwise similarity engine | `build_similarity_engine` |
-| Build a dense fuzzy-rough model object | `build_fuzzy_rough_model` |
-| Use a scikit-learn-style positive-region scorer | `FuzzyRoughPositiveRegionScorer` |
+| Task                                                       | Public API                                                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Compute lower, upper, boundary, and positive-region values | `compute_approximations`                                                                                           |
+| Compute only one approximation output                      | `compute_lower_approximation`, `compute_upper_approximation`, `compute_boundary_region`, `compute_positive_region` |
+| Build a pairwise similarity matrix                         | `build_similarity_matrix`                                                                                          |
+| Build a dense or blockwise similarity engine               | `build_similarity_engine`                                                                                          |
+| Build a dense fuzzy-rough model object                     | `build_fuzzy_rough_model`                                                                                          |
+| Use a scikit-learn-style positive-region scorer            | `FuzzyRoughPositiveRegionScorer`                                                                                   |
 
 Supported fuzzy-rough model aliases are:
 
@@ -91,13 +88,11 @@ np.allclose(result.boundary, result.upper - result.lower)
 np.allclose(result.positive_region, result.lower)
 ```
 
-Public result arrays are always returned as NumPy arrays, even when an optional
-CuPy-backed blockwise path is used internally.
+Public result arrays are always returned as NumPy arrays, even when an optional CuPy-backed blockwise path is used internally.
 
 ### Dense execution
 
-Dense execution builds or consumes a full pairwise similarity matrix and then
-uses the dense model implementation.
+Dense execution builds or consumes a full pairwise similarity matrix and then uses the dense model implementation.
 
 ```python
 result = compute_approximations(
@@ -126,8 +121,7 @@ result = compute_approximations(
 
 ### Blockwise execution
 
-Blockwise execution computes exact approximations without materializing the full
-similarity matrix by default.
+Blockwise execution computes exact approximations without materializing the full similarity matrix by default.
 
 ```python
 result = compute_approximations(
@@ -141,9 +135,7 @@ result = compute_approximations(
 )
 ```
 
-Blockwise mode requires `X` and does not accept a precomputed
-`similarity_matrix`. To inspect the matrix produced by blockwise execution, set
-`return_similarity_matrix=True`.
+Blockwise mode requires `X` and does not accept a precomputed `similarity_matrix`. To inspect the matrix produced by blockwise execution, set `return_similarity_matrix=True`.
 
 ```python
 result = compute_approximations(
@@ -174,8 +166,7 @@ from FRsutils.api import (
 positive = compute_positive_region(X, y, model="itfrs", similarity="linear")
 ```
 
-These wrappers delegate to `compute_approximations` and return plain NumPy
-arrays, not result objects.
+These wrappers delegate to `compute_approximations` and return plain NumPy arrays, not result objects.
 
 ## Result object and metadata
 
@@ -185,8 +176,7 @@ arrays, not result objects.
 data = result.as_dict()
 ```
 
-By default, `as_dict()` does not include `similarity_matrix`, because that
-matrix can be large. Include it explicitly when needed:
+By default, `as_dict()` does not include `similarity_matrix`, because that matrix can be large. Include it explicitly when needed:
 
 ```python
 data = result.as_dict(include_similarity_matrix=True)
@@ -231,8 +221,7 @@ for block in engine.iter_blocks():
 
 ## Building dense model objects
 
-`build_fuzzy_rough_model` constructs dense model objects from a precomputed
-similarity matrix and labels.
+`build_fuzzy_rough_model` constructs dense model objects from a precomputed similarity matrix and labels.
 
 ```python
 from FRsutils.api import build_fuzzy_rough_model, build_similarity_matrix
@@ -247,13 +236,11 @@ model = build_fuzzy_rough_model(
 lower = model.lower_approximation()
 ```
 
-This builder supports the same model aliases as `compute_approximations`:
-`"itfrs"`, `"vqrs"`, and `"owafrs"`.
+This builder supports the same model aliases as `compute_approximations`: `"itfrs"`, `"vqrs"`, and `"owafrs"`.
 
 ## Scikit-learn-style positive-region scorer
 
-`FuzzyRoughPositiveRegionScorer` provides an estimator-like interface with
-`fit`, `fit_score`, `score_samples`, `as_result`, `get_params`, and
+`FuzzyRoughPositiveRegionScorer` provides an estimator-like interface with `fit`, `fit_score`, `score_samples`, `as_result`, `get_params`, and
 `set_params`.
 
 ```python
@@ -269,9 +256,7 @@ scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
 
-The scorer follows scikit-learn estimator conventions for parameter handling
-and cloning. It computes scores for the fitted samples; it is not a predictor
-for unseen samples.
+The scorer follows scikit-learn estimator conventions for parameter handling and cloning. It computes scores for the fitted samples; it is not a predictor for unseen samples.
 
 ## Flat and nested configuration
 
@@ -289,8 +274,7 @@ result = compute_approximations(
 )
 ```
 
-Internally, FRsutils may normalize these flat parameters into nested component
-configuration. Nested configuration is also accepted at the public API boundary:
+Internally, FRsutils may normalize these flat parameters into a nested component configuration. Nested configuration is also accepted at the public API boundary:
 
 ```python
 config = {
@@ -306,13 +290,11 @@ config = {
 result = compute_approximations(X, y, config=config)
 ```
 
-Do not mix nested config with additional flat keyword parameters in the same
-call. This keeps the public API unambiguous.
+Do not mix nested config with additional flat keyword parameters in the same call. This keeps the public API unambiguous.
 
 ## Backend and CuPy behavior
 
-The stable backend is NumPy. CuPy support is optional and only used through
-explicit blockwise execution:
+The stable backend is NumPy. CuPy support is optional and only used through explicit blockwise execution:
 
 ```python
 result = compute_approximations(
@@ -327,19 +309,12 @@ result = compute_approximations(
 
 Backend claims are model-specific:
 
-- ITFRS: blockwise execution can use CuPy-backed similarity blocks and
-  GPU-resident approximation accumulators.
-- VQRS: blockwise execution can use CuPy-backed similarity blocks and
-  GPU-resident approximation accumulators.
-- OWAFRS: blockwise execution can use CuPy-backed similarity blocks, but does
-  not currently claim GPU-resident OWAFRS approximation accumulators.
+- ITFRS: blockwise execution can use CuPy-backed similarity blocks and GPU-resident approximation accumulators.
+- VQRS: blockwise execution can use CuPy-backed similarity blocks and GPU-resident approximation accumulators.
+- OWAFRS: blockwise execution can use CuPy-backed similarity blocks, but does not currently claim GPU-resident OWAFRS approximation accumulators.
 
-Regardless of backend, public outputs remain NumPy arrays for compatibility
-with scientific Python and scikit-learn-style workflows. See
-[`cupy_info.md`](cupy_info.md),
-[`backend_execution_status.md`](backend_execution_status.md), and
-[`owafrs_non_gpu_resident_decision.md`](owafrs_non_gpu_resident_decision.md)
-for the detailed backend contract and OWAFRS decision record.
+Regardless of backend, public outputs remain NumPy arrays for compatibility with scientific Python and scikit-learn-style workflows. See [`cupy_info.md`](cupy_info.md), [`backend_execution_status.md`](backend_execution_status.md), and
+[`owafrs_non_gpu_resident_decision.md`](owafrs_non_gpu_resident_decision.md) for the detailed backend contract and OWAFRS decision record.
 
 ## Recommended imports
 
@@ -361,7 +336,4 @@ Internal modules may change more often than the canonical public API facade.
 
 ## JOSS and release documentation
 
-For release notes, software-paper wording, and benchmark claims, use the
-conservative wording in `paper_claims.md`. Before tagging or submitting, check
-`release_checklist.md`, `release_validation_commands.md`,
-`documentation_smoke_check.md`, and `joss_metadata_check.md`.
+For release notes, software-paper wording, and benchmark claims, use the conservative wording in `paper_claims.md`. Before tagging or submitting, check `release_checklist.md`, `release_validation_commands.md`, `documentation_smoke_check.md`, and `joss_metadata_check.md`.

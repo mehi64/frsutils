@@ -132,6 +132,28 @@ class BenchmarkCaseResult:
     error_message: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class BenchmarkDataset:
+    """Dataset used by the benchmark suite.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Numeric feature matrix.
+    y : np.ndarray
+        One-dimensional label vector.
+    name : str
+        Short dataset identifier written to reports.
+    source : str
+        Dataset source description written to report metadata.
+    """
+
+    X: np.ndarray
+    y: np.ndarray
+    name: str
+    source: str
+
+
 SCENARIOS: Dict[str, BenchmarkScenario] = {
     "dense_numpy": BenchmarkScenario(
         name="dense_numpy",
@@ -257,6 +279,224 @@ def make_synthetic_dataset(
     denom[denom == 0.0] = 1.0
     X = X / denom
     return X.astype(float, copy=False), y
+
+
+def _read_csv_rows(path: Path) -> Tuple[List[str], List[List[str]]]:
+    """Read a CSV file as a header row and data rows.
+
+    Parameters
+    ----------
+    path : Path
+        CSV file path.
+
+    Returns
+    -------
+    header, rows : tuple[list[str], list[list[str]]]
+        Header names and non-empty data rows.
+    """
+    with path.open("r", encoding="utf-8", newline="") as file_obj:
+        reader = csv.reader(file_obj)
+        try:
+            header = next(reader)
+        except StopIteration as exc:
+            raise BenchmarkConfigurationError(f"CSV file is empty: {path}") from exc
+        rows = [row for row in reader if any(cell.strip() for cell in row)]
+    if not rows:
+        raise BenchmarkConfigurationError(f"CSV file has no data rows: {path}")
+    return header, rows
+
+
+def _resolve_target_column(header: Sequence[str], target_column: str) -> int:
+    """Resolve a target column name or integer index.
+
+    Parameters
+    ----------
+    header : Sequence[str]
+        CSV header row.
+    target_column : str
+        Column name or zero-based integer index.
+
+    Returns
+    -------
+    int
+        Zero-based target column index.
+    """
+    if not target_column:
+        raise BenchmarkConfigurationError("--target-column is required with --input-csv.")
+
+    stripped = str(target_column).strip()
+    try:
+        index = int(stripped)
+    except ValueError:
+        normalized_header = [name.strip() for name in header]
+        if stripped not in normalized_header:
+            raise BenchmarkConfigurationError(
+                f"Target column {stripped!r} was not found in CSV header."
+            )
+        index = normalized_header.index(stripped)
+
+    if index < 0 or index >= len(header):
+        raise BenchmarkConfigurationError(
+            f"Target column index {index} is out of range for {len(header)} columns."
+        )
+    return index
+
+
+def load_csv_dataset(path: Path, *, target_column: str, name: Optional[str] = None) -> BenchmarkDataset:
+    """Load a numeric feature matrix and labels from a CSV file.
+
+    Parameters
+    ----------
+    path : Path
+        CSV file with a header row.
+    target_column : str
+        Target column name or zero-based column index.
+    name : Optional[str]
+        Optional report dataset name.
+
+    Returns
+    -------
+    BenchmarkDataset
+        Loaded benchmark dataset.
+    """
+    if not path.exists():
+        raise BenchmarkConfigurationError(f"CSV file does not exist: {path}")
+
+    header, rows = _read_csv_rows(path)
+    target_index = _resolve_target_column(header, target_column)
+
+    expected_width = len(header)
+    feature_rows: List[List[float]] = []
+    labels: List[str] = []
+    for row_number, row in enumerate(rows, start=2):
+        if len(row) != expected_width:
+            raise BenchmarkConfigurationError(
+                f"CSV row {row_number} has {len(row)} columns; expected {expected_width}."
+            )
+        feature_values: List[float] = []
+        for column_index, value in enumerate(row):
+            if column_index == target_index:
+                labels.append(value.strip())
+                continue
+            try:
+                feature_values.append(float(value))
+            except ValueError as exc:
+                column_name = header[column_index].strip() or str(column_index)
+                raise BenchmarkConfigurationError(
+                    f"Non-numeric feature value in row {row_number}, column {column_name!r}."
+                ) from exc
+        feature_rows.append(feature_values)
+
+    X = np.asarray(feature_rows, dtype=float)
+    y = np.asarray(labels)
+    if X.ndim != 2 or X.shape[1] < 1:
+        raise BenchmarkConfigurationError("CSV input must contain at least one feature column.")
+    return BenchmarkDataset(
+        X=X,
+        y=y,
+        name=name or path.stem,
+        source=f"csv:{path}",
+    )
+
+
+def load_npy_dataset(
+    *,
+    x_path: Path,
+    y_path: Path,
+    name: Optional[str] = None,
+) -> BenchmarkDataset:
+    """Load a feature matrix and labels from two NumPy ``.npy`` files.
+
+    Parameters
+    ----------
+    x_path : Path
+        Path to a two-dimensional numeric feature matrix.
+    y_path : Path
+        Path to a one-dimensional label vector.
+    name : Optional[str]
+        Optional report dataset name.
+
+    Returns
+    -------
+    BenchmarkDataset
+        Loaded benchmark dataset.
+    """
+    if not x_path.exists():
+        raise BenchmarkConfigurationError(f"X .npy file does not exist: {x_path}")
+    if not y_path.exists():
+        raise BenchmarkConfigurationError(f"y .npy file does not exist: {y_path}")
+
+    X = np.asarray(np.load(x_path), dtype=float)
+    y = np.asarray(np.load(y_path))
+    if X.ndim != 2:
+        raise BenchmarkConfigurationError("--input-npy-x must contain a 2D feature matrix.")
+    if y.ndim != 1:
+        raise BenchmarkConfigurationError("--input-npy-y must contain a 1D label vector.")
+    if X.shape[0] != y.shape[0]:
+        raise BenchmarkConfigurationError("X and y .npy files must have the same sample count.")
+    return BenchmarkDataset(
+        X=X,
+        y=y,
+        name=name or x_path.stem,
+        source=f"npy:X={x_path};y={y_path}",
+    )
+
+
+def _validate_loaded_dataset(dataset: BenchmarkDataset) -> BenchmarkDataset:
+    """Validate a loaded benchmark dataset and normalize array shapes.
+
+    Parameters
+    ----------
+    dataset : BenchmarkDataset
+        Candidate dataset.
+
+    Returns
+    -------
+    BenchmarkDataset
+        Validated dataset with NumPy arrays.
+    """
+    X = np.asarray(dataset.X, dtype=float)
+    y = np.asarray(dataset.y)
+    if X.ndim != 2:
+        raise BenchmarkConfigurationError("Benchmark X must be a 2D feature matrix.")
+    if y.ndim != 1:
+        raise BenchmarkConfigurationError("Benchmark y must be a 1D label vector.")
+    if X.shape[0] != y.shape[0]:
+        raise BenchmarkConfigurationError("Benchmark X and y sample counts must match.")
+    if X.shape[0] < 2:
+        raise BenchmarkConfigurationError("Benchmark dataset must contain at least 2 samples.")
+    if X.shape[1] < 1:
+        raise BenchmarkConfigurationError("Benchmark dataset must contain at least 1 feature.")
+    return BenchmarkDataset(X=X, y=y, name=dataset.name, source=dataset.source)
+
+
+def _slice_dataset(dataset: BenchmarkDataset, n_samples: int) -> BenchmarkDataset:
+    """Return a prefix sample of a loaded benchmark dataset.
+
+    Parameters
+    ----------
+    dataset : BenchmarkDataset
+        Source dataset.
+    n_samples : int
+        Prefix size.
+
+    Returns
+    -------
+    BenchmarkDataset
+        Dataset prefix used for one benchmark size.
+    """
+    if n_samples < 2:
+        raise BenchmarkConfigurationError("sample sizes must be at least 2 for loaded datasets.")
+    if n_samples > dataset.X.shape[0]:
+        raise BenchmarkConfigurationError(
+            f"Requested sample size {n_samples} exceeds loaded dataset size {dataset.X.shape[0]}."
+        )
+    return BenchmarkDataset(
+        X=dataset.X[:n_samples],
+        y=dataset.y[:n_samples],
+        name=dataset.name,
+        source=dataset.source,
+    )
 
 
 def _scenario_is_optional_cupy_failure(exc: BaseException, scenario: BenchmarkScenario) -> bool:
@@ -447,9 +687,9 @@ def benchmark_one_case(
     median_time, mean_time, min_time, max_time = _runtime_summary(runtimes)
 
     if dense_reference is None:
-        max_error_lower = 0.0
-        max_error_upper = 0.0
-        max_error_positive_region = 0.0
+        max_error_lower = None
+        max_error_upper = None
+        max_error_positive_region = None
     else:
         max_error_lower = _max_abs_error(last_result.lower, dense_reference.lower)
         max_error_upper = _max_abs_error(last_result.upper, dense_reference.upper)
@@ -491,6 +731,8 @@ def run_benchmark_suite(
     scenario_names: Sequence[str],
     repeats: int,
     random_state: int,
+    dataset: Optional[BenchmarkDataset] = None,
+    skip_dense_reference: bool = False,
 ) -> Dict[str, Any]:
     """Execute the benchmark matrix.
         
@@ -510,6 +752,10 @@ def run_benchmark_suite(
             Timed repetitions per case.
         random_state : int
             Base RNG seed.
+        dataset : Optional[BenchmarkDataset]
+            Optional loaded dataset. If omitted, synthetic datasets are generated.
+        skip_dense_reference : bool
+            If True, do not compute dense reference rows before candidate cases.
         
         Returns
         -------
@@ -524,21 +770,35 @@ def run_benchmark_suite(
     if unknown_scenarios:
         raise BenchmarkConfigurationError(f"Unknown scenario(s): {', '.join(unknown_scenarios)}")
 
+    loaded_dataset = _validate_loaded_dataset(dataset) if dataset is not None else None
+
     rows: List[BenchmarkCaseResult] = []
+    observed_feature_counts: List[int] = []
     for size_index, n_samples in enumerate(sample_sizes):
-        X, y = make_synthetic_dataset(
-            n_samples=int(n_samples),
-            n_features=int(n_features),
-            random_state=int(random_state) + size_index,
-        )
-        for model in normalized_models:
-            dense_reference = _execute_once(
-                X,
-                y,
-                model=model,
-                scenario=SCENARIOS["dense_numpy"],
-                block_size=None,
+        if loaded_dataset is None:
+            X, y = make_synthetic_dataset(
+                n_samples=int(n_samples),
+                n_features=int(n_features),
+                random_state=int(random_state) + size_index,
             )
+            dataset_name = "synthetic"
+            dataset_source = "synthetic"
+        else:
+            dataset_prefix = _slice_dataset(loaded_dataset, int(n_samples))
+            X, y = dataset_prefix.X, dataset_prefix.y
+            dataset_name = dataset_prefix.name
+            dataset_source = dataset_prefix.source
+        observed_feature_counts.append(int(X.shape[1]))
+        for model in normalized_models:
+            dense_reference = None
+            if not skip_dense_reference:
+                dense_reference = _execute_once(
+                    X,
+                    y,
+                    model=model,
+                    scenario=SCENARIOS["dense_numpy"],
+                    block_size=None,
+                )
             for scenario_name in normalized_scenarios:
                 scenario = SCENARIOS[scenario_name]
                 candidate_block_sizes: Iterable[Optional[int]] = block_sizes if scenario.uses_block_size else [None]
@@ -564,11 +824,14 @@ def run_benchmark_suite(
             "numpy_version": np.__version__,
             "models": normalized_models,
             "sample_sizes": [int(value) for value in sample_sizes],
-            "n_features": int(n_features),
+            "n_features": int(observed_feature_counts[0] if observed_feature_counts else n_features),
+            "dataset_name": dataset_name if rows else (loaded_dataset.name if loaded_dataset else "synthetic"),
+            "dataset_source": dataset_source if rows else (loaded_dataset.source if loaded_dataset else "synthetic"),
             "block_sizes": [int(value) for value in block_sizes],
             "scenarios": normalized_scenarios,
             "repeats": int(repeats),
             "random_state": int(random_state),
+            "dense_reference_enabled": not skip_dense_reference,
             "memory_note": "python_peak_memory_bytes is measured with tracemalloc and does not fully capture NumPy/CuPy native allocator memory.",
         },
         "results": [asdict(row) for row in rows],
@@ -650,7 +913,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(description="Run FRsutils execution benchmarks.")
     parser.add_argument("--models", default="itfrs,vqrs,owafrs", help="Comma-separated model aliases.")
-    parser.add_argument("--sample-sizes", default="128,256", help="Comma-separated positive sample sizes.")
+    parser.add_argument(
+        "--sample-sizes",
+        default=None,
+        help=(
+            "Comma-separated positive sample sizes. Defaults to 128,256 for synthetic "
+            "data and to the full dataset size for loaded CSV/NPY data."
+        ),
+    )
     parser.add_argument("--n-features", type=int, default=8, help="Number of synthetic numeric features.")
     parser.add_argument("--block-sizes", default="64,128", help="Comma-separated positive block sizes.")
     parser.add_argument(
@@ -660,9 +930,105 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--repeats", type=int, default=3, help="Timed repetitions per case.")
     parser.add_argument("--random-state", type=int, default=42, help="Base RNG seed.")
+    parser.add_argument(
+        "--input-csv",
+        type=Path,
+        default=None,
+        help="Optional CSV dataset path with a header row.",
+    )
+    parser.add_argument(
+        "--target-column",
+        default=None,
+        help="Target column name or zero-based index for --input-csv.",
+    )
+    parser.add_argument(
+        "--input-npy-x",
+        type=Path,
+        default=None,
+        help="Optional .npy feature-matrix path.",
+    )
+    parser.add_argument(
+        "--input-npy-y",
+        type=Path,
+        default=None,
+        help="Optional .npy label-vector path.",
+    )
+    parser.add_argument(
+        "--dataset-name",
+        default=None,
+        help="Optional dataset name written to report metadata.",
+    )
+    parser.add_argument(
+        "--skip-dense-reference",
+        action="store_true",
+        help=(
+            "Skip dense NumPy reference computation. This is useful for large datasets "
+            "where only blockwise CPU/GPU runtime comparison is needed. Numerical error "
+            "fields are left empty when no dense reference is computed."
+        ),
+    )
     parser.add_argument("--output-json", type=Path, default=None, help="Optional JSON output path.")
     parser.add_argument("--output-csv", type=Path, default=None, help="Optional CSV output path.")
     return parser
+
+
+def _load_dataset_from_cli_args(args: argparse.Namespace) -> Optional[BenchmarkDataset]:
+    """Load an optional benchmark dataset from CLI arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments.
+
+    Returns
+    -------
+    Optional[BenchmarkDataset]
+        Loaded dataset, or None for synthetic benchmark data.
+    """
+    uses_csv = args.input_csv is not None
+    uses_npy = args.input_npy_x is not None or args.input_npy_y is not None
+    if uses_csv and uses_npy:
+        raise BenchmarkConfigurationError("Use either --input-csv or --input-npy-x/--input-npy-y, not both.")
+    if uses_csv:
+        return load_csv_dataset(
+            Path(args.input_csv),
+            target_column=str(args.target_column or ""),
+            name=args.dataset_name,
+        )
+    if uses_npy:
+        if args.input_npy_x is None or args.input_npy_y is None:
+            raise BenchmarkConfigurationError("Both --input-npy-x and --input-npy-y are required together.")
+        return load_npy_dataset(
+            x_path=Path(args.input_npy_x),
+            y_path=Path(args.input_npy_y),
+            name=args.dataset_name,
+        )
+    return None
+
+
+def _sample_sizes_from_cli_args(
+    args: argparse.Namespace,
+    dataset: Optional[BenchmarkDataset],
+) -> List[int]:
+    """Resolve benchmark sample sizes from CLI arguments and dataset context.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments.
+    dataset : Optional[BenchmarkDataset]
+        Optional loaded dataset.
+
+    Returns
+    -------
+    List[int]
+        Sample sizes for the benchmark matrix.
+    """
+    if args.sample_sizes:
+        return parse_int_values(args.sample_sizes)
+    if dataset is not None:
+        return [int(dataset.X.shape[0])]
+    return [128, 256]
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -683,14 +1049,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        dataset = _load_dataset_from_cli_args(args)
         report = run_benchmark_suite(
             models=parse_csv_values(args.models),
-            sample_sizes=parse_int_values(args.sample_sizes),
+            sample_sizes=_sample_sizes_from_cli_args(args, dataset),
             n_features=int(args.n_features),
             block_sizes=parse_int_values(args.block_sizes),
             scenario_names=parse_csv_values(args.scenarios),
             repeats=int(args.repeats),
             random_state=int(args.random_state),
+            dataset=dataset,
+            skip_dense_reference=bool(args.skip_dense_reference),
         )
     except BenchmarkConfigurationError as exc:
         parser.error(str(exc))

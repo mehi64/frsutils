@@ -41,6 +41,43 @@ CPU-only environments are supported. If `backend="cupy"` is requested but CuPy
 or CUDA is unavailable, the corresponding rows are marked as `skipped` rather
 than crashing the whole benchmark run.
 
+## Large dataset mode
+
+For large datasets, compare only blockwise CPU and GPU execution and skip the
+dense NumPy reference:
+
+```bash
+python benchmarks/benchmark_fuzzy_rough_execution.py \
+    --models itfrs,vqrs \
+    --input-csv path/to/dataset.csv \
+    --target-column class \
+    --block-sizes 512,1024 \
+    --scenarios blockwise_numpy,blockwise_cupy \
+    --repeats 3 \
+    --skip-dense-reference \
+    --output-json benchmark_large.json \
+    --output-csv benchmark_large.csv
+```
+
+The CSV loader expects a header row, one target column, and numeric feature
+columns. The target column can be selected by name or by zero-based column
+index. NumPy input is also supported:
+
+```bash
+python benchmarks/benchmark_fuzzy_rough_execution.py \
+    --models itfrs,vqrs \
+    --input-npy-x X.npy \
+    --input-npy-y y.npy \
+    --block-sizes 512,1024 \
+    --scenarios blockwise_numpy,blockwise_cupy \
+    --skip-dense-reference \
+    --output-json benchmark_large.json
+```
+
+When `--skip-dense-reference` is used, the numerical-equivalence error fields
+are left empty because no dense reference is computed. This mode is intended for
+scalable runtime comparison, not equivalence validation.
+
 ## Recorded fields
 
 Each benchmark row records:
@@ -51,6 +88,7 @@ Each benchmark row records:
 - median/mean/min/max runtime over repeated runs,
 - Python allocator peak memory measured by `tracemalloc`,
 - numerical-equivalence errors against the dense NumPy reference,
+- whether dense reference computation was enabled,
 - public result metadata:
   - `used_blockwise`,
   - `used_gpu_similarity_blocks`,

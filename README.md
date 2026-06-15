@@ -2,14 +2,8 @@
 
 # FRsutils
 
-FRsutils is a Python library for reusable fuzzy-rough set utilities. The package
-focuses on fuzzy-rough core building blocks such as similarity matrices,
-t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
+FRsutils is a Python library for reusable fuzzy-rough set utilities. The package focuses on fuzzy-rough core building blocks such as similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough models, lower/upper
 approximations, and positive-region computation.
-
-Fuzzy-rough oversampling algorithms such as FRSMOTE now live in the standalone
-`frsampling` package. That package depends on FRsutils through the
-public `FRsutils.api` facade.
 
 # For Developers
 
@@ -57,27 +51,6 @@ Install these only when you need the related workflows:
 - `cupy-cuda12x` or another CUDA-compatible CuPy wheel for explicit
   `backend="cupy"` experiments
 
-## Oversampling package boundary
-
-FRsutils is the fuzzy-rough core package. Install the standalone `frsampling`
-package separately when you need FRSMOTE or future fuzzy-rough oversamplers such
-as FRADASYN. Downstream oversampling packages should import FRsutils through the
-public facade:
-
-```python
-from FRsutils.api import compute_positive_region
-```
-
-Use the downstream package import path for oversamplers:
-
-```python
-from frsampling import FRSMOTE
-```
-
-No backward-compatibility wrapper is kept in FRsutils for the old FRSMOTE import
-paths. Existing scripts must be migrated explicitly in the downstream
-oversampling package.
-
 # Fuzzy-rough set utilities
 
 FRsutils provides reusable fuzzy-rough set calculations used in research,
@@ -90,19 +63,17 @@ including:
 
 ## Public API quickstart
 
-The canonical user-facing API is `FRsutils.api`. End users, notebooks,
-examples, and downstream packages should import from this facade instead of
-importing directly from internal `FRsutils.core` or `FRsutils.utils` modules.
+The canonical user-facing API is `FRsutils.api`. End users, notebooks, examples, and downstream packages should import from this facade instead of importing directly from internal `FRsutils.core` or `FRsutils.utils` modules. As an example: 
 
 ```python
 from FRsutils.api import compute_approximations
 ```
 
-The package top level, `FRsutils`, is intentionally kept compact so internal
-implementation details do not become public API by accident.
+The package top level, `FRsutils`, is intentionally kept compact so internal implementation details do not become public API by accident.
 
-The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough
-approximations, and read the named fields from the returned result object.
+The smallest workflow is to prepare normalized numeric data, compute fuzzy-rough approximations, and read the named fields from the returned result object.
+
+### Example:
 
 ```python
 import numpy as np
@@ -146,8 +117,7 @@ scores = compute_positive_region(
 print("positive-region scores:", scores)
 ```
 
-For reusable fitted scoring workflows, use the sklearn-style positive-region
-scorer:
+For reusable fitted scoring workflows, use the sklearn-style positive-region scorer:
 
 ```python
 import numpy as np
@@ -180,8 +150,7 @@ print(result.lower)
 print(result.upper)
 ```
 
-Downstream packages can reuse a precomputed similarity matrix through the public
-API without importing from FRsutils internals:
+Downstream packages can reuse a precomputed similarity matrix through the public API without importing from FRsutils internals:
 
 ```python
 import numpy as np
@@ -214,15 +183,12 @@ print(scores)
 ```
 
 A runnable version of the quickstart is available at
-[`examples/public_api_quickstart.py`](examples/public_api_quickstart.py). See
-[`docs/public_api.md`](docs/public_api.md) for the public API guide.
+[`examples/public_api_quickstart.py`](examples/public_api_quickstart.py). See [`docs/public_api.md`](docs/public_api.md) for the public API guide.
 
 ## Execution engines and backend status
 
 FRsutils now exposes dense and exact blockwise execution through the public API.
-Dense mode preserves the historical full-matrix behavior. Blockwise mode avoids
-materializing the full `n x n` similarity matrix for approximation computation
-and is available for ITFRS, VQRS, and OWAFRS.
+Dense mode preserves the historical full-matrix behavior. Blockwise mode avoids materializing the full `n x n` similarity matrix for approximation computation and is available for ITFRS, VQRS, and OWAFRS.
 
 ```python
 from FRsutils.api import compute_approximations
@@ -238,18 +204,9 @@ result = compute_approximations(
 )
 ```
 
-`backend="cupy"` is an optional experimental backend for GPU-accelerated
-similarity-block computation. For `model="itfrs"` and `model="vqrs"` with
-`engine="blockwise"`, approximation reductions/accumulators can also stay
-CuPy-resident until final public NumPy output conversion. OWAFRS deliberately remains on the conservative NumPy row-buffer path after the
-OWAFRS non-GPU-resident decision because exact OWA execution requires row-wise sorting and a
-separate memory/sorting benchmark. Do not claim full GPU-native fuzzy-rough
-execution yet. See
-[`docs/backend_execution_status.md`](docs/backend_execution_status.md) and
-[`docs/owafrs_non_gpu_resident_decision.md`](docs/owafrs_non_gpu_resident_decision.md).
+`backend="cupy"` is an optional experimental backend for GPU-accelerated similarity-block computation. For `model="itfrs"` and `model="vqrs"` with `engine="blockwise"`, approximation reductions/accumulators can also stay CuPy-resident until final public NumPy output conversion. OWAFRS deliberately remains on the conservative NumPy row-buffer path after the OWAFRS non-GPU-resident decision because exact OWA execution requires row-wise sorting and a separate memory/sorting benchmark. Do not claim full GPU-native fuzzy-rough execution yet. See [`docs/backend_execution_status.md`](docs/backend_execution_status.md) and [`docs/owafrs_non_gpu_resident_decision.md`](docs/owafrs_non_gpu_resident_decision.md).
 
-The returned result records execution provenance so benchmark scripts and
-downstream packages can verify which path was used:
+The returned result records execution provenance so benchmark scripts and downstream packages can verify which path was used:
 
 ```python
 result.engine                      # "dense" or "blockwise"
@@ -260,8 +217,7 @@ result.used_gpu_similarity_blocks          # bool
 result.used_gpu_approximation_accumulators # bool, true for CuPy blockwise ITFRS/VQRS; false for OWAFRS
 ```
 
-The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`,
-`backend`, and `block_size` parameters.
+The sklearn-style `FuzzyRoughPositiveRegionScorer` accepts the same `engine`, `backend`, and `block_size` parameters.
 
 ## Benchmark suite
 
@@ -271,11 +227,7 @@ FRsutils includes a reproducible benchmark harness for the public approximation 
 python benchmarks/benchmark_fuzzy_rough_execution.py     --models itfrs,vqrs,owafrs     --sample-sizes 128,256,512     --n-features 8     --block-sizes 64,128     --scenarios dense_numpy,blockwise_numpy,blockwise_cupy     --repeats 3     --output-json benchmark_results.json     --output-csv benchmark_results.csv
 ```
 
-The suite compares dense NumPy, exact blockwise NumPy, and optional CuPy-backed
-blockwise execution. It records runtime, lightweight Python allocator peak
-memory, dense-reference numerical-equivalence errors, and public execution
-metadata. CuPy/CUDA-unavailable rows are reported as skipped. See
-[`docs/benchmark_suite.md`](docs/benchmark_suite.md).
+The suite compares dense NumPy, exact blockwise NumPy, and optional CuPy-backed blockwise execution. It records runtime, lightweight Python allocator peak memory, dense-reference numerical-equivalence errors, and public execution metadata. CuPy/CUDA-unavailable rows are reported as skipped. See [`docs/benchmark_suite.md`](docs/benchmark_suite.md).
 
 ## Release-ready examples and paper claim boundary
 
@@ -375,6 +327,12 @@ From the repository root, the default test command excludes tests marked as
 
 ```bash
 python -m pytest tests -q
+```
+
+to run all tests, including slow-marked ones:
+
+```bash
+python -m pytest tests benchmarks -m "slow or not slow" -vv -rs
 ```
 
 Run the documented quickstart and release/backend smoke set explicitly with:
