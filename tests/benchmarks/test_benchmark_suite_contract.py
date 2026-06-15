@@ -10,6 +10,7 @@ from benchmarks.benchmark_fuzzy_rough_execution import (
     load_npy_dataset,
     main,
     run_benchmark_suite,
+    write_comparison_csv_report,
     write_csv_report,
     write_json_report,
 )
@@ -29,6 +30,7 @@ def test_benchmark_suite_writes_machine_readable_artifacts(tmp_path):
 
     assert report["metadata"]["benchmark_suite"] == "public_api_execution"
     assert len(report["results"]) == 2
+    assert report["comparisons"] == []
     assert all(row["status"] == "success" for row in report["results"])
 
     blockwise_rows = [row for row in report["results"] if row["scenario"] == "blockwise_numpy"]
@@ -171,3 +173,81 @@ def test_benchmark_cli_can_load_csv_and_skip_dense_reference(tmp_path):
     assert loaded["metadata"]["sample_sizes"] == [4]
     assert loaded["metadata"]["dense_reference_enabled"] is False
     assert loaded["results"][0]["max_abs_error_lower"] is None
+
+
+def test_benchmark_suite_can_compare_blockwise_backends_pairwise(tmp_path):
+    """Paired comparison rows should include runtimes and numerical diffs."""
+    report = run_benchmark_suite(
+        models=["itfrs"],
+        sample_sizes=[10],
+        n_features=3,
+        block_sizes=[5],
+        scenario_names=["blockwise_numpy"],
+        repeats=1,
+        random_state=7,
+        skip_dense_reference=True,
+        compare_blockwise_backends=True,
+        comparison_backends=("numpy", "numpy"),
+    )
+
+    assert report["metadata"]["paired_backend_comparison_enabled"] is True
+    assert report["metadata"]["comparison_backends"] == ["numpy", "numpy"]
+    assert len(report["comparisons"]) == 1
+
+    comparison = report["comparisons"][0]
+    assert comparison["status"] == "success"
+    assert comparison["reference_backend"] == "numpy"
+    assert comparison["candidate_backend"] == "numpy"
+    assert comparison["reference_median_runtime_seconds"] is not None
+    assert comparison["candidate_median_runtime_seconds"] is not None
+    assert comparison["speedup_reference_over_candidate"] is not None
+    assert comparison["max_abs_diff_lower"] <= 1e-12
+    assert comparison["max_abs_diff_upper"] <= 1e-12
+    assert comparison["max_abs_diff_boundary"] <= 1e-12
+    assert comparison["max_abs_diff_positive_region"] <= 1e-12
+
+    comparison_csv = tmp_path / "comparison.csv"
+    write_comparison_csv_report(report, comparison_csv)
+    with comparison_csv.open("r", encoding="utf-8", newline="") as file_obj:
+        rows = list(csv.DictReader(file_obj))
+    assert len(rows) == 1
+    assert rows[0]["status"] == "success"
+
+
+def test_benchmark_cli_supports_synthetic_size_and_pairwise_comparison(tmp_path):
+    """CLI should allow direct synthetic dataset sizing and comparison output."""
+    json_path = tmp_path / "synthetic_pair.json"
+    comparison_csv = tmp_path / "synthetic_pair_comparison.csv"
+
+    exit_code = main(
+        [
+            "--models",
+            "itfrs",
+            "--synthetic-samples",
+            "10",
+            "--n-features",
+            "4",
+            "--block-sizes",
+            "5",
+            "--scenarios",
+            "blockwise_numpy",
+            "--repeats",
+            "1",
+            "--skip-dense-reference",
+            "--compare-blockwise-backends",
+            "--comparison-backends",
+            "numpy,numpy",
+            "--output-json",
+            str(json_path),
+            "--output-comparison-csv",
+            str(comparison_csv),
+        ],
+    )
+
+    assert exit_code == 0
+    loaded = json.loads(json_path.read_text(encoding="utf-8"))
+    assert loaded["metadata"]["sample_sizes"] == [10]
+    assert loaded["metadata"]["n_features"] == 4
+    assert loaded["metadata"]["paired_backend_comparison_enabled"] is True
+    assert len(loaded["comparisons"]) == 1
+    assert comparison_csv.exists()

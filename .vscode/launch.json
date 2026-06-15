@@ -444,6 +444,17 @@
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "benchmark_fuzzy_rough_execution",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "benchmarks.benchmark_fuzzy_rough_execution",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
