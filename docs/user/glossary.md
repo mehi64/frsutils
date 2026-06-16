@@ -12,7 +12,10 @@ memory. In FRsutils, the standard dense path uses NumPy.
 ## Blockwise execution
 
 Execution mode that computes exact fuzzy-rough results by processing similarity
-blocks instead of materializing the full similarity matrix.
+blocks instead of materializing the full similarity matrix. Blockwise execution
+reduces pairwise-computation memory use; it does not currently provide disk-backed
+or streaming dataset loading, so the input feature matrix `X` is expected to fit
+in memory.
 
 ## Backend
 

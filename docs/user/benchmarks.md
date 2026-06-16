@@ -78,8 +78,8 @@ than crashing the whole benchmark run.
 
 ## Paired NumPy/CuPy blockwise comparison
 
-For large datasets, use paired comparison mode. This runs blockwise NumPy and
-blockwise CuPy on the same dataset, model, and block size, then records both
+For larger in-memory datasets, use paired comparison mode. This runs blockwise
+NumPy and blockwise CuPy on the same dataset, model, and block size, then records both
 runtime and numerical differences:
 
 ```bash
@@ -118,10 +118,10 @@ NumPy median runtime / CuPy median runtime
 Values greater than 1 mean the candidate backend, normally CuPy, was faster in
 that benchmark case.
 
-## Large real dataset mode
+## Larger in-memory CSV benchmark mode
 
-For large CSV datasets, compare only blockwise CPU and GPU execution and skip
-the dense NumPy reference:
+For CSV benchmark data that can be loaded into memory, compare only blockwise
+CPU and GPU execution and skip the dense NumPy reference:
 
 ```bash
 python benchmarks/benchmark_fuzzy_rough_execution.py \

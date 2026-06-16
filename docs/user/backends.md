@@ -12,7 +12,7 @@ FRsutils exposes execution modes through the canonical public API,
 | Execution mode | User-facing option | Intended use |
 | --- | --- | --- |
 | Dense NumPy | `engine="dense"` | Reference behavior and small datasets. |
-| Exact blockwise NumPy | `engine="blockwise", backend="numpy"` | Larger datasets without materializing a full similarity matrix. |
+| Exact blockwise NumPy | `engine="blockwise", backend="numpy"` | In-memory datasets where the full similarity matrix should not be materialized. |
 | Optional CuPy blockwise | `engine="blockwise", backend="cupy"` | GPU-backed blockwise execution for supported paths. |
 
 The public output type is stable across all modes: approximation arrays are
