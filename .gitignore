@@ -5,10 +5,7 @@ build/
 *.egg-info/
 .pytest_cache/
 *.tmp
-build/
-dist/
 frsutils.egg-info/
-~$ta_calculations.docx
 *.zip
 *.csv
 temp/
