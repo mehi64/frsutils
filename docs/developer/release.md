@@ -10,7 +10,7 @@ review.
 ## Release candidate identity
 
 - Package name: `frsutils`
-- Current package version in the inspected metadata: `0.0.5`
+- Current package version in the inspected metadata: `0.1.0`
 - License: `BSD-3-Clause`
 - Public API boundary: `frsutils`
 - JOSS paper files: `paper.md`, `paper.bib`
@@ -291,18 +291,19 @@ Recommended path:
 
 Fill this section after the final local run.
 
-- Final validation date:
-- Python version:
-- Operating system:
-- CuPy/CUDA environment:
-- Full test result:
-- Expected skips:
-- JOSS paper citation check:
-- Documentation link check:
-- Release tag:
-- Software archive DOI:
-- JOSS submission/review URL:
-- Final JOSS DOI after acceptance:
+- Final validation date: 2026-07-11
+- Python version: 3.13.5 for the local release validation; CI remains configured for 3.10, 3.11, and 3.12
+- Operating system: Linux x86_64 release-validation environment
+- CuPy/CUDA environment: CuPy unavailable; real-CuPy tests skipped as designed
+- Full test result: 2648 default tests passed; 149 CuPy-related tests skipped; all 10518 exhaustive OWAFRS slow cases passed in equivalent test-function batches
+- Expected skips: 149, all caused by CuPy not being installed
+- JOSS paper citation check: 10 citation keys used; all 10 resolved in `paper.bib`
+- Documentation link check: 22 Markdown files checked; no broken relative links
+- Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments
+- Release tag: pending `v0.1.0` after the release commit is pushed and CI is green
+- Software archive DOI: pending release publication and archival
+- JOSS submission/review URL: pending
+- Final JOSS DOI after acceptance: pending
 
 ## Submit-ready criteria
 

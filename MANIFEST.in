@@ -1,0 +1,16 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include CITATION.cff
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+include SUPPORT.md
+include paper.md
+include paper.bib
+include mkdocs.yml
+include pytest.ini
+
+recursive-include docs *.md *.png
+recursive-include examples *.py
+recursive-include benchmarks *.py
+recursive-include tests *.py *.md

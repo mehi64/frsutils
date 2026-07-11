@@ -7,8 +7,8 @@ authors:
     given-names: Mehran
 repository-code: "https://github.com/mehi64/frsutils"
 url: "https://github.com/mehi64/frsutils"
-version: "0.0.3"
-date-released: "2026-06-14"
+version: "0.1.0"
+date-released: "2026-07-11"
 license: BSD-3-Clause
 abstract: "frsutils is a Python library for reusable fuzzy-rough set utilities, including similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough approximation models, lower and upper approximations, and positive-region computation."
 keywords:

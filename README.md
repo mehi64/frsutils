@@ -249,7 +249,7 @@ paper DOI as the preferred citation.
   author = {Amiri, Mehran},
   title = {frsutils: Fuzzy-Rough Set Utilities for Python},
   url = {https://github.com/mehi64/frsutils},
-  version = {0.0.5},
+  version = {0.1.0},
   year = {2026}
 }
 ```
