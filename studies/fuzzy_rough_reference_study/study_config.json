@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "random_seed": 42,
+  "block_size": 64,
+  "repeats": 3,
+  "equivalence_atol": 1e-12,
+  "top_k_boundary_gap": 10,
+  "similarity": {
+    "name": "gaussian",
+    "sigma": 2.0
+  },
+  "datasets": [
+    {
+      "name": "breast_cancer",
+      "loader": "breast_cancer",
+      "task": "original_binary"
+    },
+    {
+      "name": "wine_class_0_vs_rest",
+      "loader": "wine",
+      "task": "one_vs_rest",
+      "positive_class": 0
+    },
+    {
+      "name": "digits_3_vs_8",
+      "loader": "digits",
+      "task": "pairwise_binary",
+      "include_classes": [
+        3,
+        8
+      ],
+      "positive_class": 8
+    }
+  ],
+  "models": [
+    {
+      "name": "itfrs",
+      "parameters": {}
+    },
+    {
+      "name": "vqrs",
+      "parameters": {
+        "lb_fuzzy_quantifier_name": "linear",
+        "lb_fuzzy_quantifier_alpha": 0.4,
+        "lb_fuzzy_quantifier_beta": 0.8,
+        "ub_fuzzy_quantifier_name": "linear",
+        "ub_fuzzy_quantifier_alpha": 0.1,
+        "ub_fuzzy_quantifier_beta": 0.6
+      }
+    },
+    {
+      "name": "owafrs",
+      "parameters": {
+        "lb_owa_method_name": "linear",
+        "ub_owa_method_name": "linear"
+      }
+    }
+  ],
+  "benchmark": {
+    "sample_sizes": [
+      128,
+      256,
+      512
+    ],
+    "n_features": 8,
+    "block_sizes": [
+      64,
+      128
+    ],
+    "repeats": 3,
+    "random_seed": 42,
+    "scenarios": [
+      "dense_numpy",
+      "blockwise_numpy"
+    ]
+  }
+}

@@ -19,114 +19,151 @@ bibliography: paper.bib
 
 # Summary
 
-frsutils is a scientific Python library for reusable fuzzy-rough set
-computations. It provides a compact public API for constructing similarity
-matrices, computing lower and upper approximations, deriving boundary regions,
-and evaluating positive-region scores. The current release exposes three
-fuzzy-rough model families through stable aliases: implicator/t-norm fuzzy rough
-sets (`itfrs`), vaguely quantified rough sets (`vqrs`), and ordered weighted
-averaging fuzzy rough sets (`owafrs`). frsutils is built on NumPy [@harris2020numpy]
-and follows a small, task-oriented API surface inspired by scientific Python and
-scikit-learn conventions [@pedregosa2011scikit].
+`frsutils` is a scientific Python library for computing fuzzy-rough set
+approximations. Fuzzy-rough models describe whether an observation belongs
+certainly, possibly, or ambiguously to a concept when observations are related
+by graded similarity rather than exact equality. The library provides a compact
+public API for similarity matrices, lower and upper approximations, boundary
+regions, and positive-region scores. It exposes three model families through a
+shared interface: implicator/t-norm fuzzy-rough sets (ITFRS)
+[@radzikowska2002comparative], vaguely quantified rough sets (VQRS)
+[@cornelis2007vqrs], and ordered weighted averaging fuzzy-rough sets (OWAFRS)
+[@yager1988owa; @cornelis2010owafrs]. Dense NumPy execution is provided as a
+reference implementation, together with exact blockwise execution and optional,
+model-specific CuPy acceleration [@harris2020numpy; @okuta2017cupy].
 
 # Statement of need
 
-Rough sets [@pawlak1982rough] and fuzzy rough sets
-[@dubois1990rough; @radzikowska2002comparative] provide mathematical tools for
-representing approximate concepts when samples are related by indiscernibility,
-similarity, or gradual membership. These models are used in feature selection,
-classification, prototype or instance selection, and fuzzy-rough data analysis.
-However, research code for fuzzy-rough approximations is often written as
-project-specific scripts, making it difficult to compare variants, reuse
-components, or validate implementations across studies.
+Rough sets [@pawlak1982rough] and fuzzy-rough sets
+[@dubois1990rough; @radzikowska2002comparative] are used in research on feature
+selection, classification, prototype and instance selection, data complexity,
+and learning from uncertain or overlapping concepts. These applications depend
+on a recurring computational layer: construct a graded relation between
+samples, evaluate lower and upper approximations, and derive quantities such as
+the boundary or positive region. In practice, this layer is often reimplemented
+inside individual experiments. Small differences in orientation, aggregation,
+self-comparison, class handling, or parameter defaults can then make results
+hard to compare and implementations difficult to reuse.
 
-frsutils addresses this gap by factoring common fuzzy-rough building blocks into
-a reusable Python package. It is intended for researchers and research-software
-developers who need tested implementations of similarities, t-norms,
-implicators, fuzzy quantifiers, OWA weights, approximation models, and
-positive-region computations. The package is also intended to support downstream
-method development, where new fuzzy-rough sample-selection, scoring, or
-oversampling methods need a dependable approximation layer rather than another
-copy of ad hoc matrix code.
+`frsutils` addresses this reproducibility and reuse problem for researchers and
+research-software developers working in Python. It supplies tested mathematical
+components, model implementations, and task-level functions behind one stable
+package-root API. The same interface can therefore be used to compare model
+families, validate a new method against a dense reference implementation, or
+serve as the approximation dependency of downstream sample-selection and
+imbalanced-learning software. The blockwise engine also addresses a practical
+limitation of pairwise fuzzy-rough computations: a complete similarity matrix
+requires quadratic storage in the number of samples. `frsutils` processes exact
+similarity blocks instead of requiring that full matrix to be materialized,
+while retaining explicit execution metadata and the same scientific outputs.
 
 # State of the field
 
-Several mature Python libraries provide general numerical computing, machine
-learning, or GPU array functionality, including NumPy [@harris2020numpy],
-scikit-learn [@pedregosa2011scikit], and CuPy [@okuta2017cupy]. These libraries
-are essential infrastructure, but they do not provide a focused fuzzy-rough
-approximation API. Related software such as fuzzy-rough-learn focuses on
-machine-learning algorithms built from fuzzy-rough ideas
-[@lenz2020fuzzyroughlearn]. frsutils is complementary: it provides a lightweight
-core approximation layer, reusable component registries, and a stable
-`frsutils` namespace that downstream packages can depend on without importing
-internal modules.
+Existing software covers related but different levels of the fuzzy-rough
+research stack. The R package `RoughSets` implements a broad collection of
+rough-set and fuzzy-rough concepts and applications, including approximation,
+feature and instance selection, rule induction, and classification
+[@riza2014roughsets]. `fuzzy-rough-learn` provides Python machine-learning
+algorithms and data descriptors built with fuzzy-rough ideas, including
+classifiers, regressors, feature selection, and prototype selection
+[@lenz2020fuzzyroughlearn]. Its public API is organized primarily around those
+learning algorithms and descriptors.
 
-The library therefore occupies a narrow but useful layer between mathematical
-research code and complete machine-learning estimators. It gives researchers a
-common implementation surface for comparing ITFRS, VQRS, and OWAFRS variants,
-while keeping execution metadata and backend behavior explicit enough for
-reproducible experiments.
+`frsutils` deliberately occupies a narrower layer. Its primary public objects
+are the approximation operations and their components, rather than complete
+predictive estimators. It places ITFRS, VQRS, and OWAFRS behind a common result
+contract; exposes per-sample lower, upper, boundary, and positive-region values;
+and provides both dense reference and exact blockwise execution with recorded
+backend and engine metadata. These requirements did not map cleanly onto an
+extension of an estimator-oriented package: downstream research code needed a
+small dependency whose public boundary was the mathematical approximation
+itself, whose model semantics were selectable, and whose execution strategy
+could change without changing returned scientific values. Building `frsutils`
+therefore adds a reusable approximation-engine layer rather than duplicating
+the broader learning functionality of `RoughSets` or `fuzzy-rough-learn`.
+NumPy and scikit-learn remain foundational dependencies and conventions rather
+than competing alternatives [@harris2020numpy; @pedregosa2011scikit].
 
-# Software design and functionality
+# Software design
 
-The public entry point is `frsutils`. Users can compute all approximation
-outputs with `compute_approximations`, or call focused wrappers such as
-`compute_lower_approximation`, `compute_upper_approximation`,
-`compute_boundary_region`, and `compute_positive_region`. The returned
-`FuzzyRoughApproximationResult` stores NumPy arrays for the lower approximation,
-upper approximation, boundary region, and positive-region score, together with
-execution metadata such as the selected model, engine, backend, and block size.
+The central design choice is to separate the stable research contract from
+model construction and execution details. Users call package-root functions
+such as `compute_approximations` and receive a
+`FuzzyRoughApproximationResult` containing NumPy arrays and execution metadata.
+A single result type makes model comparisons and downstream integration
+predictable, while registries and builders keep similarities, t-norms,
+implicators, fuzzy quantifiers, and OWA weights independently configurable.
+This balances a small user-facing API against the extensibility needed for
+methodological research.
 
-frsutils supports dense reference execution and exact blockwise execution. Dense
-execution builds or consumes a full pairwise similarity matrix and is useful for
-small datasets and reference checks. Blockwise execution computes exact
-approximations by processing similarity blocks, reducing the need to materialize
-the full matrix. Optional CuPy-backed blockwise paths [@okuta2017cupy] are
-available for selected internal operations while preserving NumPy arrays as the
-public output contract. The GPU-related claims are intentionally model-specific:
-ITFRS and VQRS may use GPU-backed similarity blocks and experimental
-GPU-resident approximation accumulators, whereas OWAFRS currently claims only
-GPU-backed similarity blocks.
+A second trade-off concerns transparency, memory, and speed. Dense model classes
+materialize or consume a complete similarity matrix. They are concise,
+inspectable reference implementations and are valuable for hand-computed tests
+and regression checks, but their pairwise storage limits scale. The blockwise
+engine computes the same approximations from successive similarity blocks. It
+reduces similarity-matrix materialization without introducing an approximate
+algorithm, at the cost of additional control flow and sensitivity of runtime to
+the selected block size. Dense and blockwise results are continuously compared
+in tests and in the distributed reference study.
 
-The package also provides reusable component registries and builders for
-similarities, t-norms, implicators, OWA weights, and fuzzy quantifiers. This
-separation allows researchers to combine components in a controlled way while
-keeping user-facing examples and downstream code on the public API.
+A third choice is to keep backend-specific arrays internal. NumPy arrays are the
+public output contract even when CuPy is used for supported blockwise
+operations. This avoids making downstream packages conditional on GPU array
+types and keeps serialization and tests consistent. The trade-off is that output
+conversion may prevent a fully GPU-resident end-to-end pipeline. Claims are
+therefore model-specific: ITFRS and VQRS support documented experimental
+GPU-resident accumulation paths, while OWAFRS currently uses GPU-backed
+similarity blocks without claiming GPU-resident approximation accumulation.
+GPU support is optional so that the core installation remains portable.
 
-The implementation distinguishes dense model classes from blockwise public
-execution engines. Dense model classes act as small NumPy reference
-implementations that are easy to inspect and test. The public blockwise path is
-used when callers need the same approximation results without constructing the
-entire pairwise matrix at once. Automated tests cover exact hand-computed
-examples, model serialization, public API contracts, backend metadata, optional
-CuPy behavior, and example scripts. This testing strategy is intended to make
-frsutils suitable as a dependency for later fuzzy-rough research software rather
-than only as a collection of standalone scripts.
+These choices matter scientifically because they permit two forms of
+verification. Individual formulas can be checked in small dense examples, and
+larger workflows can verify numerical equivalence across execution engines.
+Tests also cover configuration, serialization, package-root API contracts,
+backend metadata, and optional backend behavior. The resulting architecture is
+intended to let new fuzzy-rough methods reuse and test their approximation layer
+instead of embedding another private implementation.
 
-# Research impact
+# Research impact statement
 
-frsutils makes fuzzy-rough approximation experiments easier to reproduce by
-separating mathematical components, model construction, execution mode, and
-result metadata. The package supports classical and noise-tolerant fuzzy-rough
-families, including VQRS [@cornelis2007vqrs] and OWAFRS
-[@cornelis2010owafrs], whose aggregation behavior is based on ordered weighted
-averaging [@yager1988owa]. By providing tested approximation routines and a
-stable import surface, frsutils can serve as a foundation for downstream sample
-selection, scoring, benchmarking, and educational material in fuzzy-rough
-research. The stable public API also makes it easier to cite a single software
-artifact from future method papers, including papers that propose new
-fuzzy-rough oversampling or selection algorithms on top of the frsutils core.
+The repository includes a reproducible reference study under
+`studies/fuzzy_rough_reference_study/`. It uses only the stable package-root API
+to apply ITFRS, VQRS, and OWAFRS to three binary tasks derived from public
+datasets distributed with scikit-learn. For every model and task, it records
+per-sample lower and upper approximations, signed boundary values,
+positive-region scores, runtime observations, resolved configuration, software
+and system versions, and an artifact checksum manifest. No external dataset
+download or unpublished code is required.
+
+The stored reference run contains nine real-data dense/blockwise comparisons;
+all satisfy the declared absolute tolerance of $10^{-12}$, with a maximum
+recorded discrepancy of approximately $6.7\times10^{-16}$. A separate fixed
+benchmark sweep records 27 successful model, engine, and problem-size cases in
+machine-readable CSV and JSON files. These results are software-validation
+artifacts, not a claim that one fuzzy-rough model or backend is universally
+superior. They demonstrate credible near-term scholarly significance by making
+model semantics, execution choices, and numerical-equivalence evidence directly
+reproducible. The same workflow provides a concrete integration pattern for
+future feature-selection, sample-selection, scoring, and oversampling research
+that depends on `frsutils` without importing its internal modules.
 
 # AI usage disclosure
 
-Generative AI tools were used to assist with drafting documentation, reviewing
-API wording, and preparing release-checklist material. The author reviewed the
-generated material, edited it for project-specific accuracy, and validated code
-and examples with automated tests before release.
+OpenAI ChatGPT, primarily the GPT-5.5 Thinking and GPT-5.6 Thinking models, was
+used during development. Assistance covered code generation and refactoring,
+test-scaffolding suggestions, documentation drafting and editing, review of API
+wording, preparation of the reproducible reference-study workflow, release and
+JOSS checklist preparation, and drafting and copy-editing portions of this
+manuscript. The author made the problem-framing, mathematical, architectural design,
+public-API, licensing, and release decisions. The author reviewed and modified
+all AI-assisted material, executed the software and examples, inspected the
+produced artifacts, and validated code behavior with automated tests and
+numerical comparisons. The author accepts full responsibility for the accuracy,
+originality, licensing compliance, and scientific claims of the submitted
+software and paper.
 
 # Acknowledgements
 
 The author thanks the developers and maintainers of NumPy, scikit-learn, CuPy,
-and the broader fuzzy-rough research community whose work made this package
-possible.
+`RoughSets`, and `fuzzy-rough-learn`, and the broader fuzzy-rough research
+community whose theoretical and software contributions made this work possible.

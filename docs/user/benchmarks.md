@@ -231,3 +231,12 @@ JSON/CSV artifacts are generated.
 The benchmark suite provides the harness, not final benchmark numbers. Final
 numbers should be generated later on a stable target machine with the intended
 CPU/GPU environment, fixed package versions, and documented run settings.
+
+## Reference-study benchmark profile
+
+The reproducible research artifact under
+`studies/fuzzy_rough_reference_study/` runs this harness with a fixed CPU-only
+profile and commits JSON/CSV outputs together with real-dataset approximation
+tables and environment metadata. See the
+[reference-study guide](reference_study.md) for the one-command workflow and
+claim boundaries.

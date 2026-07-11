@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use frsutils in academic work, research prototypes, benchmarks, or publications, please cite the software. After the JOSS paper is accepted, cite the JOSS paper DOI as the preferred citation."
+message: "If you use frsutils in academic work, research prototypes, benchmarks, or publications, please cite this software release. After the JOSS article is accepted, cite the JOSS article as the preferred citation."
 type: software
 title: "frsutils: Fuzzy-Rough Set Utilities for Python"
 authors:
@@ -10,16 +10,24 @@ url: "https://github.com/mehi64/frsutils"
 version: "0.1.0"
 date-released: "2026-07-11"
 license: BSD-3-Clause
-abstract: "frsutils is a Python library for reusable fuzzy-rough set utilities, including similarity matrices, t-norms, implicators, fuzzy quantifiers, fuzzy-rough approximation models, lower and upper approximations, and positive-region computation."
+abstract: "frsutils is a scientific Python library for reusable fuzzy-rough set computations. It provides a stable public API for similarity matrices, ITFRS, VQRS, and OWAFRS lower and upper approximations, boundary regions, positive-region scores, dense reference execution, and exact blockwise execution."
 keywords:
   - fuzzy-rough sets
   - fuzzy sets
   - rough sets
   - positive region
+  - lower approximation
+  - upper approximation
   - similarity matrix
-  - Python
-# After JOSS acceptance, add a preferred-citation block with the JOSS paper DOI.
-# Example:
+  - scientific Python
+# Add the version-specific software archive DOI after Zenodo has archived the
+# GitHub release. Use the version DOI, not only the concept DOI:
+# identifiers:
+#   - type: doi
+#     value: 10.5281/zenodo.XXXXXXX
+#     description: Archived frsutils 0.1.0 software release
+#
+# After JOSS acceptance, add a preferred-citation block with the article DOI:
 # preferred-citation:
 #   type: article
 #   title: "frsutils: Fuzzy-Rough Set Utilities for Python"
@@ -27,5 +35,5 @@ keywords:
 #     - family-names: Amiri
 #       given-names: Mehran
 #   journal: "Journal of Open Source Software"
-#   doi: "10.xxxx/joss.xxxxx"
+#   doi: "10.21105/joss.XXXXX"
 #   year: 2026

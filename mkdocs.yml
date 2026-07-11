@@ -16,6 +16,7 @@ nav:
       - Public API: user/public_api.md
       - Backends and execution: user/backends.md
       - Benchmarks: user/benchmarks.md
+      - Reproducible reference study: user/reference_study.md
       - Glossary: user/glossary.md
   - Scientific concepts:
       - ITFRS: concepts/itfrs_info.md
@@ -27,6 +28,8 @@ nav:
       - OWA weights: concepts/owa_weights_info.md
   - Maintainer guide:
       - Release and JOSS validation: developer/release.md
+      - Final JOSS submission checklist: developer/joss_submission_checklist.md
+      - Software archive and DOI: developer/archive_and_doi.md
 
 theme:
   name: material

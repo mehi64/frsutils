@@ -8,6 +8,7 @@ build/
 frsutils.egg-info/
 *.zip
 *.csv
+!studies/fuzzy_rough_reference_study/results/*.csv
 temp/
 logs/*.csv
 logs/*.json

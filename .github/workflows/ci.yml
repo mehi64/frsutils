@@ -41,6 +41,14 @@ jobs:
       - name: Run default test suite
         run: python -m pytest tests -ra
 
+      - name: Run reference-study smoke test
+        if: matrix.python-version == '3.12'
+        run: |
+          python studies/fuzzy_rough_reference_study/run_study.py \
+            --skip-benchmark \
+            --skip-figures \
+            --output-dir /tmp/frsutils-reference-study-smoke
+
   package:
     name: Build and validate package
     runs-on: ubuntu-latest
@@ -66,30 +74,62 @@ jobs:
       - name: Validate distribution metadata
         run: python -m twine check dist/*
 
-      - name: Verify wheel contents
+      - name: Verify distribution contents
         run: |
           python - <<'PY'
           from pathlib import Path
+          from tarfile import open as open_tar
           from zipfile import ZipFile
 
           wheel = next(Path("dist").glob("*.whl"))
           with ZipFile(wheel) as archive:
-              names = archive.namelist()
+              wheel_names = archive.namelist()
 
-          required = {
+          required_wheel = {
               "frsutils/__init__.py",
               "frsutils/api/__init__.py",
               "frsutils/core/__init__.py",
           }
-          missing = sorted(required.difference(names))
-          uppercase = sorted(name for name in names if name.startswith("FRsutils/"))
+          missing_wheel = sorted(required_wheel.difference(wheel_names))
+          uppercase = sorted(
+              name for name in wheel_names if name.startswith("FRsutils/")
+          )
 
-          if missing:
-              raise SystemExit(f"Wheel is missing package files: {missing}")
+          if missing_wheel:
+              raise SystemExit(
+                  f"Wheel is missing package files: {missing_wheel}"
+              )
           if uppercase:
-              raise SystemExit("Wheel contains the obsolete uppercase package path")
+              raise SystemExit(
+                  "Wheel contains the obsolete uppercase package path"
+              )
+
+          sdist = next(Path("dist").glob("*.tar.gz"))
+          with open_tar(sdist, "r:gz") as archive:
+              sdist_names = archive.getnames()
+
+          required_sdist_suffixes = {
+              "studies/fuzzy_rough_reference_study/run_study.py",
+              "studies/fuzzy_rough_reference_study/study_config.json",
+              "studies/fuzzy_rough_reference_study/results/study_manifest.json",
+              "docs/user/reference_study.md",
+              "docs/developer/archive_and_doi.md",
+              "docs/developer/joss_submission_checklist.md",
+              "scripts/validate_joss_submission.py",
+              "RELEASE_NOTES_v0.1.0.md",
+          }
+          missing_sdist = sorted(
+              suffix
+              for suffix in required_sdist_suffixes
+              if not any(name.endswith(suffix) for name in sdist_names)
+          )
+          if missing_sdist:
+              raise SystemExit(
+                  f"Source distribution is missing study files: {missing_sdist}"
+              )
 
           print(f"Validated wheel contents: {wheel.name}")
+          print(f"Validated source distribution contents: {sdist.name}")
           PY
 
       - name: Install and import the built wheel

@@ -15,6 +15,8 @@ benchmark guidance, and the scientific definitions implemented by the library.
   metadata, and model-specific GPU claim boundaries.
 - [Benchmarks](user/benchmarks.md): benchmark commands, recorded fields, paired
   NumPy/CuPy comparison, and safe interpretation rules.
+- [Reproducible reference study](user/reference_study.md): real-dataset analysis,
+  dense/blockwise equivalence evidence, environment capture, and committed results.
 - [Glossary](user/glossary.md): short canonical definitions for execution and
   fuzzy-rough terminology.
 
@@ -33,9 +35,12 @@ component can be reviewed independently:
 
 ## Developer and release documentation
 
-- [Release and JOSS validation](developer/release.md): release checklist,
-  validation commands, metadata checks, JOSS submission steps, and safe paper
-  wording.
+- [Release and JOSS validation](developer/release.md): release commands, test
+  evidence, metadata checks, and safe software claims.
+- [Final JOSS submission checklist](developer/joss_submission_checklist.md):
+  automated and manual submission gates.
+- [Software archive and DOI guide](developer/archive_and_doi.md): GitHub–Zenodo
+  release archival and citation updates.
 
 ## Documentation policy
 

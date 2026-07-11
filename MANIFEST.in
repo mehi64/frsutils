@@ -5,6 +5,7 @@ include CITATION.cff
 include CODE_OF_CONDUCT.md
 include CONTRIBUTING.md
 include SUPPORT.md
+include RELEASE_NOTES_v0.1.0.md
 include paper.md
 include paper.bib
 include mkdocs.yml
@@ -13,4 +14,7 @@ include pytest.ini
 recursive-include docs *.md *.png
 recursive-include examples *.py
 recursive-include benchmarks *.py
+recursive-include studies *.py *.md *.json *.csv *.txt *.png
 recursive-include tests *.py *.md
+
+recursive-include scripts *.py

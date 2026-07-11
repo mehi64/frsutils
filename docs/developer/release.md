@@ -5,7 +5,10 @@ documentation smoke checks, JOSS metadata notes, submit-readiness report, paper
 claim boundaries, and release-hardening notes into one active maintainer file.
 
 Use it before tagging a release candidate or submitting FRsutils for JOSS
-review.
+review. The concise final gate is maintained in the
+[JOSS submission checklist](joss_submission_checklist.md), and the account-level
+archive procedure is documented in the
+[software archive and DOI guide](archive_and_doi.md).
 
 ## Release candidate identity
 
@@ -182,6 +185,12 @@ Minimum checks before release/JOSS submission:
 - [ ] Documentation links from README and paper point to existing files.
 - [ ] Test evidence is recorded for the release candidate.
 
+Automated metadata, section, citation, and local-link validation:
+
+```bash
+python scripts/validate_joss_submission.py
+```
+
 Citation-key sanity check:
 
 ```bash
@@ -259,20 +268,11 @@ Files that should not be committed:
 
 ## Software DOI and citation strategy
 
-The final JOSS article DOI is assigned only after acceptance, so do not cite a
-future JOSS DOI in another paper before acceptance. Use a software release DOI
-for FRsutils instead.
-
-Recommended path:
-
-- [ ] Create a release tag for FRsutils, for example `v0.1.0` or the version
-      chosen for submission.
-- [ ] Archive that release with Zenodo or another research-software archive.
-- [ ] Use the software archive DOI in downstream papers that need to cite
-      FRsutils before JOSS acceptance.
-- [ ] If the JOSS submission is already open, optionally mention that FRsutils
-      has been submitted to JOSS and is under open review.
-- [ ] After JOSS acceptance, update downstream citations if timing allows.
+The JOSS article DOI is assigned after acceptance and is distinct from the DOI
+of an archived software release. Follow the
+[software archive and DOI guide](archive_and_doi.md) to create the GitHub
+release, archive it with Zenodo, and update `CITATION.cff` without inventing a
+placeholder identifier.
 
 ## JOSS submission steps
 
@@ -297,7 +297,7 @@ Fill this section after the final local run.
 - CuPy/CUDA environment: CuPy unavailable; real-CuPy tests skipped as designed
 - Full test result: 2648 default tests passed; 149 CuPy-related tests skipped; all 10518 exhaustive OWAFRS slow cases passed in equivalent test-function batches
 - Expected skips: 149, all caused by CuPy not being installed
-- JOSS paper citation check: 10 citation keys used; all 10 resolved in `paper.bib`
+- JOSS paper citation check: rerun `python scripts/validate_joss_submission.py` after Phase 4 changes
 - Documentation link check: 22 Markdown files checked; no broken relative links
 - Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments
 - Release tag: pending `v0.1.0` after the release commit is pushed and CI is green
@@ -318,3 +318,34 @@ The repository is submit-ready when all of the following are true:
 - [ ] User-facing files do not contain temporary milestone file names.
 - [ ] Optional CuPy/GPU support is described conservatively.
 - [ ] Repository has no generated reports or local caches staged for commit.
+
+## Research-impact artifact checks
+
+The phase-three research-use evidence is stored under:
+
+```text
+studies/fuzzy_rough_reference_study/
+```
+
+Before a release candidate or JOSS submission:
+
+```bash
+python -m pip install -e ".[study]"
+python studies/fuzzy_rough_reference_study/run_study.py
+python -m pytest tests/studies -q -rs
+```
+
+Review these conditions:
+
+- [ ] Every row in `dense_blockwise_equivalence.csv` has `passed=True`.
+- [ ] `benchmark_results.json` has no failed cases.
+- [ ] `environment.json` identifies the release commit and reports a clean
+      worktree.
+- [ ] `study_manifest.json` was regenerated after all study outputs.
+- [ ] The committed tables and figures match `study_config.json`.
+- [ ] Research-impact wording in `paper.md` claims only what the artifact shows.
+- [ ] No unpublished FRSMOTE implementation, result, or repository is required
+      to reproduce the study.
+
+The recorded runtime values are machine-specific evidence, not performance
+promises. Do not infer native NumPy/CuPy memory usage from `tracemalloc` alone.

@@ -6,7 +6,15 @@ and releases use semantic versioning.
 
 ## [Unreleased]
 
-No user-visible changes have been recorded since version 0.1.0.
+### Added
+
+- A fully rewritten JOSS paper with substantive statement-of-need, state-of-the-field, software-design, research-impact, and AI-disclosure sections.
+- Automated JOSS metadata and paper validation, repository-level readiness tests, and a draft-paper GitHub Actions workflow.
+- A final JOSS submission checklist, GitHub–Zenodo archival guide, and release notes for version 0.1.0.
+- Reproducible real-dataset reference study for ITFRS, VQRS, and OWAFRS.
+- Dense/blockwise equivalence tables, repeated runtime observations, per-sample
+  approximation outputs, environment metadata, figures, and artifact checksums.
+- A study-specific optional dependency group and documentation page.
 
 ## [0.1.0] - 2026-07-11
 
