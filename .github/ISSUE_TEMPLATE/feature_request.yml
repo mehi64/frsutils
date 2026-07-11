@@ -1,0 +1,55 @@
+name: Feature or scientific enhancement
+description: Propose a reusable fuzzy-rough capability or public API improvement.
+title: "[Enhancement]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Research or user problem
+      description: What limitation or research need should this proposal address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the mathematical behavior, API, inputs, outputs, and important edge cases.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Scientific basis and references
+      description: Provide definitions, papers, standards, or independently verifiable formulas where relevant.
+  - type: textarea
+    id: testing
+    attributes:
+      label: Correctness and validation plan
+      description: Explain how the behavior can be tested, including known-value and dense/blockwise equivalence tests.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Expected project area
+      options:
+        - Public API
+        - Approximation model
+        - Similarity or fuzzy operator
+        - Execution engine or backend
+        - Scoring or results
+        - Documentation or examples
+        - Benchmarking
+        - Unsure
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to help implement or test this proposal.

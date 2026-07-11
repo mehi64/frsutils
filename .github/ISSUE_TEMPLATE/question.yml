@@ -1,0 +1,36 @@
+name: Question or usage help
+description: Ask about installation, documented APIs, models, or execution behavior.
+title: "[Question]: "
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: State the result you are trying to obtain and what is unclear.
+    validations:
+      required: true
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What you tried
+      description: Include a minimal code example and the documentation you consulted.
+      render: python
+  - type: input
+    id: version
+    attributes:
+      label: frsutils version or commit
+      placeholder: "0.0.5 or commit SHA"
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "Python 3.12, Windows 11, NumPy backend"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the documentation and existing issues.
+          required: true
+        - label: I removed confidential data and credentials.
+          required: true

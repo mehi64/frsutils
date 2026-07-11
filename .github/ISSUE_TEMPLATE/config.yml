@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support policy
+    url: https://github.com/mehi64/frsutils/blob/main/SUPPORT.md
+    about: Read the support scope and reporting guidance before opening an issue.
+  - name: Documentation
+    url: https://mehi64.github.io/frsutils/
+    about: Check the user guides, concepts, backend contracts, and examples.

@@ -1,0 +1,49 @@
+site_name: frsutils
+site_description: Scientific Python utilities for fuzzy-rough set computations.
+site_author: Mehran Amiri
+site_url: https://mehi64.github.io/frsutils/
+repo_url: https://github.com/mehi64/frsutils
+repo_name: mehi64/frsutils
+edit_uri: edit/main/docs/
+copyright: Copyright © 2026 Mehran Amiri
+
+docs_dir: docs
+site_dir: site
+
+nav:
+  - Home: index.md
+  - User guide:
+      - Public API: user/public_api.md
+      - Backends and execution: user/backends.md
+      - Benchmarks: user/benchmarks.md
+      - Glossary: user/glossary.md
+  - Scientific concepts:
+      - ITFRS: concepts/itfrs_info.md
+      - VQRS: concepts/vqrs_info.md
+      - OWAFRS: concepts/owafrs_info.md
+      - Similarities: concepts/similarities_info.md
+      - T-norms: concepts/tnorms_info.md
+      - Implicators: concepts/implicators_info.md
+      - OWA weights: concepts/owa_weights_info.md
+  - Maintainer guide:
+      - Release and JOSS validation: developer/release.md
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true

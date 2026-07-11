@@ -1,9 +1,11 @@
-# FRsutils documentation
+# frsutils documentation
 
-This folder contains the active project documentation for FRsutils. It is kept
-small on purpose: user-facing usage, scientific concepts, backend behavior, and
-release/JOSS validation are separated, while duplicated checklist and decision
-notes have been merged into fewer files.
+`frsutils` provides reusable fuzzy-rough set components and task-oriented APIs
+for similarity construction, lower and upper approximations, boundary regions,
+and positive-region scores.
+
+Use the navigation to find public API contracts, execution and backend behavior,
+benchmark guidance, and the scientific definitions implemented by the library.
 
 ## User documentation
 
@@ -47,3 +49,21 @@ split it:
 Avoid adding short-lived status reports or duplicate checklist files to the
 active docs tree. If temporary notes are needed, keep them outside active docs or
 remove them before release.
+
+## Community
+
+Project governance and collaboration resources are maintained in the repository:
+
+- [Contributing guide](https://github.com/mehi64/frsutils/blob/main/CONTRIBUTING.md)
+- [Code of Conduct](https://github.com/mehi64/frsutils/blob/main/CODE_OF_CONDUCT.md)
+- [Support policy](https://github.com/mehi64/frsutils/blob/main/SUPPORT.md)
+- [Changelog](https://github.com/mehi64/frsutils/blob/main/CHANGELOG.md)
+- [Issue tracker](https://github.com/mehi64/frsutils/issues)
+
+## Local documentation build
+
+```bash
+python -m pip install -e ".[docs]"
+mkdocs build --strict
+mkdocs serve
+```

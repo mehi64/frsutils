@@ -1,0 +1,86 @@
+name: Bug report
+description: Report reproducible incorrect behavior in frsutils.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include confidential datasets or credentials.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary
+      description: Describe the incorrect behavior and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproducible example
+      description: Provide the smallest complete Python example and synthetic data that reproduce the problem.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior and traceback
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: frsutils version or commit
+      placeholder: "0.0.5 or commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.4"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04, Windows 11, macOS 15, ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: execution
+    attributes:
+      label: Execution path
+      multiple: true
+      options:
+        - Dense NumPy
+        - Blockwise NumPy
+        - Blockwise CuPy
+        - Public builder or model construction
+        - Installation or packaging
+        - Documentation or example
+        - Other or unknown
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include dependency versions, configuration, shapes, and any related issue links.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing open and closed issues.
+          required: true
+        - label: I used non-confidential data in the reproduction.
+          required: true
+        - label: I can reproduce this with the public API or documented workflow.
+          required: true

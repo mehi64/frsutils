@@ -21,3 +21,6 @@ test_reports/
 .coverage
 htmlcov/
 benchmark_smoke_output/
+site/
+.venv/
+venv/

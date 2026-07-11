@@ -1,5 +1,10 @@
 <img title="" src="https://raw.githubusercontent.com/mehi64/frsutils/main/logo/logo.png" alt="frsutils logo" width="220">
 
+[![CI](https://github.com/mehi64/frsutils/actions/workflows/ci.yml/badge.svg)](https://github.com/mehi64/frsutils/actions/workflows/ci.yml)
+[![Documentation](https://github.com/mehi64/frsutils/actions/workflows/docs.yml/badge.svg)](https://github.com/mehi64/frsutils/actions/workflows/docs.yml)
+[![PyPI](https://img.shields.io/pypi/v/frsutils.svg)](https://pypi.org/project/frsutils/)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+
 # frsutils
 
 `frsutils` is a scientific Python library for fuzzy-rough set computations. It provides reusable building blocks and task-oriented APIs for similarity construction, fuzzy-rough lower and upper approximations, boundary regions, and
@@ -30,9 +35,10 @@ Core requirements are intentionally small:
 Optional extras are used only for specific workflows:
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
+pip install -e ".[docs]"
 # or, for CUDA 12.x CuPy experiments:
-pip install -e .[gpu-cuda12x]
+pip install -e ".[gpu-cuda12x]"
 ```
 
 ## Quick start
@@ -170,14 +176,25 @@ used by multiple research and application packages.
 
 ## Documentation
 
-Start here:
+The published documentation is available at
+[mehi64.github.io/frsutils](https://mehi64.github.io/frsutils/).
 
-- [Documentation index](docs/README.md)
+Repository sources:
+
+- [Documentation index](docs/index.md)
 - [Public API](docs/user/public_api.md)
 - [Backends](docs/user/backends.md)
 - [Glossary](docs/user/glossary.md)
 - [Benchmarks](docs/user/benchmarks.md)
 - [Release and JOSS validation](docs/developer/release.md)
+
+Build the documentation locally with:
+
+```bash
+python -m pip install -e ".[docs]"
+mkdocs build --strict
+mkdocs serve
+```
 
 ## Development and validation
 
@@ -203,6 +220,18 @@ python -m pytest tests/models_tests -m slow -o addopts="" -q
 
 Before tagging or submitting to JOSS, follow the
 [release and JOSS validation guide](docs/developer/release.md).
+
+## Community and project governance
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Support policy](SUPPORT.md)
+- [Changelog](CHANGELOG.md)
+- [Issue tracker](https://github.com/mehi64/frsutils/issues)
+
+Bug reports, usage questions, and scientific enhancement proposals should use
+the structured issue forms. Public contributions are reviewed through pull
+requests and the automated CI checks.
 
 ## License
 

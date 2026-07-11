@@ -44,6 +44,10 @@ dev = [
     "colorlog",
     "matplotlib",
 ]
+docs = [
+    "mkdocs==1.6.1",
+    "mkdocs-material>=9.7,<10",
+]
 gpu-cuda12x = [
     "cupy-cuda12x",
 ]
@@ -53,7 +57,7 @@ gpu-cuda11x = [
 
 [project.urls]
 "Homepage" = "https://github.com/mehi64/frsutils"
-"Documentation" = "https://github.com/mehi64/frsutils#readme"
+"Documentation" = "https://mehi64.github.io/frsutils/"
 "Source" = "https://github.com/mehi64/frsutils"
 "Issues" = "https://github.com/mehi64/frsutils/issues"
 

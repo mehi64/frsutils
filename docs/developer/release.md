@@ -10,7 +10,7 @@ review.
 ## Release candidate identity
 
 - Package name: `frsutils`
-- Current package version in the inspected metadata: `0.0.3`
+- Current package version in the inspected metadata: `0.0.5`
 - License: `BSD-3-Clause`
 - Public API boundary: `frsutils`
 - JOSS paper files: `paper.md`, `paper.bib`
@@ -117,6 +117,17 @@ python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
 
 ## Documentation smoke checks
 
+Install the documentation dependencies and validate the published MkDocs site:
+
+```bash
+python -m pip install -e ".[docs]"
+mkdocs build --strict
+```
+
+Use `mkdocs serve` for a local browser preview. The GitHub Pages workflow builds
+all documentation pull requests and deploys `main` after Pages is configured to
+use **GitHub Actions** as its publishing source.
+
 Run these after changing README, public API docs, backend docs, examples, or the
 JOSS paper:
 
@@ -212,6 +223,17 @@ python -m pytest -o addopts="" -ra --tb=short --durations=50 \
 
 Generated outputs under `test_reports/` and `benchmark_smoke_output/` should be
 kept out of commits.
+
+## Open-source repository checks
+
+- [ ] GitHub Issues are enabled in repository settings.
+- [ ] The issue forms and pull request template render correctly.
+- [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, and
+      `CHANGELOG.md` are linked from the README.
+- [ ] The CI workflow passes for Python 3.10, 3.11, and 3.12.
+- [ ] The package job builds and validates both wheel and source distribution.
+- [ ] GitHub Pages uses **GitHub Actions** as its publishing source.
+- [ ] The documentation workflow deploys the current `main` branch successfully.
 
 ## Repository hygiene before release
 
