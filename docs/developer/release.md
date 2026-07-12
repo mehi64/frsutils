@@ -118,6 +118,55 @@ python -m pytest tests/api/test_vqrs_blockwise_cupy_contract.py -q -rs
 python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
 ```
 
+## Real CUDA validation
+
+Real CUDA validation is optional for ordinary CPU-only CI, but it is required
+before a release makes claims about real CuPy/CUDA numerical execution.
+
+Capture the environment:
+
+```bash
+nvidia-smi
+nvcc --version
+python --version
+python -m pip freeze
+python -c "import cupy as cp; cp.show_config()"
+```
+
+Run a direct CUDA smoke test:
+
+```bash
+python -c "import cupy as cp; x = cp.arange(10, dtype=cp.float32); print(cp.asnumpy(x * x))"
+```
+
+Run the real-CUDA contract tests:
+
+```bash
+python -m pytest \
+  tests/api/test_cupy_backend_contract.py \
+  tests/api/test_itfrs_blockwise_cupy_contract.py \
+  tests/api/test_vqrs_blockwise_cupy_contract.py \
+  tests/api/test_owafrs_blockwise_cupy_contract.py \
+  -o addopts="" -vv -rs
+```
+
+Then run the complete ordinary suite:
+
+```bash
+python -m pytest -rs
+```
+
+The release record must distinguish among:
+
+- CPU-only fake-CuPy contract validation,
+- real GPU numerical validation,
+- model-specific GPU-residency claims,
+- benchmark observations.
+
+Record exact package and platform versions as a validated environment, not as
+an exhaustive compatibility guarantee. Do not convert machine-specific runtime
+observations into general performance claims.
+
 ## Documentation smoke checks
 
 Install the documentation dependencies and validate the published MkDocs site:
@@ -291,12 +340,16 @@ placeholder identifier.
 
 Fill this section after the final local run.
 
-- Final validation date: 2026-07-11
-- Python version: 3.13.5 for the local release validation; CI remains configured for 3.10, 3.11, and 3.12
-- Operating system: Linux x86_64 release-validation environment
-- CuPy/CUDA environment: CuPy unavailable; real-CuPy tests skipped as designed
-- Full test result: 2648 default tests passed; 149 CuPy-related tests skipped; all 10518 exhaustive OWAFRS slow cases passed in equivalent test-function batches
-- Expected skips: 149, all caused by CuPy not being installed
+- Final validation date: 2026-07-12; final clean rerun still pending after the unrelated logger UTF-8 fix
+- Python version: 3.11.6 for the real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
+- Operating system: Ubuntu 24.04.4 LTS, Linux 6.8.0-111-generic, x86_64
+- GPU: NVIDIA GeForce GTX 1050 Mobile, 4 GiB, compute capability 6.1
+- NVIDIA/CUDA environment: driver 535.309.01, driver-reported CUDA 12.2, system CUDA Toolkit 12.0
+- Python GPU packages: NumPy 2.3.5, CuPy 14.1.1, `nvidia-cuda-runtime-cu12` 12.0.146, and `cuda-pathfinder` 1.5.6
+- Real-CUDA smoke result: device discovery, element-wise kernel execution, and 1000 x 1000 matrix multiplication completed successfully
+- Ordinary-suite result with real CuPy enabled: 2802 passed, 1 failed, 10518 deselected; no CuPy/CUDA skips were reported
+- Remaining failure: `tests/core_tests/test_implicators.py::test_help[goedel]` failed because the CSV logger opened its output with ASCII rather than UTF-8; this failure is unrelated to CUDA
+- Exhaustive slow result from the prior release-validation run: all 10518 OWAFRS slow cases passed in equivalent test-function batches
 - JOSS paper citation check: rerun `python scripts/validate_joss_submission.py` after Phase 4 changes
 - Documentation link check: 22 Markdown files checked; no broken relative links
 - Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments

@@ -41,6 +41,88 @@ result = compute_approximations(
 If CuPy or CUDA is not installed, CuPy-specific tests and benchmark cases should
 skip cleanly instead of failing ordinary CPU-only validation.
 
+## Installation
+
+Install the optional CUDA 12 environment with:
+
+```bash
+python -m pip install "frsutils[gpu-cuda12x]"
+```
+
+For local development:
+
+```bash
+python -m pip install -e ".[gpu-cuda12x]"
+```
+
+The CUDA extra uses CuPy 14.x and includes CuPy's CUDA component dependencies.
+The core package does not install CuPy or CUDA dependencies.
+
+## Validated CUDA environment
+
+The real-CUDA numerical tests for the 0.1.0 release candidate were executed in
+the following environment:
+
+| Component | Validated value |
+| --- | --- |
+| Operating system | Ubuntu 24.04.4 LTS |
+| Linux kernel | 6.8.0-111-generic |
+| GPU | NVIDIA GeForce GTX 1050 Mobile, 4 GiB |
+| GPU compute capability | 6.1 |
+| NVIDIA driver | 535.309.01 |
+| Driver-reported CUDA capability | CUDA 12.2 |
+| System CUDA Toolkit | CUDA 12.0 |
+| Python | 3.11.6 |
+| NumPy | 2.3.5 |
+| CuPy | 14.1.1 |
+| CUDA runtime header wheel | `nvidia-cuda-runtime-cu12` 12.0.146 |
+| CUDA path discovery | `cuda-pathfinder` 1.5.6 |
+
+This table records one successfully tested configuration. It is not an
+exhaustive compatibility matrix, and these exact versions are not mandatory for
+all installations.
+
+The stable CPU backend remains NumPy. GPU performance depends on the model,
+dataset size, block size, available GPU memory, driver, and CUDA environment.
+FRsutils does not guarantee that CuPy execution is faster for every workload.
+
+## CUDA installation troubleshooting
+
+Inspect the detected GPU and CuPy environment first:
+
+```bash
+nvidia-smi
+python -c "import cupy as cp; cp.show_config()"
+```
+
+If CuPy detects the GPU but the first numerical operation fails with:
+
+```text
+RuntimeError: Failed to find CUDA headers
+```
+
+prefer reinstalling the FRsutils CUDA extra, which includes CuPy's CUDA
+component dependencies:
+
+```bash
+python -m pip install --upgrade "frsutils[gpu-cuda12x]"
+```
+
+For an existing plain `cupy-cuda12x` installation, install CUDA runtime headers
+matching the local CUDA 12 toolkit minor version. For example, a CUDA 12.0
+environment can use:
+
+```bash
+python -m pip install "nvidia-cuda-runtime-cu12==12.0.*"
+```
+
+After installation, `cupy.show_config()` should report a non-empty
+`CUDA Extra Include Dirs` entry. Then verify a real CUDA operation:
+
+```bash
+python -c "import cupy as cp; x = cp.arange(10, dtype=cp.float32); print(cp.asnumpy(x * x))"
+```
+
 ## Model-specific backend status
 
 | Model | Dense NumPy | Exact blockwise NumPy | CuPy-backed similarity blocks | GPU-resident approximation accumulators |

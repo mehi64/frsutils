@@ -216,13 +216,21 @@ class _TinyLogger:
 
         if self.structured_output == "json":
             _ensure_log_file_parent(self.structured_path)
-            with open(self.structured_path, "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
+            with open(self.structured_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
         elif self.structured_output == "csv":
             _ensure_log_file_parent(self.structured_path)
-            write_header = not os.path.exists(self.structured_path) or os.stat(self.structured_path).st_size == 0
-            with open(self.structured_path, "a", newline='') as f:
+            write_header = (
+                not os.path.exists(self.structured_path)
+                or os.stat(self.structured_path).st_size == 0
+            )
+            with open(
+                self.structured_path,
+                "a",
+                newline="",
+                encoding="utf-8",
+            ) as f:
                 writer = csv.DictWriter(f, fieldnames=log_entry.keys())
                 if write_header:
                     writer.writeheader()

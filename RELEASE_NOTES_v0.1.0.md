@@ -20,10 +20,23 @@ package and its stable package-root API.
 ## Compatibility
 
 - Python 3.10, 3.11, and 3.12 are the supported release targets.
-- Core dependencies: NumPy and scikit-learn.
+- Core dependencies are NumPy and scikit-learn.
+- NumPy remains the stable default backend.
 - CuPy is optional and is not installed with the core package.
+- The CUDA 12 optional environment is constrained to CuPy 14.x.
+- Real-CUDA numerical validation for this release candidate was completed on an
+  NVIDIA GeForce GTX 1050 Mobile with driver 535.309.01, CUDA Toolkit 12.0,
+  Python 3.11.6, NumPy 2.3.5, and CuPy 14.1.1.
+- The recorded GPU environment is a validated configuration, not an exhaustive
+  compatibility guarantee.
 
 ## Validation
+
+The real-CUDA smoke checks completed successfully for device discovery,
+element-wise kernel execution, and matrix multiplication. The ordinary suite
+then executed with real CuPy enabled and reported 2802 passed tests and one
+non-CUDA logger-encoding failure. A final clean test record must be captured
+after that UTF-8 logger fix before publishing the release.
 
 Before publishing the release, run:
 

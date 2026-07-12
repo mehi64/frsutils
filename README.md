@@ -37,9 +37,36 @@ Optional extras are used only for specific workflows:
 ```bash
 pip install -e ".[dev]"
 pip install -e ".[docs]"
-# or, for CUDA 12.x CuPy experiments:
-pip install -e ".[gpu-cuda12x]"
 ```
+
+### Optional CUDA 12 backend
+
+The stable default backend is NumPy. CUDA support is optional and currently
+applies only to the documented CuPy-backed blockwise paths. A compatible NVIDIA
+driver and CUDA-capable GPU are required.
+
+Install the CUDA 12 dependencies from PyPI with:
+
+```bash
+python -m pip install "frsutils[gpu-cuda12x]"
+```
+
+For local development from a source checkout:
+
+```bash
+python -m pip install -e ".[gpu-cuda12x]"
+```
+
+Verify device discovery and a real CUDA computation with:
+
+```bash
+python -c "import cupy as cp; print(cp.cuda.runtime.getDeviceCount()); print(cp.asnumpy(cp.arange(5) ** 2))"
+```
+
+A result containing one or more devices and the array `[0 1 4 9 16]` confirms
+that a CUDA computation completed successfully. See
+[backends and execution behavior](docs/user/backends.md) for the validated
+environment, model-specific GPU boundaries, and troubleshooting guidance.
 
 ## Quick start
 

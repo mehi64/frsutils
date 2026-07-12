@@ -52,10 +52,7 @@ study = [
     "matplotlib",
 ]
 gpu-cuda12x = [
-    "cupy-cuda12x",
-]
-gpu-cuda11x = [
-    "cupy-cuda11x",
+    "cupy-cuda12x[ctk]>=14,<15",
 ]
 
 [project.urls]

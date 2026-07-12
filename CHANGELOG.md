@@ -15,6 +15,8 @@ and releases use semantic versioning.
 - Dense/blockwise equivalence tables, repeated runtime observations, per-sample
   approximation outputs, environment metadata, figures, and artifact checksums.
 - A study-specific optional dependency group and documentation page.
+- A documented CUDA 12 installation path, validated real-GPU environment, and
+  maintainer protocol for real-CUDA release checks.
 
 ## [0.1.0] - 2026-07-11
 
@@ -40,8 +42,19 @@ package and stable public API.
   installation smoke test.
 - MkDocs documentation and GitHub Pages deployment workflow.
 
+### Tested
+
+- Confirmed CuPy device discovery, element-wise CUDA kernel execution, and
+  matrix multiplication on an NVIDIA GeForce GTX 1050 Mobile.
+- Executed the ordinary test suite with real CuPy/CUDA availability; 2802 tests
+  passed and one unrelated CSV logger UTF-8 failure remained for correction.
+
 ### Changed
 
+- Constrained the optional CUDA 12 backend to CuPy 14.x and included CuPy's CUDA
+  component dependencies in the optional installation extra.
+- Documented CUDA runtime-header troubleshooting and the real-GPU validation
+  environment used for the 0.1.0 release candidate.
 - Canonical package and import name standardized as lowercase `frsutils`.
 - Project licensing and package metadata standardized on BSD-3-Clause.
 - Documentation navigation uses `docs/index.md` as the published site home.
