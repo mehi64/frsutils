@@ -128,7 +128,8 @@ class LukasiewiczTNorm(TNorm):
 
 @TNorm.register("drastic", "drasticproduct")
 class DrasticProductTNorm(TNorm):
-    """Drastic Product T-norm."""
+    """Drastic Product T-norm. 
+        T(a, b) = a if b = 1, b if a = 1, and 0 otherwise."""
 
     def __init__(self):
         """Initialize the DrasticProductTNorm instance."""
@@ -156,7 +157,8 @@ class DrasticProductTNorm(TNorm):
 
 @TNorm.register("einstein", "einsteinproduct")
 class EinsteinProductTNorm(TNorm):
-    """Einstein Product T-norm."""
+    """Einstein Product T-norm.
+        T(a, b) = (a * b) / (2 - a - b + a * b)"""
 
     def __init__(self):
         """Initialize the EinsteinProductTNorm instance."""
@@ -186,7 +188,8 @@ class EinsteinProductTNorm(TNorm):
 
 @TNorm.register("hamacher", "hamacherproduct")
 class HamacherProductTNorm(TNorm):
-    """Hamacher Product T-norm."""
+    """Hamacher Product T-norm.
+        T(a, b) = (a * b) / (a + b - a * b), returning 0 when a = b = 0."""
 
     def __init__(self):
         """Initialize the HamacherProductTNorm instance."""
@@ -216,7 +219,8 @@ class HamacherProductTNorm(TNorm):
 
 @TNorm.register("nilpotent", "nilpotentminimum")
 class NilpotentMinimumTNorm(TNorm):
-    """Nilpotent Minimum T-norm."""
+    """Nilpotent Minimum T-norm.
+        T(a, b) = min(a, b) if a + b > 1, and 0 otherwise."""
 
     def __init__(self):
         """Initialize the NilpotentMinimumTNorm instance."""
