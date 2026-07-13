@@ -1,0 +1,7 @@
+# Scientific reference data and the code that loads or validates it require
+# explicit review from the project maintainer.
+/.github/CODEOWNERS @mehi64
+/tests/reference_data/** @mehi64
+/tests/reference_data_loader.py @mehi64
+/tests/reference_data_store.py @mehi64
+/tests/reference_data_tests/** @mehi64

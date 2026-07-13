@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "hash_algorithm": "sha256",
+  "files": {
+    "implicator_scalar.json": {
+      "dataset_kind": "implicator_scalar",
+      "sha256": "a9a0bb9127c6353f587f649f31b9d9d1f8e6227cd25bb64044f7e96ac7155d47"
+    },
+    "itfrs.json": {
+      "dataset_kind": "itfrs",
+      "sha256": "0f77f2b2385fbe6387cdbbe135a4509ce7a8b0afde403313cc1cb5a3fc51c987"
+    },
+    "owa_weights.json": {
+      "dataset_kind": "owa_weights",
+      "sha256": "f6976be299761eafc14b2094ea995cc3e75c6b9fea08778bf04180c849f40e08"
+    },
+    "owafrs.json": {
+      "dataset_kind": "owafrs",
+      "sha256": "1d7f750660afd2b304b0f3dde88ef9eeff837f0f0cbee1d95e69c907d834d9bf"
+    },
+    "similarities.json": {
+      "dataset_kind": "similarities",
+      "sha256": "3150421891ff615c696cc00a360238f0b1fd44995915fad95bb4c330e67993dc"
+    },
+    "tnorm_call.json": {
+      "dataset_kind": "tnorm_call",
+      "sha256": "2108bcb3ed5df726c3b8b4cb55caa317ead1d87bf20e7ccd8f4338a57b82af73"
+    },
+    "tnorm_reduce.json": {
+      "dataset_kind": "tnorm_reduce",
+      "sha256": "ee6a8da52092b0029190b37676104a21fb5cdb844604f943fe506e978fbd0947"
+    },
+    "tnorm_regression.json": {
+      "dataset_kind": "tnorm_regression",
+      "sha256": "ad6418418110e2c9c07b90ddc8f58e95df4c13ffb99981c7aff061f167b18c0b"
+    },
+    "vqrs.json": {
+      "dataset_kind": "vqrs",
+      "sha256": "c92656a905b6cce35e1c6076fce0682bdb5439a9bc7168ab68889e3d12ca1731"
+    }
+  }
+}

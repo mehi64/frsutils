@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 from frsutils.core.implicators import Implicator
-from tests import synthetic_data_store as ds
+from tests import reference_data_store as ds
 from frsutils.utils.logger.logger_util import get_logger
 
 logger = get_logger(env="test", experiment_name="test_implicators")

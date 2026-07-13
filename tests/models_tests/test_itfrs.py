@@ -7,7 +7,7 @@ from frsutils.core.models.itfrs import ITFRS
 from frsutils.core.tnorms import MinTNorm
 from frsutils.core.implicators import LukasiewiczImplicator
 from frsutils.utils.logger.logger_util import get_logger
-from tests import synthetic_data_store as ds
+from tests import reference_data_store as ds
 from frsutils.core.tnorms import TNorm
 from frsutils.core.implicators import Implicator
 

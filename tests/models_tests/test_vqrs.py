@@ -5,10 +5,16 @@ import pytest
 import numpy as np
 from frsutils.core.models.vqrs import VQRS
 from frsutils.utils.logger.logger_util import get_logger
-from tests import synthetic_data_store as ds
-from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier, LinearFuzzyQuantifier, QuadraticFuzzyQuantifier
+from tests import reference_data_store as ds
+from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 
 logger = get_logger("test")
+
+VQRS_REFERENCE_CASES = ds.get_VQRS_testing_testsets()
+VQRS_REFERENCE_QUANTIFIERS = [
+    pytest.param("linear", "linear_fuzzy_quantifier", id="linear"),
+    pytest.param("quadratic", "quadratic_fuzzy_quantifier", id="quadratic"),
+]
 
 @pytest.fixture
 def synthetic_data_():
@@ -30,6 +36,53 @@ def model_instance(synthetic_data_):
 
     logger = get_logger("test")
     return VQRS(sim, lbl, lb_fq, ub_fq, logger=logger)
+
+@pytest.mark.parametrize(
+    "test_case",
+    VQRS_REFERENCE_CASES,
+    ids=lambda test_case: test_case["name"],
+)
+@pytest.mark.parametrize(
+    ("quantifier_name", "expected_key"),
+    VQRS_REFERENCE_QUANTIFIERS,
+)
+def test_vqrs_approximations_match_reference_values(
+    test_case,
+    quantifier_name,
+    expected_key,
+):
+    """Validate VQRS lower and upper approximations against reference values."""
+    lower_quantifier = FuzzyQuantifier.create(
+        quantifier_name,
+        alpha=test_case["alpha_lower"],
+        beta=test_case["beta_lower"],
+    )
+    upper_quantifier = FuzzyQuantifier.create(
+        quantifier_name,
+        alpha=test_case["alpha_upper"],
+        beta=test_case["beta_upper"],
+    )
+    model = VQRS(
+        test_case["sim_matrix"],
+        test_case["y"],
+        lower_quantifier,
+        upper_quantifier,
+    )
+    expected = test_case["expected"][expected_key]
+
+    np.testing.assert_allclose(
+        model.lower_approximation(),
+        expected["lower_bound"],
+        atol=1e-6,
+        rtol=0.0,
+    )
+    np.testing.assert_allclose(
+        model.upper_approximation(),
+        expected["upper_bound"],
+        atol=1e-6,
+        rtol=0.0,
+    )
+
 
 @pytest.mark.parametrize("quantifier_name", list(FuzzyQuantifier.list_available().keys()))
 def test_lower_approximation_shape_ndarray_range_all_combinations(quantifier_name, synthetic_data_, model_instance):

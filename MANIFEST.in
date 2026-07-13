@@ -15,6 +15,6 @@ recursive-include docs *.md *.png
 recursive-include examples *.py
 recursive-include benchmarks *.py
 recursive-include studies *.py *.md *.json *.csv *.txt *.png
-recursive-include tests *.py *.md
+recursive-include tests *.py *.md *.json
 
 recursive-include scripts *.py

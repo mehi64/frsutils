@@ -38,6 +38,9 @@ jobs:
           python -m pip install -e ".[dev]"
           python -m pip check
 
+      - name: Run scientific reference-data contract tests
+        run: python -m pytest tests/reference_data_tests -ra
+
       - name: Run default test suite
         run: python -m pytest tests -ra
 
@@ -83,7 +86,7 @@ jobs:
 
           wheel = next(Path("dist").glob("*.whl"))
           with ZipFile(wheel) as archive:
-              wheel_names = archive.namelist()
+              wheel_names = set(archive.namelist())
 
           required_wheel = {
               "frsutils/__init__.py",
@@ -106,8 +109,12 @@ jobs:
 
           sdist = next(Path("dist").glob("*.tar.gz"))
           with open_tar(sdist, "r:gz") as archive:
-              sdist_names = archive.getnames()
+              sdist_names = set(archive.getnames())
 
+          reference_data_files = {
+              path.as_posix()
+              for path in Path("tests/reference_data").glob("*.json")
+          }
           required_sdist_suffixes = {
               "studies/fuzzy_rough_reference_study/run_study.py",
               "studies/fuzzy_rough_reference_study/study_config.json",
@@ -117,6 +124,12 @@ jobs:
               "docs/developer/joss_submission_checklist.md",
               "scripts/validate_joss_submission.py",
               "RELEASE_NOTES_v0.1.0.md",
+              "tests/reference_data_loader.py",
+              "tests/reference_data_store.py",
+              "tests/reference_data/README.md",
+              "tests/reference_data_tests/test_reference_data_contract.py",
+              "tests/test_procedures.md",
+              *reference_data_files,
           }
           missing_sdist = sorted(
               suffix
@@ -125,7 +138,16 @@ jobs:
           )
           if missing_sdist:
               raise SystemExit(
-                  f"Source distribution is missing study files: {missing_sdist}"
+                  "Source distribution is missing required files: "
+                  f"{missing_sdist}"
+              )
+          if any(
+              name.endswith("tests/synthetic_data_store.py")
+              for name in sdist_names
+          ):
+              raise SystemExit(
+                  "Source distribution contains the obsolete reference-data "
+                  "accessor name"
               )
 
           print(f"Validated wheel contents: {wheel.name}")
@@ -134,10 +156,23 @@ jobs:
 
       - name: Install and import the built wheel
         run: |
-          python -m pip install --force-reinstall dist/*.whl
+          python -m venv /tmp/frsutils-wheel-smoke
+          /tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
+          /tmp/frsutils-wheel-smoke/bin/python -m pip install dist/*.whl
           cd /tmp
-          python -c "import frsutils; print(frsutils.__file__)"
-          python -m pip check
+          /tmp/frsutils-wheel-smoke/bin/python -c \
+            "import frsutils; print(frsutils.__file__)"
+          /tmp/frsutils-wheel-smoke/bin/python -m pip check
+
+      - name: Install and import the built source distribution
+        run: |
+          python -m venv /tmp/frsutils-sdist-smoke
+          /tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
+          /tmp/frsutils-sdist-smoke/bin/python -m pip install dist/*.tar.gz
+          cd /tmp
+          /tmp/frsutils-sdist-smoke/bin/python -c \
+            "import frsutils; print(frsutils.__file__)"
+          /tmp/frsutils-sdist-smoke/bin/python -m pip check
 
       - name: Upload distribution artifacts
         uses: actions/upload-artifact@v4

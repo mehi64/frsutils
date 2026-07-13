@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "itfrs",
+  "provenance": {
+    "migration_date": "2026-07-13",
+    "migration_policy": "Values were copied verbatim from the existing Python reference-data store and were not regenerated from FRsutils production implementations.",
+    "origin": "tests/synthetic_data_store.py:get_ITFRS_testing_testsets"
+  },
+  "data": [
+    {
+      "name": "itfrs",
+      "y": {
+        "__ndarray__": [
+          1,
+          1,
+          0,
+          1,
+          0
+        ],
+        "dtype": "int64",
+        "shape": [
+          5
+        ]
+      },
+      "sim_matrix": {
+        "__ndarray__": [
+          [
+            1.0,
+            0.54,
+            0.37,
+            0.19,
+            0.1
+          ],
+          [
+            0.54,
+            1.0,
+            0.35,
+            0.29,
+            0.2
+          ],
+          [
+            0.37,
+            0.35,
+            1.0,
+            0.55,
+            0.73
+          ],
+          [
+            0.19,
+            0.29,
+            0.55,
+            1.0,
+            0.74
+          ],
+          [
+            0.1,
+            0.2,
+            0.73,
+            0.74,
+            1.0
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          5,
+          5
+        ]
+      },
+      "expected": {
+        "Reichenbach_lowerBound": {
+          "__ndarray__": [
+            0.63,
+            0.65,
+            0.45,
+            0.26,
+            0.26
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "KD_lowerBound": {
+          "__ndarray__": [
+            0.63,
+            0.65,
+            0.45,
+            0.26,
+            0.26
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Luk_lowerBound": {
+          "__ndarray__": [
+            0.63,
+            0.65,
+            0.45,
+            0.26,
+            0.26
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Goedel_lowerBound": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Goguen_lowerBound": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Rescher_lowerBound": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Weber_lowerBound": {
+          "__ndarray__": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Fodor_lowerBound": {
+          "__ndarray__": [
+            0.63,
+            0.65,
+            0.45,
+            0.26,
+            0.26
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "Yager_lowerBound": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "prod_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "min_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "einstein_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "luk_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "drastic_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "nilpotent_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "hamacher_tn_upperBound": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        },
+        "yager_tn_upperBound_p_0_83": {
+          "__ndarray__": [
+            0.54,
+            0.54,
+            0.73,
+            0.29,
+            0.73
+          ],
+          "dtype": "float64",
+          "shape": [
+            5
+          ]
+        }
+      }
+    }
+  ]
+}

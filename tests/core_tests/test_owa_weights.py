@@ -10,7 +10,7 @@ from frsutils.core.owa_weights import (
     LogarithmicOWAWeights,
     OWAWeights,
 )
-from tests import synthetic_data_store as ds
+from tests import reference_data_store as ds
 
 data_entry = ds.owa_weights_testing_testsets()[0]  # single dictionary wrapper
 

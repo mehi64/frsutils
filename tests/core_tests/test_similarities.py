@@ -11,7 +11,7 @@ from frsutils.core.similarities import (
     calculate_similarity_matrix,
 )
 from frsutils.core.tnorms import TNorm
-from tests import synthetic_data_store as ds
+from tests import reference_data_store as ds
 from frsutils.utils.logger.logger_util import get_logger
 
 
