@@ -16,6 +16,8 @@ package and its stable package-root API.
   environment metadata, machine-readable outputs, figures, and checksums.
 - Continuous integration, package-build validation, documentation deployment,
   and JOSS paper validation workflows.
+- Reviewable JSON scientific reference data protected by provenance metadata,
+  SHA-256 manifests, schema checks, and read-only NumPy reconstruction.
 
 ## Compatibility
 
@@ -33,10 +35,14 @@ package and its stable package-root API.
 ## Validation
 
 The real-CUDA smoke checks completed successfully for device discovery,
-element-wise kernel execution, and matrix multiplication. The ordinary suite
-then executed with real CuPy enabled and reported 2802 passed tests and one
-non-CUDA logger-encoding failure. A final clean test record must be captured
-after that UTF-8 logger fix before publishing the release.
+element-wise kernel execution, and matrix multiplication. The previously
+reported non-CUDA logger-encoding regression has been corrected and its
+targeted test now passes. After completion of the JSON reference-data
+migration, the default suite reported 2677 passed and 149 optional-backend
+skips, with 10518 slow cases deselected. The reference-data contract suite also
+passed. The prior release-validation record reports all 10518 slow OWAFRS cases
+passing in equivalent test-function batches; rerun the complete slow suite from
+the final release checkout before publication.
 
 Before publishing the release, run:
 

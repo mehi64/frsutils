@@ -2,8 +2,8 @@
 
 This directory contains version-controlled input and expected-output values used
 as scientific test oracles by the FRsutils test suite. The values support
-regression tests for fuzzy-rough operators, similarity computations, OWA
-weights, and approximation models.
+regression tests for fuzzy-rough operators, fuzzy quantifiers, similarity
+computations, OWA weights, and approximation models.
 
 The JSON files are intentionally kept human-readable so reviewers can inspect
 numerical changes in pull-request diffs. `manifest.json` records the expected
@@ -11,6 +11,12 @@ SHA-256 digest and dataset kind for each reference-data file. The shared loader
 in `tests/reference_data_loader.py` verifies those digests, rejects ambiguous or
 non-standard JSON, restores NumPy arrays with their declared dtype and shape,
 and marks the arrays as read-only.
+
+The migration of canonical scientific oracles from Python literals to these
+JSON files was completed on 2026-07-13. The one-off extraction script and
+migration inventory were removed after validation; Git history preserves the
+migration record. Local fixtures that test validation, shape, dtype, routing,
+or edge-case behavior remain in their test modules.
 
 ## Reference-data change policy
 
@@ -65,6 +71,11 @@ Each data file has this top-level structure:
 }
 ```
 
+The `data` field may be a list of homogeneous cases or an object that groups
+multiple related case collections while preserving compatibility accessors.
+Dataset-specific contract tests validate the grouped schemas used by implicator,
+similarity, approximation-baseline, and fuzzy-rough model reference data.
+
 NumPy arrays use an explicit representation:
 
 ```json
@@ -79,6 +90,29 @@ Keep the declared dtype and shape exact. The loader currently supports
 `float64` and `int64` reference arrays and rejects `NaN`, `Infinity`, duplicate
 keys, and ragged shapes. The contract tests also reject JSON files that are not
 registered in the manifest.
+
+The model files keep historical parameterized cases under `legacy_testsets`.
+`itfrs.json` and `owafrs.json` store focused dense regression oracles under
+`dense_baselines`. `vqrs.json` stores each shared matrix-and-label fixture once
+under `dense_fixtures`, with one or more component configurations and expected
+outputs in its `baselines` collection. The compatibility accessors in
+`tests/reference_data_store.py` expose a flat list of dense VQRS cases so tests
+remain isolated from this storage-level deduplication.
+
+String or mixed-type labels used by dense VQRS and OWAFRS baselines are stored
+as plain JSON values with explicit metadata rather than encoded NumPy arrays:
+
+```json
+{
+  "values": ["a", "a", "b", "b"],
+  "dtype": "object",
+  "shape": [4]
+}
+```
+
+This avoids extending the numeric array decoder to object arrays while still
+making label type and shape changes reviewable. Tests reconstruct these labels
+as local NumPy arrays when required.
 
 ## Updating a file safely
 

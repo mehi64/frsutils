@@ -5,12 +5,43 @@ import pytest
 import numpy as np
 from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier, validate_range_0_1
 from frsutils.utils.logger.logger_util import get_logger
+from tests import reference_data_store as ds
 
 
 logger = get_logger(env="test",
                     experiment_name="test_fuzzy_quantifiers")
 
 registered_fqs = FuzzyQuantifier.list_available()
+REFERENCE_CASES = {
+    case["name"]: case for case in ds.get_fuzzy_quantifier_testsets()
+}
+LINEAR_1D_REFERENCE = REFERENCE_CASES["fuzzy_quantifier_linear_piecewise_1d"]
+QUADRATIC_1D_REFERENCE = REFERENCE_CASES[
+    "fuzzy_quantifier_quadratic_piecewise_1d"
+]
+LINEAR_2D_REFERENCE = REFERENCE_CASES["fuzzy_quantifier_linear_piecewise_2d"]
+QUADRATIC_2D_REFERENCE = REFERENCE_CASES[
+    "fuzzy_quantifier_quadratic_piecewise_2d"
+]
+
+
+def _reference_subset(
+    reference_case: dict,
+    indices: tuple[int, ...],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return selected input and expected values from a 1D reference case."""
+    index_array = np.asarray(indices, dtype=int)
+    return reference_case["x"][index_array], reference_case["expected"][index_array]
+
+BOUNDARY_REFERENCE_X, BOUNDARY_REFERENCE_EXPECTED = _reference_subset(
+    LINEAR_1D_REFERENCE,
+    (1, 3, 5),
+)
+QUADRATIC_INTERNAL_X, QUADRATIC_INTERNAL_EXPECTED = _reference_subset(
+    QUADRATIC_1D_REFERENCE,
+    (1, 2, 3, 4, 5),
+)
+
 # ----------------------------
 # Functional Behavior Testing
 # ----------------------------
@@ -46,34 +77,45 @@ def test_quantifier_output_exceptions(quant_type, alpha, beta):
 
 
 
-@pytest.mark.parametrize("quant_type, alpha, beta, x, expected", [
-    ("linear", 0.2, 0.8, np.array([0.0, 0.2, 0.5, 0.8, 1.0]), np.array([0.0, 0.0, 0.5, 1.0, 1.0])),
-    ("quadratic", 0.2, 0.8, np.array([0.0, 0.2, 0.5, 0.8, 1.0]), np.array([0.0, 0.0, 0.5, 1.0, 1.0]))
-])
-def test_quantifier_known_outputs(quant_type, alpha, beta, x, expected):
-    fq = FuzzyQuantifier.create(quant_type, alpha=alpha, beta=beta)
+@pytest.mark.parametrize(
+    "reference_case",
+    [LINEAR_1D_REFERENCE, QUADRATIC_1D_REFERENCE],
+    ids=lambda case: case["quantifier"]["name"],
+)
+def test_quantifier_known_outputs(reference_case):
+    quantifier = reference_case["quantifier"]
+    x, expected = _reference_subset(reference_case, (0, 1, 3, 5, 6))
+    fq = FuzzyQuantifier.create(quantifier["name"], **quantifier["params"])
+
     result = fq(x)
+
     np.testing.assert_allclose(result, expected, atol=1e-5)
 
 
 def test_linear_quantifier_matches_piecewise_formula_at_internal_points():
-    fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.8)
-    x = np.array([0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 1.0], dtype=float)
-    expected = np.array([0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.0], dtype=float)
+    quantifier = LINEAR_1D_REFERENCE["quantifier"]
+    fq = FuzzyQuantifier.create(quantifier["name"], **quantifier["params"])
 
-    result = fq(x)
+    result = fq(LINEAR_1D_REFERENCE["x"])
 
-    np.testing.assert_allclose(result, expected, atol=1e-12)
+    np.testing.assert_allclose(
+        result,
+        LINEAR_1D_REFERENCE["expected"],
+        atol=1e-12,
+    )
 
 
 def test_quadratic_quantifier_matches_piecewise_formula_at_internal_points():
-    fq = FuzzyQuantifier.create("quadratic", alpha=0.2, beta=0.8)
-    x = np.array([0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 1.0], dtype=float)
-    expected = np.array([0.0, 0.0, 0.125, 0.5, 0.875, 1.0, 1.0], dtype=float)
+    quantifier = QUADRATIC_1D_REFERENCE["quantifier"]
+    fq = FuzzyQuantifier.create(quantifier["name"], **quantifier["params"])
 
-    result = fq(x)
+    result = fq(QUADRATIC_1D_REFERENCE["x"])
 
-    np.testing.assert_allclose(result, expected, atol=1e-12)
+    np.testing.assert_allclose(
+        result,
+        QUADRATIC_1D_REFERENCE["expected"],
+        atol=1e-12,
+    )
 
 
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
@@ -147,23 +189,29 @@ def test_quantifier_boundary_and_midpoint_values_are_continuous(quant_type):
 
 
 def test_linear_quantifier_matches_formula_on_two_dimensional_input():
-    fq = FuzzyQuantifier.create("linear", alpha=0.2, beta=0.8)
-    x = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 1.0]], dtype=float)
-    expected = np.array([[0.0, 0.0, 0.25], [0.5, 0.75, 1.0]], dtype=float)
+    quantifier = LINEAR_2D_REFERENCE["quantifier"]
+    fq = FuzzyQuantifier.create(quantifier["name"], **quantifier["params"])
 
-    result = fq(x)
+    result = fq(LINEAR_2D_REFERENCE["x"])
 
-    np.testing.assert_allclose(result, expected, atol=1e-12)
+    np.testing.assert_allclose(
+        result,
+        LINEAR_2D_REFERENCE["expected"],
+        atol=1e-12,
+    )
 
 
 def test_quadratic_quantifier_matches_formula_on_two_dimensional_input():
-    fq = FuzzyQuantifier.create("quadratic", alpha=0.2, beta=0.8)
-    x = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 1.0]], dtype=float)
-    expected = np.array([[0.0, 0.0, 0.125], [0.5, 0.875, 1.0]], dtype=float)
+    quantifier = QUADRATIC_2D_REFERENCE["quantifier"]
+    fq = FuzzyQuantifier.create(quantifier["name"], **quantifier["params"])
 
-    result = fq(x)
+    result = fq(QUADRATIC_2D_REFERENCE["x"])
 
-    np.testing.assert_allclose(result, expected, atol=1e-12)
+    np.testing.assert_allclose(
+        result,
+        QUADRATIC_2D_REFERENCE["expected"],
+        atol=1e-12,
+    )
 #endregion
 
 
@@ -201,10 +249,14 @@ def test_list_available_includes_quadratic_alias_quad():
 @pytest.mark.parametrize("quant_type", ["LINEAR", "Quadratic", "QUAD"])
 def test_factory_alias_lookup_is_case_insensitive(quant_type):
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
-    result = fq(np.array([0.2, 0.5, 0.8], dtype=float))
+    result = fq(BOUNDARY_REFERENCE_X)
 
     assert isinstance(fq, FuzzyQuantifier)
-    np.testing.assert_allclose(result, np.array([0.0, 0.5, 1.0]), atol=1e-12)
+    np.testing.assert_allclose(
+        result,
+        BOUNDARY_REFERENCE_EXPECTED,
+        atol=1e-12,
+    )
 
 
 def test_factory_rejects_unknown_alias():
@@ -219,10 +271,12 @@ def test_factory_rejects_unknown_alias():
 ])
 def test_from_dict_accepts_supported_linear_formats(data):
     fq = FuzzyQuantifier.from_dict(data)
-    x = np.array([0.2, 0.5, 0.8], dtype=float)
-
     assert fq.name == "linear"
-    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+    np.testing.assert_allclose(
+        fq(BOUNDARY_REFERENCE_X),
+        BOUNDARY_REFERENCE_EXPECTED,
+        atol=1e-12,
+    )
 
 
 @pytest.mark.parametrize("data", [
@@ -232,11 +286,12 @@ def test_from_dict_accepts_supported_linear_formats(data):
 ])
 def test_from_dict_accepts_supported_quadratic_formats(data):
     fq = FuzzyQuantifier.from_dict(data)
-    x = np.array([0.2, 0.35, 0.5, 0.65, 0.8], dtype=float)
-    expected = np.array([0.0, 0.125, 0.5, 0.875, 1.0], dtype=float)
-
     assert fq.name == "quadratic"
-    np.testing.assert_allclose(fq(x), expected, atol=1e-12)
+    np.testing.assert_allclose(
+        fq(QUADRATIC_INTERNAL_X),
+        QUADRATIC_INTERNAL_EXPECTED,
+        atol=1e-12,
+    )
 
 
 @pytest.mark.parametrize("data", [
@@ -302,11 +357,13 @@ def test_direct_constructor_factory_and_from_dict_are_equivalent(quant_type):
 def test_create_from_spec_accepts_preferred_nested_spec(quant_type):
     spec = {"name": quant_type, "params": {"alpha": 0.2, "beta": 0.8}}
     fq = FuzzyQuantifier.create_from_spec(spec)
-    x = np.array([0.2, 0.5, 0.8], dtype=float)
-
     assert isinstance(fq, FuzzyQuantifier)
     assert fq.name == FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8).name
-    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+    np.testing.assert_allclose(
+        fq(BOUNDARY_REFERENCE_X),
+        BOUNDARY_REFERENCE_EXPECTED,
+        atol=1e-12,
+    )
 
 
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
@@ -363,11 +420,13 @@ def test_create_extracts_namespaced_parameters():
         ub_alpha=0.1,
         ub_beta=0.9,
     )
-    x = np.array([0.2, 0.5, 0.8], dtype=float)
-
     assert fq._get_params()["alpha"] == 0.2
     assert fq._get_params()["beta"] == 0.8
-    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+    np.testing.assert_allclose(
+        fq(BOUNDARY_REFERENCE_X),
+        BOUNDARY_REFERENCE_EXPECTED,
+        atol=1e-12,
+    )
 
 
 def test_create_extracts_namespaced_parameters_case_insensitively_for_alias():
@@ -379,13 +438,14 @@ def test_create_extracts_namespaced_parameters_case_insensitively_for_alias():
         lb_alpha=0.1,
         lb_beta=0.9,
     )
-    x = np.array([0.2, 0.35, 0.5, 0.65, 0.8], dtype=float)
-    expected = np.array([0.0, 0.125, 0.5, 0.875, 1.0], dtype=float)
-
     assert fq.name == "quadratic"
     assert fq._get_params()["alpha"] == 0.2
     assert fq._get_params()["beta"] == 0.8
-    np.testing.assert_allclose(fq(x), expected, atol=1e-12)
+    np.testing.assert_allclose(
+        fq(QUADRATIC_INTERNAL_X),
+        QUADRATIC_INTERNAL_EXPECTED,
+        atol=1e-12,
+    )
 
 
 def test_create_with_strict_true_rejects_unused_parameters():
@@ -407,10 +467,12 @@ def test_create_with_strict_false_ignores_unused_parameters():
         extra_param=123,
         strict=False,
     )
-    x = np.array([0.2, 0.5, 0.8], dtype=float)
-
     assert isinstance(fq, FuzzyQuantifier)
-    np.testing.assert_allclose(fq(x), np.array([0.0, 0.5, 1.0]), atol=1e-12)
+    np.testing.assert_allclose(
+        fq(BOUNDARY_REFERENCE_X),
+        BOUNDARY_REFERENCE_EXPECTED,
+        atol=1e-12,
+    )
 
 
 def test_create_with_strict_true_checks_filtered_namespaced_parameters():

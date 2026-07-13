@@ -28,6 +28,25 @@ from frsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, 
 from frsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
 from frsutils.core.similarity_engine import BaseSimilarityEngine, SimilarityBlock
 from frsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
+from tests import reference_data_store as reference_data
+
+
+def _get_named_reference_case(cases, name):
+    """Return the uniquely named reference case from a case collection."""
+    matches = [case for case in cases if case["name"] == name]
+    if len(matches) != 1:
+        raise AssertionError(f"Expected one reference case named {name!r}, found {len(matches)}.")
+    return matches[0]
+
+
+def _labels_from_reference_case(case):
+    """Return read-only NumPy labels from encoded or plain-label metadata."""
+    labels = case["labels"]
+    if isinstance(labels, np.ndarray):
+        return labels
+    result = np.asarray(labels["values"], dtype=np.dtype(labels["dtype"]))
+    result.setflags(write=False)
+    return result
 
 
 class FakeArrayNamespace:
@@ -792,33 +811,30 @@ def test_component_builders_reject_component_specs_with_non_mapping_params(build
 # -----------------------------------------------------------------------------
 
 
-ITFRS_SIMILARITY_MATRIX = np.array(
-    [
-        [1.00, 0.80, 0.30, 0.10],
-        [0.80, 1.00, 0.45, 0.20],
-        [0.30, 0.45, 1.00, 0.70],
-        [0.10, 0.20, 0.70, 1.00],
-    ],
-    dtype=float,
+ITFRS_REFERENCE_CASE = _get_named_reference_case(
+    reference_data.get_itfrs_dense_baseline_testsets(),
+    "itfrs_blockwise_default_components",
 )
-ITFRS_LABELS = np.array(["minority", "minority", "majority", "majority"], dtype=object)
+ITFRS_SIMILARITY_MATRIX = ITFRS_REFERENCE_CASE["similarity_matrix"]
+ITFRS_LABELS = _labels_from_reference_case(ITFRS_REFERENCE_CASE)
+ITFRS_EXPECTED = ITFRS_REFERENCE_CASE["expected"]
 
 
 @pytest.mark.parametrize("block_size", [1, 2, 10])
-def test_compute_itfrs_blockwise_matches_manual_default_components_for_block_sizes(block_size):
+def test_compute_itfrs_blockwise_matches_reference_default_components_for_block_sizes(block_size):
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=block_size)
-    expected_lower, expected_upper, expected_boundary, expected_positive_region = _manual_itfrs_expected(
-        ITFRS_SIMILARITY_MATRIX,
-        ITFRS_LABELS,
-    )
 
     result = compute_itfrs_blockwise(engine, ITFRS_LABELS)
 
     assert isinstance(result, ITFRSBlockwiseApproximation)
-    np.testing.assert_allclose(result.lower, expected_lower, atol=1e-12)
-    np.testing.assert_allclose(result.upper, expected_upper, atol=1e-12)
-    np.testing.assert_allclose(result.boundary, expected_boundary, atol=1e-12)
-    np.testing.assert_allclose(result.positive_region, expected_positive_region, atol=1e-12)
+    np.testing.assert_allclose(result.lower, ITFRS_EXPECTED["lower"], atol=1e-12)
+    np.testing.assert_allclose(result.upper, ITFRS_EXPECTED["upper"], atol=1e-12)
+    np.testing.assert_allclose(result.boundary, ITFRS_EXPECTED["boundary"], atol=1e-12)
+    np.testing.assert_allclose(
+        result.positive_region,
+        ITFRS_EXPECTED["positive_region"],
+        atol=1e-12,
+    )
     np.testing.assert_allclose(result.boundary, result.upper - result.lower, atol=1e-12)
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
     assert result.execution_backend == "numpy"
@@ -959,34 +975,31 @@ def test_compute_itfrs_blockwise_rejects_length_mismatched_labels():
 # -----------------------------------------------------------------------------
 
 
-VQRS_SIMILARITY_MATRIX = np.array(
-    [
-        [1.00, 0.40, 0.60, 0.50],
-        [0.40, 1.00, 0.30, 0.50],
-        [0.60, 0.30, 1.00, 0.20],
-        [0.50, 0.50, 0.20, 1.00],
-    ],
-    dtype=float,
+VQRS_REFERENCE_CASE = _get_named_reference_case(
+    reference_data.get_vqrs_dense_baseline_testsets(),
+    "vqrs_blockwise_default_quantifiers",
 )
-VQRS_LABELS = np.array(["minority", "minority", "majority", "majority"], dtype=object)
+VQRS_SIMILARITY_MATRIX = VQRS_REFERENCE_CASE["similarity_matrix"]
+VQRS_LABELS = _labels_from_reference_case(VQRS_REFERENCE_CASE)
+VQRS_EXPECTED = VQRS_REFERENCE_CASE["expected"]
 
 
 @pytest.mark.parametrize("block_size", [1, 2, 10])
-def test_compute_vqrs_blockwise_matches_manual_default_quantifiers_for_block_sizes(block_size):
+def test_compute_vqrs_blockwise_matches_reference_default_quantifiers_for_block_sizes(block_size):
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=block_size)
-    expected_lower, expected_upper, expected_boundary, expected_positive_region, expected_interim = _manual_vqrs_expected(
-        VQRS_SIMILARITY_MATRIX,
-        VQRS_LABELS,
-    )
 
     result = compute_vqrs_blockwise(engine, VQRS_LABELS)
 
     assert isinstance(result, VQRSBlockwiseApproximation)
-    np.testing.assert_allclose(result.lower, expected_lower, atol=1e-12)
-    np.testing.assert_allclose(result.upper, expected_upper, atol=1e-12)
-    np.testing.assert_allclose(result.boundary, expected_boundary, atol=1e-12)
-    np.testing.assert_allclose(result.positive_region, expected_positive_region, atol=1e-12)
-    np.testing.assert_allclose(result.interim, expected_interim, atol=1e-12)
+    np.testing.assert_allclose(result.lower, VQRS_EXPECTED["lower"], atol=1e-12)
+    np.testing.assert_allclose(result.upper, VQRS_EXPECTED["upper"], atol=1e-12)
+    np.testing.assert_allclose(result.boundary, VQRS_EXPECTED["boundary"], atol=1e-12)
+    np.testing.assert_allclose(
+        result.positive_region,
+        VQRS_EXPECTED["positive_region"],
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(result.interim, VQRS_EXPECTED["interim"], atol=1e-12)
     np.testing.assert_allclose(result.boundary, result.upper - result.lower, atol=1e-12)
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
     assert result.execution_backend == "numpy"

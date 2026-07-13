@@ -3,131 +3,349 @@
   "dataset_kind": "vqrs",
   "provenance": {
     "migration_date": "2026-07-13",
-    "migration_policy": "Values were copied verbatim from the existing Python reference-data store and were not regenerated from FRsutils production implementations.",
-    "origin": "tests/synthetic_data_store.py:get_VQRS_testing_testsets"
+    "migration_policy": "Values were copied verbatim from the former Python reference-data store and were not regenerated from FRsutils production implementations.",
+    "origin": "Former tests/synthetic_data_store.py:get_VQRS_testing_testsets (removed after the 2026-07-13 JSON reference-data migration; preserved in Git history)",
+    "dense_baseline_extension": "The dense fast baseline was copied from the locked phase-one inventory after independent formula verification. String labels are stored as plain JSON values with explicit dtype and shape metadata.",
+    "blockwise_baseline_extension": "The blockwise default-quantifier baseline was copied from the locked phase-one inventory after independent formula verification. The dense fast and blockwise baselines share one canonical matrix-and-label fixture."
   },
-  "data": [
-    {
-      "name": "vqrs",
-      "y": {
-        "__ndarray__": [
-          1,
-          1,
-          0,
-          1,
-          0
-        ],
-        "dtype": "int64",
-        "shape": [
-          5
-        ]
-      },
-      "sim_matrix": {
-        "__ndarray__": [
-          [
-            1.0,
-            0.54,
-            0.37,
-            0.19,
-            0.1
+  "data": {
+    "legacy_testsets": [
+      {
+        "name": "vqrs",
+        "y": {
+          "__ndarray__": [
+            1,
+            1,
+            0,
+            1,
+            0
           ],
-          [
-            0.54,
-            1.0,
-            0.35,
-            0.29,
-            0.2
-          ],
-          [
-            0.37,
-            0.35,
-            1.0,
-            0.55,
-            0.73
-          ],
-          [
-            0.19,
-            0.29,
-            0.55,
-            1.0,
-            0.74
-          ],
-          [
-            0.1,
-            0.2,
-            0.73,
-            0.74,
-            1.0
+          "dtype": "int64",
+          "shape": [
+            5
           ]
-        ],
-        "dtype": "float64",
-        "shape": [
-          5,
-          5
-        ]
-      },
-      "alpha_lower": 0.1,
-      "beta_lower": 0.6,
-      "alpha_upper": 0.2,
-      "beta_upper": 1.0,
-      "expected": {
-        "quadratic_fuzzy_quantifier": {
-          "upper_bound": {
-            "__ndarray__": [
-              0.5206163194,
-              0.5036166362,
-              0.085078125,
-              0.015835966374605,
-              0.14101950331976762
-            ],
-            "dtype": "float64",
-            "shape": [
-              5
-            ]
-          },
-          "lower_bound": {
-            "__ndarray__": [
-              1.0,
-              1.0,
-              0.5582,
-              0.2344383779189888,
-              0.7185380971013948
-            ],
-            "dtype": "float64",
-            "shape": [
-              5
-            ]
-          }
         },
-        "linear_fuzzy_quantifier": {
-          "upper_bound": {
-            "__ndarray__": [
-              0.51041625,
-              0.5018116,
-              0.20625,
-              0.08898305,
-              0.2655367238
+        "sim_matrix": {
+          "__ndarray__": [
+            [
+              1.0,
+              0.54,
+              0.37,
+              0.19,
+              0.1
             ],
-            "dtype": "float64",
-            "shape": [
-              5
+            [
+              0.54,
+              1.0,
+              0.35,
+              0.29,
+              0.2
+            ],
+            [
+              0.37,
+              0.35,
+              1.0,
+              0.55,
+              0.73
+            ],
+            [
+              0.19,
+              0.29,
+              0.55,
+              1.0,
+              0.74
+            ],
+            [
+              0.1,
+              0.2,
+              0.73,
+              0.74,
+              1.0
             ]
+          ],
+          "dtype": "float64",
+          "shape": [
+            5,
+            5
+          ]
+        },
+        "alpha_lower": 0.1,
+        "beta_lower": 0.6,
+        "alpha_upper": 0.2,
+        "beta_upper": 1.0,
+        "expected": {
+          "quadratic_fuzzy_quantifier": {
+            "upper_bound": {
+              "__ndarray__": [
+                0.5206163194,
+                0.5036166362,
+                0.085078125,
+                0.015835966374605,
+                0.14101950331976762
+              ],
+              "dtype": "float64",
+              "shape": [
+                5
+              ]
+            },
+            "lower_bound": {
+              "__ndarray__": [
+                1.0,
+                1.0,
+                0.5582,
+                0.2344383779189888,
+                0.7185380971013948
+              ],
+              "dtype": "float64",
+              "shape": [
+                5
+              ]
+            }
           },
-          "lower_bound": {
-            "__ndarray__": [
-              1.0,
-              1.0,
-              0.53,
-              0.34237288,
-              0.624858758
-            ],
-            "dtype": "float64",
-            "shape": [
-              5
-            ]
+          "linear_fuzzy_quantifier": {
+            "upper_bound": {
+              "__ndarray__": [
+                0.51041625,
+                0.5018116,
+                0.20625,
+                0.08898305,
+                0.2655367238
+              ],
+              "dtype": "float64",
+              "shape": [
+                5
+              ]
+            },
+            "lower_bound": {
+              "__ndarray__": [
+                1.0,
+                1.0,
+                0.53,
+                0.34237288,
+                0.624858758
+              ],
+              "dtype": "float64",
+              "shape": [
+                5
+              ]
+            }
           }
         }
       }
-    }
-  ]
+    ],
+    "dense_fixtures": [
+      {
+        "name": "vqrs_four_sample_similarity_and_labels",
+        "similarity_matrix": {
+          "__ndarray__": [
+            [
+              1.0,
+              0.4,
+              0.6,
+              0.5
+            ],
+            [
+              0.4,
+              1.0,
+              0.3,
+              0.5
+            ],
+            [
+              0.6,
+              0.3,
+              1.0,
+              0.2
+            ],
+            [
+              0.5,
+              0.5,
+              0.2,
+              1.0
+            ]
+          ],
+          "dtype": "float64",
+          "shape": [
+            4,
+            4
+          ]
+        },
+        "labels": {
+          "values": [
+            "minority",
+            "minority",
+            "majority",
+            "majority"
+          ],
+          "dtype": "object",
+          "shape": [
+            4
+          ]
+        },
+        "baselines": [
+          {
+            "name": "vqrs_dense_fast_asymmetric_quantifiers",
+            "components": {
+              "lower_quantifier": {
+                "name": "linear",
+                "params": {
+                  "alpha": 0.1,
+                  "beta": 0.6
+                }
+              },
+              "upper_quantifier": {
+                "name": "quadratic",
+                "params": {
+                  "alpha": 0.0,
+                  "beta": 0.8
+                }
+              }
+            },
+            "expected": {
+              "lower": {
+                "__ndarray__": [
+                  0.3333333333333333,
+                  0.4666666666666666,
+                  0.16363636363636364,
+                  0.1333333333333333
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "upper": {
+                "__ndarray__": [
+                  0.22222222222222218,
+                  0.34722222222222215,
+                  0.10330578512396693,
+                  0.08680555555555554
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "boundary": {
+                "__ndarray__": [
+                  -0.11111111111111113,
+                  -0.11944444444444446,
+                  -0.060330578512396704,
+                  -0.046527777777777765
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "positive_region": {
+                "__ndarray__": [
+                  0.3333333333333333,
+                  0.4666666666666666,
+                  0.16363636363636364,
+                  0.1333333333333333
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "interim": {
+                "__ndarray__": [
+                  0.26666666666666666,
+                  0.3333333333333333,
+                  0.18181818181818182,
+                  0.16666666666666666
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              }
+            }
+          },
+          {
+            "name": "vqrs_blockwise_default_quantifiers",
+            "components": {
+              "lower_quantifier": {
+                "name": "linear",
+                "params": {
+                  "alpha": 0.1,
+                  "beta": 0.6
+                }
+              },
+              "upper_quantifier": {
+                "name": "linear",
+                "params": {
+                  "alpha": 0.1,
+                  "beta": 0.6
+                }
+              }
+            },
+            "expected": {
+              "lower": {
+                "__ndarray__": [
+                  0.3333333333333333,
+                  0.4666666666666666,
+                  0.16363636363636364,
+                  0.1333333333333333
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "upper": {
+                "__ndarray__": [
+                  0.3333333333333333,
+                  0.4666666666666666,
+                  0.16363636363636364,
+                  0.1333333333333333
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "boundary": {
+                "__ndarray__": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "positive_region": {
+                "__ndarray__": [
+                  0.3333333333333333,
+                  0.4666666666666666,
+                  0.16363636363636364,
+                  0.1333333333333333
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              },
+              "interim": {
+                "__ndarray__": [
+                  0.26666666666666666,
+                  0.3333333333333333,
+                  0.18181818181818182,
+                  0.16666666666666666
+                ],
+                "dtype": "float64",
+                "shape": [
+                  4
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
 }

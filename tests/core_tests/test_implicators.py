@@ -9,6 +9,14 @@ from frsutils.utils.logger.logger_util import get_logger
 
 logger = get_logger(env="test", experiment_name="test_implicators")
 call_testsets = ds.get_implicator_scalar_testsets()
+BOUNDARY_CASES = [
+    (case["implicator"], case["a"], case["b"], case["expected"])
+    for case in ds.get_implicator_boundary_cases()
+]
+BRANCH_EDGE_CASES = [
+    (case["implicator"], case["a"], case["b"], case["expected"])
+    for case in ds.get_implicator_branch_edge_cases()
+]
 registered_implicators = Implicator.list_available()
 
 #region <Output correctness>
@@ -171,44 +179,6 @@ def test_implicator_monotonicity_on_grid(implicator_name):
         )
 
 
-BOUNDARY_CASES = [
-    ("lukasiewicz", 0.0, 0.0, 1.0),
-    ("lukasiewicz", 1.0, 0.0, 0.0),
-    ("lukasiewicz", 1.0, 1.0, 1.0),
-    ("lukasiewicz", 0.7, 0.2, 0.5),
-    ("goedel", 0.2, 0.2, 1.0),
-    ("goedel", 0.7, 0.2, 0.2),
-    ("goedel", 1.0, 0.0, 0.0),
-    ("goedel", 0.0, 0.0, 1.0),
-    ("kleenedienes", 0.0, 0.0, 1.0),
-    ("kleenedienes", 1.0, 0.0, 0.0),
-    ("kleenedienes", 1.0, 0.4, 0.4),
-    ("kleenedienes", 0.7, 0.2, 0.3),
-    ("reichenbach", 0.0, 0.0, 1.0),
-    ("reichenbach", 1.0, 0.0, 0.0),
-    ("reichenbach", 1.0, 0.4, 0.4),
-    ("reichenbach", 0.7, 0.2, 0.44),
-    ("goguen", 0.0, 0.0, 1.0),
-    ("goguen", 0.0, 1.0, 1.0),
-    ("goguen", 0.7, 0.2, 2.0 / 7.0),
-    ("goguen", 0.2, 0.7, 1.0),
-    ("rescher", 0.2, 0.2, 1.0),
-    ("rescher", 0.7, 0.2, 0.0),
-    ("rescher", 1.0, 0.0, 0.0),
-    ("rescher", 0.0, 0.0, 1.0),
-    ("yager", 0.0, 0.0, 1.0),
-    ("yager", 0.0, 0.2, 1.0),
-    ("yager", 1.0, 0.2, 0.2),
-    ("yager", 0.5, 0.25, 0.5),
-    ("weber", 0.0, 0.0, 1.0),
-    ("weber", 0.5, 0.0, 1.0),
-    ("weber", 1.0, 0.0, 0.0),
-    ("weber", 1.0, 0.7, 0.7),
-    ("fodor", 0.2, 0.2, 1.0),
-    ("fodor", 0.7, 0.2, 0.3),
-    ("fodor", 1.0, 0.0, 0.0),
-    ("fodor", 0.0, 0.0, 1.0),
-]
 
 
 @pytest.mark.parametrize("implicator_name, a, b, expected", BOUNDARY_CASES)
@@ -221,38 +191,6 @@ def test_implicator_boundary_cases_match_contract(implicator_name, a, b, expecte
     assert np.isclose(result, expected, atol=1e-12)
 
 
-BRANCH_EDGE_CASES = [
-    (
-        "goguen",
-        np.array([0.0, 0.0, 0.5, 0.5]),
-        np.array([0.0, 1.0, 0.25, 0.75]),
-        np.array([1.0, 1.0, 0.5, 1.0]),
-    ),
-    (
-        "rescher",
-        np.array([0.2, 0.7, 1.0, 1.0]),
-        np.array([0.2, 0.2, 0.0, 1.0]),
-        np.array([1.0, 0.0, 0.0, 1.0]),
-    ),
-    (
-        "yager",
-        np.array([0.0, 0.0, 0.5, 1.0]),
-        np.array([0.0, 0.25, 0.25, 0.25]),
-        np.array([1.0, 1.0, 0.5, 0.25]),
-    ),
-    (
-        "weber",
-        np.array([0.999999999, 1.0, 1.0]),
-        np.array([0.2, 0.2, 1.0]),
-        np.array([1.0, 0.2, 1.0]),
-    ),
-    (
-        "fodor",
-        np.array([0.2, 0.7, 1.0, 1.0]),
-        np.array([0.2, 0.2, 0.0, 1.0]),
-        np.array([1.0, 0.3, 0.0, 1.0]),
-    ),
-]
 
 
 @pytest.mark.parametrize("implicator_name, a, b, expected", BRANCH_EDGE_CASES)

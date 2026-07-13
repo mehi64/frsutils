@@ -3,313 +3,514 @@
   "dataset_kind": "similarities",
   "provenance": {
     "migration_date": "2026-07-13",
-    "migration_policy": "Values were copied verbatim from the existing Python reference-data store and were not regenerated from FRsutils production implementations.",
-    "origin": "tests/synthetic_data_store.py:get_similarity_testing_testsets"
+    "migration_policy": "Legacy matrix values were copied verbatim from the former Python data store. Focused dense baselines were copied verbatim from the reviewed API contract test and were not regenerated from FRsutils production implementations.",
+    "origins": [
+      "Former tests/synthetic_data_store.py:get_similarity_testing_testsets (removed after the 2026-07-13 JSON reference-data migration; preserved in Git history)",
+      "tests/api/test_dense_similarity_baseline_contract.py"
+    ]
   },
-  "data": [
-    {
-      "name": "basic_similarity",
-      "X": {
-        "__ndarray__": [
-          [
-            0.1,
-            0.32,
-            0.48
-          ],
-          [
-            0.2,
-            0.78,
-            0.93
-          ],
-          [
-            0.73,
-            0.18,
-            0.28
-          ],
-          [
-            0.91,
-            0.48,
-            0.73
-          ],
-          [
-            1.0,
-            0.28,
-            0.47
-          ]
-        ],
-        "dtype": "float64",
-        "shape": [
-          5,
-          3
-        ]
-      },
-      "sigma_for_gaussian_similarity": 0.67,
-      "expected": {
-        "sim_matrix_with_linear_similarity_product_tnorm": {
+  "data": {
+    "matrix_testsets": [
+      {
+        "name": "basic_similarity",
+        "X": {
           "__ndarray__": [
             [
-              1.0,
-              0.2673,
-              0.25456,
-              0.1197,
-              0.09504
+              0.1,
+              0.32,
+              0.48
             ],
             [
-              0.2673,
-              1.0,
-              0.0658,
-              0.1624,
-              0.054
+              0.2,
+              0.78,
+              0.93
             ],
             [
-              0.25456,
-              0.0658,
-              1.0,
-              0.3157,
-              0.53217
+              0.73,
+              0.18,
+              0.28
             ],
             [
-              0.1197,
-              0.1624,
-              0.3157,
-              1.0,
-              0.53872
+              0.91,
+              0.48,
+              0.73
             ],
             [
-              0.09504,
-              0.054,
-              0.53217,
-              0.53872,
-              1.0
+              1.0,
+              0.28,
+              0.47
             ]
           ],
           "dtype": "float64",
           "shape": [
             5,
-            5
+            3
           ]
         },
-        "sim_matrix_with_linear_similarity_minimum_tnorm": {
+        "sigma_for_gaussian_similarity": 0.67,
+        "expected": {
+          "sim_matrix_with_linear_similarity_product_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.2673,
+                0.25456,
+                0.1197,
+                0.09504
+              ],
+              [
+                0.2673,
+                1.0,
+                0.0658,
+                0.1624,
+                0.054
+              ],
+              [
+                0.25456,
+                0.0658,
+                1.0,
+                0.3157,
+                0.53217
+              ],
+              [
+                0.1197,
+                0.1624,
+                0.3157,
+                1.0,
+                0.53872
+              ],
+              [
+                0.09504,
+                0.054,
+                0.53217,
+                0.53872,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          },
+          "sim_matrix_with_linear_similarity_minimum_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.54,
+                0.37,
+                0.19,
+                0.1
+              ],
+              [
+                0.54,
+                1.0,
+                0.35,
+                0.29,
+                0.2
+              ],
+              [
+                0.37,
+                0.35,
+                1.0,
+                0.55,
+                0.73
+              ],
+              [
+                0.19,
+                0.29,
+                0.55,
+                1.0,
+                0.74
+              ],
+              [
+                0.1,
+                0.2,
+                0.73,
+                0.74,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          },
+          "sim_matrix_with_linear_similarity_luk_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.0,
+                0.03,
+                0.0,
+                0.05
+              ],
+              [
+                0.0,
+                1.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.03,
+                0.0,
+                1.0,
+                0.07,
+                0.44
+              ],
+              [
+                0.0,
+                0.0,
+                0.07,
+                1.0,
+                0.45
+              ],
+              [
+                0.05,
+                0.0,
+                0.44,
+                0.45,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          },
+          "sim_matrix_with_gaussian_similarity_product_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.6235,
+                0.6014,
+                0.4365,
+                0.4049
+              ],
+              [
+                0.6235,
+                1.0,
+                0.3059,
+                0.4935,
+                0.2932
+              ],
+              [
+                0.6014,
+                0.3059,
+                1.0,
+                0.6964,
+                0.8759
+              ],
+              [
+                0.4365,
+                0.4935,
+                0.6964,
+                1.0,
+                0.8791
+              ],
+              [
+                0.4049,
+                0.2932,
+                0.8759,
+                0.8791,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          },
+          "sim_matrix_with_gaussian_similarity_minimum_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.79,
+                0.6427,
+                0.4815,
+                0.4057
+              ],
+              [
+                0.79,
+                1.0,
+                0.6246,
+                0.5704,
+                0.4902
+              ],
+              [
+                0.6427,
+                0.6246,
+                1.0,
+                0.7981,
+                0.922
+              ],
+              [
+                0.4815,
+                0.5704,
+                0.7981,
+                1.0,
+                0.9275
+              ],
+              [
+                0.4057,
+                0.4902,
+                0.922,
+                0.9275,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          },
+          "sim_matrix_with_gaussian_similarity_luk_tnorm": {
+            "__ndarray__": [
+              [
+                1.0,
+                0.577,
+                0.5775,
+                0.3862,
+                0.4038
+              ],
+              [
+                0.577,
+                1.0,
+                0.0256,
+                0.4314,
+                0.0371
+              ],
+              [
+                0.5775,
+                0.0256,
+                1.0,
+                0.6673,
+                0.8715
+              ],
+              [
+                0.3862,
+                0.4314,
+                0.6673,
+                1.0,
+                0.8749
+              ],
+              [
+                0.4038,
+                0.0371,
+                0.8715,
+                0.8749,
+                1.0
+              ]
+            ],
+            "dtype": "float64",
+            "shape": [
+              5,
+              5
+            ]
+          }
+        }
+      }
+    ],
+    "dense_baselines": [
+      {
+        "name": "dense_linear_one_feature",
+        "X": {
           "__ndarray__": [
             [
-              1.0,
-              0.54,
-              0.37,
-              0.19,
+              0.0
+            ],
+            [
               0.1
             ],
             [
-              0.54,
+              0.8
+            ],
+            [
+              0.9
+            ]
+          ],
+          "dtype": "float64",
+          "shape": [
+            4,
+            1
+          ]
+        },
+        "similarity": {
+          "name": "linear",
+          "params": {
+            "tnorm": "minimum"
+          }
+        },
+        "expected": {
+          "__ndarray__": [
+            [
               1.0,
-              0.35,
-              0.29,
+              0.9,
+              0.2,
+              0.1
+            ],
+            [
+              0.9,
+              1.0,
+              0.3,
               0.2
             ],
             [
-              0.37,
-              0.35,
+              0.2,
+              0.3,
               1.0,
-              0.55,
-              0.73
-            ],
-            [
-              0.19,
-              0.29,
-              0.55,
-              1.0,
-              0.74
+              0.9
             ],
             [
               0.1,
               0.2,
-              0.73,
-              0.74,
+              0.9,
               1.0
             ]
           ],
           "dtype": "float64",
           "shape": [
-            5,
-            5
+            4,
+            4
           ]
-        },
-        "sim_matrix_with_linear_similarity_luk_tnorm": {
+        }
+      },
+      {
+        "name": "dense_linear_two_features_minimum",
+        "X": {
           "__ndarray__": [
             [
-              1.0,
-              0.0,
-              0.03,
-              0.0,
-              0.05
-            ],
-            [
-              0.0,
-              1.0,
-              0.0,
               0.0,
               0.0
             ],
             [
-              0.03,
-              0.0,
-              1.0,
-              0.07,
-              0.44
+              0.1,
+              0.2
             ],
             [
-              0.0,
-              0.0,
-              0.07,
-              1.0,
-              0.45
+              0.8,
+              0.7
             ],
             [
-              0.05,
-              0.0,
-              0.44,
-              0.45,
+              0.9,
               1.0
             ]
           ],
           "dtype": "float64",
           "shape": [
-            5,
-            5
+            4,
+            2
           ]
         },
-        "sim_matrix_with_gaussian_similarity_product_tnorm": {
+        "similarity": {
+          "name": "linear",
+          "params": {
+            "tnorm": "minimum"
+          }
+        },
+        "expected": {
           "__ndarray__": [
             [
               1.0,
-              0.6235,
-              0.6014,
-              0.4365,
-              0.4049
+              0.8,
+              0.2,
+              0.0
             ],
             [
-              0.6235,
+              0.8,
               1.0,
-              0.3059,
-              0.4935,
-              0.2932
+              0.3,
+              0.2
             ],
             [
-              0.6014,
-              0.3059,
+              0.2,
+              0.3,
               1.0,
-              0.6964,
-              0.8759
+              0.7
             ],
             [
-              0.4365,
-              0.4935,
-              0.6964,
-              1.0,
-              0.8791
-            ],
-            [
-              0.4049,
-              0.2932,
-              0.8759,
-              0.8791,
+              0.0,
+              0.2,
+              0.7,
               1.0
             ]
           ],
           "dtype": "float64",
           "shape": [
-            5,
-            5
+            4,
+            4
+          ]
+        }
+      },
+      {
+        "name": "dense_gaussian_one_feature_sigma_0_5",
+        "X": {
+          "__ndarray__": [
+            [
+              0.0
+            ],
+            [
+              0.1
+            ],
+            [
+              0.8
+            ],
+            [
+              0.9
+            ]
+          ],
+          "dtype": "float64",
+          "shape": [
+            4,
+            1
           ]
         },
-        "sim_matrix_with_gaussian_similarity_minimum_tnorm": {
+        "similarity": {
+          "name": "gaussian",
+          "params": {
+            "sigma": 0.5,
+            "tnorm": "minimum"
+          }
+        },
+        "expected": {
           "__ndarray__": [
             [
               1.0,
-              0.79,
-              0.6427,
-              0.4815,
-              0.4057
+              0.9801986733067553,
+              0.27803730045319414,
+              0.19789869908361465
             ],
             [
-              0.79,
+              0.9801986733067553,
               1.0,
-              0.6246,
-              0.5704,
-              0.4902
+              0.37531109885139957,
+              0.27803730045319414
             ],
             [
-              0.6427,
-              0.6246,
+              0.27803730045319414,
+              0.37531109885139957,
               1.0,
-              0.7981,
-              0.922
+              0.9801986733067553
             ],
             [
-              0.4815,
-              0.5704,
-              0.7981,
-              1.0,
-              0.9275
-            ],
-            [
-              0.4057,
-              0.4902,
-              0.922,
-              0.9275,
+              0.19789869908361465,
+              0.27803730045319414,
+              0.9801986733067553,
               1.0
             ]
           ],
           "dtype": "float64",
           "shape": [
-            5,
-            5
-          ]
-        },
-        "sim_matrix_with_gaussian_similarity_luk_tnorm": {
-          "__ndarray__": [
-            [
-              1.0,
-              0.577,
-              0.5775,
-              0.3862,
-              0.4038
-            ],
-            [
-              0.577,
-              1.0,
-              0.0256,
-              0.4314,
-              0.0371
-            ],
-            [
-              0.5775,
-              0.0256,
-              1.0,
-              0.6673,
-              0.8715
-            ],
-            [
-              0.3862,
-              0.4314,
-              0.6673,
-              1.0,
-              0.8749
-            ],
-            [
-              0.4038,
-              0.0371,
-              0.8715,
-              0.8749,
-              1.0
-            ]
-          ],
-          "dtype": "float64",
-          "shape": [
-            5,
-            5
+            4,
+            4
           ]
         }
       }
-    }
-  ]
+    ]
+  }
 }

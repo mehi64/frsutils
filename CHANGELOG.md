@@ -41,13 +41,20 @@ package and stable public API.
 - Automated wheel and source-distribution validation with an isolated wheel
   installation smoke test.
 - MkDocs documentation and GitHub Pages deployment workflow.
+- Human-readable JSON scientific reference data with SHA-256 integrity
+  manifests, read-only loading, provenance metadata, and contract tests.
 
 ### Tested
 
 - Confirmed CuPy device discovery, element-wise CUDA kernel execution, and
   matrix multiplication on an NVIDIA GeForce GTX 1050 Mobile.
-- Executed the ordinary test suite with real CuPy/CUDA availability; 2802 tests
-  passed and one unrelated CSV logger UTF-8 failure remained for correction.
+- Completed the post-migration default test suite with 2677 passed, 149
+  optional-backend skips, and 10518 slow cases deselected.
+- Confirmed that the scientific reference-data contract suite passes and that
+  the former CSV logger UTF-8 regression now passes.
+- Retained the prior release-validation record in which all 10518 exhaustive
+  OWAFRS cases passed in equivalent test-function batches; a fresh complete
+  slow-suite run remains a final release gate.
 
 ### Changed
 
