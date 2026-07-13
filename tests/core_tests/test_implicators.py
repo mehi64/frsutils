@@ -25,7 +25,7 @@ registered_implicators = Implicator.list_available()
 ###############################################
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
-def test_scalar_call_valid(implicator_name):
+def test_implicator_scalar_call_returns_inrange_scalar(implicator_name):
     """
     checks if implicator can be called with scalars and return scalar
     """
@@ -39,7 +39,7 @@ def test_scalar_call_valid(implicator_name):
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
-def test_scalar_call_matches_vectorized_outputs(implicator_name, testset):
+def test_implicator_scalar_call_correctness(implicator_name, testset):
     """Validates that scalar __call__(a, b) matches vectorized results for each test pair.
     
     This ensures implicator logic is consistent when called per-element.
@@ -61,7 +61,7 @@ def test_scalar_call_matches_vectorized_outputs(implicator_name, testset):
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 @pytest.mark.parametrize("testset", call_testsets)
-def test_implicator_call_vector_output(implicator_name, testset):
+def test_implicator_vector_call_correctness(implicator_name, testset):
     obj = Implicator.create(implicator_name)
     a_b = testset["a_b"]
     a = a_b[:, 0]
@@ -160,6 +160,7 @@ def test_implicator_compute_backend_validate_inputs_false_skips_validation(impli
     assert result.shape == a.shape
 
 
+# TODO: check again
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_monotonicity_on_grid(implicator_name):
     """Check standard implicator monotonicity on a compact unit grid."""
@@ -182,8 +183,10 @@ def test_implicator_monotonicity_on_grid(implicator_name):
 
 
 @pytest.mark.parametrize("implicator_name, a, b, expected", BOUNDARY_CASES)
-def test_implicator_boundary_cases_match_contract(implicator_name, a, b, expected):
-    """Check representative boundary values against each implicator contract."""
+def test_implicator_extra_cases_match_contract(implicator_name, a, b, expected):
+    """Check representative boundary values against each implicator contract.
+    Notice: Since in the main data provided the boundaries [(0,0), (0,1),(1,0),(1,1)] are checked,
+    we just check some other values specific to each implicator"""
     obj = Implicator.create(implicator_name)
 
     result = obj(a, b)
@@ -327,8 +330,8 @@ def test_implicator_aliases_create_same_class_and_same_outputs(alias_name, canon
     np.testing.assert_allclose(alias_obj(a, b), canonical_obj(a, b), atol=1e-12)
 
 
-@pytest.mark.parametrize("mixed_case_name", ["LUK", "GoEdEl", "KLEENE", "Product"])
-def test_implicator_create_is_case_insensitive(mixed_case_name):
+@pytest.mark.parametrize("mixed_case_name", ["LUK", "GoEdEl", "KLEENE", "ProDuct"])
+def test_implicator_create_is_not_case_insensitive(mixed_case_name):
     """Check that factory aliases are case-insensitive."""
     obj = Implicator.create(mixed_case_name)
 
@@ -542,7 +545,7 @@ def test_describe_params_detailed_keys(implicator_name):
     """
     tests values of params and deteriled params. check them in log
     """
-    # TODO: This test needs consideration when implicators with parameters introduce
+    # TODO: This test needs consideration when implicators with parameters introduce. At the time being there is no implicato with parameters
     obj = Implicator.create(implicator_name)
     details = obj.describe_params_detailed()
     assert isinstance(details, dict)
@@ -554,7 +557,6 @@ def test_describe_params_detailed_keys(implicator_name):
 
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_registry_get_class_and_name(implicator_name):
-    # TODO: just checks class name is of str type. not very helpful
     cls = Implicator.get_class(implicator_name)
     instance = cls()
     name = Implicator.get_registered_name(instance)
@@ -566,7 +568,6 @@ def test_help(implicator_name):
     """
     tests values of params and deteriled params. check them in log
     """
-    # TODO: when a class does not have docstring, it returns the base calss docstring. This is wrong
     obj = Implicator.create(implicator_name)
     details = obj.help()
     assert isinstance(details, str)
