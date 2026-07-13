@@ -5,10 +5,12 @@ import numpy as np
 import pytest
 
 from frsutils.core.tnorms import TNorm
-from tests import synthetic_data_store as ds
+from tests import reference_data_store as ds
 
 
 CALL_TESTSETS = ds.get_tnorm_call_testsets()
+MATRIX_MASK_TESTSETS = ds.get_tnorm_reduce_testsets()
+TNORM_REGRESSION_TESTSETS = ds.get_tnorm_regression_testsets()
 REGISTERED_TNORMS = TNorm.list_available()
 REGISTERED_TNORM_NAMES = list(REGISTERED_TNORMS.keys())
 REGISTERED_TNORM_ALIASES = [
@@ -26,31 +28,9 @@ EXPECTED_TNORM_ALIASES = {
     "nilpotent": {"nilpotent", "nilpotentminimum"},
     "yager": {"yager", "yg"},
 }
-REDUCE_TEST_ARRAY = np.array([
-    [0.9, 1.0, 0.7, 0.2, 1.0],
-    [0.8, 0.6, 0.9, 0.5, 1.0],
-    [0.7, 0.8, 0.6, 1.0, 0.75],
-])
-REDUCE_EXPECTED = {
-    "minimum": np.array([0.7, 0.6, 0.6, 0.2, 0.75]),
-    "product": np.array([0.504, 0.48, 0.378, 0.1, 0.75]),
-    "lukasiewicz": np.array([0.4, 0.4, 0.2, 0.0, 0.75]),
-    "drastic": np.array([0.0, 0.0, 0.0, 0.0, 0.75]),
-    "einstein": np.array([0.4540540541, 0.4444444444, 0.3176470588, 0.0714285714, 0.75]),
-    "hamacher": np.array([0.5587583149, 0.5217391304, 0.4532374101, 0.1666666667, 0.75]),
-    "nilpotent": np.array([0.7, 0.6, 0.6, 0.0, 0.75]),
-    "yager": np.array([0.6258342613, 0.5527864045, 0.4900980486, 0.0566018868, 0.75]),
-}
-YAGER_DEFAULT_EXPECTED = np.array([
-    0.13669241,
-    0.13669241,
-    0.83029437,
-    0.47226901,
-    1.0,
-    0.0,
-    0.65,
-    0.37,
-])
+REDUCE_TEST_ARRAY = TNORM_REGRESSION_TESTSETS["axis_zero_reduce"]["input"]
+REDUCE_EXPECTED = TNORM_REGRESSION_TESTSETS["axis_zero_reduce"]["expected"]
+YAGER_DEFAULT_EXPECTED = TNORM_REGRESSION_TESTSETS["yager_default"]["expected"]
 
 
 def _default_params_for_tnorm(tnorm_name):
@@ -94,7 +74,7 @@ def _cupy_to_numpy(value, cp):
 ###############################################
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_all_pairs_from_0_to_1(tnorm_name):
+def test_tnorm_outputs_stay_within_unit_interval_on_dense_grid(tnorm_name):
     obj = _build_tnorm(tnorm_name)
     values = np.linspace(0, 1, 101)  # 0.0 to 1.0 step 0.01
 
@@ -108,7 +88,7 @@ def test_tnorm_all_pairs_from_0_to_1(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_scalar_inputs(tnorm_name):
+def test_tnorm_accepts_scalar_inputs_and_returns_scalar_result(tnorm_name):
     """Check that scalar inputs are handled correctly by T-norms."""
     obj = TNorm.create(tnorm_name, **({"p": 0.835} if tnorm_name == "yager" else {}))
     a, b = 0.73, 0.18
@@ -118,7 +98,7 @@ def test_scalar_inputs(tnorm_name):
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_tnorm_call_output_matches_expected(tnorm_name, testset):
+def test_tnorm_vectorized_call_matches_reference_values(tnorm_name, testset):
     """Test that vectorized T-norm calls match hand-calculated outputs."""
     obj = _build_tnorm(tnorm_name)
     a = testset["a_b"][:, 0]
@@ -134,9 +114,40 @@ def test_tnorm_call_output_matches_expected(tnorm_name, testset):
     np.testing.assert_allclose(result, expected, atol=1e-6)
 
 
+@pytest.mark.parametrize(
+    ("tnorm_name", "expected_key"),
+    [
+        pytest.param("minimum", "minimum_outputs", id="minimum"),
+        pytest.param("product", "product_outputs", id="product"),
+        pytest.param("lukasiewicz", "luk_outputs", id="lukasiewicz"),
+    ],
+)
+@pytest.mark.parametrize(
+    "testset",
+    MATRIX_MASK_TESTSETS,
+    ids=lambda testset: testset["name"],
+)
+def test_tnorm_matrix_call_matches_binary_mask_reference_values(
+    tnorm_name,
+    expected_key,
+    testset,
+):
+    """Validate matrix T-norm calls against binary-label-mask references."""
+    tnorm = _build_tnorm(tnorm_name)
+
+    result = tnorm(testset["similarity_matrix"], testset["label_mask"])
+
+    np.testing.assert_allclose(
+        result,
+        testset["expected"][expected_key],
+        atol=1e-8,
+        rtol=0.0,
+    )
+
+
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_scalar_call_output_matches_expected_values(tnorm_name, testset):
+def test_tnorm_scalar_calls_match_reference_values(tnorm_name, testset):
     """Validate that scalar T-norm calls match expected values."""
     obj = _build_tnorm(tnorm_name)
     expected = (
@@ -157,7 +168,7 @@ def test_scalar_call_output_matches_expected_values(tnorm_name, testset):
 @pytest.mark.parametrize("tnorm_name", ["yager"])
 @pytest.mark.parametrize("p", [0.835, 5.0])
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_yager_parametrized_behavior(tnorm_name, p, testset):
+def test_yager_tnorm_matches_reference_values_for_custom_p(tnorm_name, p, testset):
     """Test the Yager T-norm with predefined parameterized datasets."""
     obj = TNorm.create(tnorm_name, p=p)
     a_b = testset["a_b"]
@@ -172,7 +183,7 @@ def test_yager_parametrized_behavior(tnorm_name, p, testset):
 
 
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_yager_default_p_matches_expected_values(testset):
+def test_yager_tnorm_default_p_matches_reference_values(testset):
     """Validate the default Yager T-norm parameter against expected values."""
     obj = TNorm.create("yager")
     a = testset["a_b"][:, 0]
@@ -185,7 +196,7 @@ def test_yager_default_p_matches_expected_values(testset):
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_compute_backend_numpy_matches_expected_values(tnorm_name, testset):
+def test_tnorm_numpy_backend_matches_reference_values(tnorm_name, testset):
     """Validate direct NumPy backend computations against expected values."""
     obj = _build_tnorm(tnorm_name)
     a = testset["a_b"][:, 0]
@@ -203,7 +214,7 @@ def test_compute_backend_numpy_matches_expected_values(tnorm_name, testset):
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_compute_backend_cupy_matches_numpy_expected_values(tnorm_name, testset):
+def test_tnorm_cupy_backend_matches_reference_values(tnorm_name, testset):
     """Validate CuPy backend computations against NumPy expected values."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -221,7 +232,7 @@ def test_compute_backend_cupy_matches_numpy_expected_values(tnorm_name, testset)
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_compute_backend_cupy_handles_scalar_like_arrays(tnorm_name):
+def test_tnorm_cupy_backend_matches_numpy_for_zero_dimensional_inputs(tnorm_name):
     """Check CuPy backend behavior for scalar-like zero-dimensional arrays."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -237,7 +248,7 @@ def test_compute_backend_cupy_handles_scalar_like_arrays(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_compute_backend_cupy_matches_numpy_for_matrices(tnorm_name):
+def test_tnorm_cupy_backend_matches_numpy_for_matrix_inputs(tnorm_name):
     """Compare CuPy and NumPy backend computations on matrix inputs."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -251,7 +262,7 @@ def test_compute_backend_cupy_matches_numpy_for_matrices(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_compute_backend_cupy_broadcasts_column_and_row_arrays(tnorm_name):
+def test_tnorm_cupy_backend_broadcasts_column_and_row_inputs(tnorm_name):
     """Check CuPy backend broadcasting for column-row array inputs."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -265,7 +276,7 @@ def test_compute_backend_cupy_broadcasts_column_and_row_arrays(tnorm_name):
     np.testing.assert_allclose(_cupy_to_numpy(result_cp, cp), expected, atol=1e-8)
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_broadcasts_scalar_and_array_inputs(tnorm_name):
+def test_tnorm_call_broadcasts_scalar_and_vector_inputs(tnorm_name):
     """Check broadcasting for scalar-array and array-scalar inputs."""
     obj = _build_tnorm(tnorm_name)
     values = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
@@ -281,7 +292,7 @@ def test_tnorm_broadcasts_scalar_and_array_inputs(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_broadcasts_column_and_row_arrays(tnorm_name):
+def test_tnorm_call_broadcasts_column_and_row_inputs(tnorm_name):
     """Check two-dimensional NumPy broadcasting for T-norm calls."""
     obj = _build_tnorm(tnorm_name)
     column = np.array([[0.0], [0.25], [0.5], [0.75], [1.0]])
@@ -298,7 +309,7 @@ def test_tnorm_broadcasts_column_and_row_arrays(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_consistency_with_call(tnorm_name):
+def test_tnorm_reduce_matches_repeated_binary_application(tnorm_name):
     """Check that reduce is consistent with repeated binary calls."""
     obj = _build_tnorm(tnorm_name)
     rng = np.random.default_rng(seed=20240613)
@@ -318,7 +329,7 @@ def test_reduce_consistency_with_call(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_matches_expected_axis0_values(tnorm_name):
+def test_tnorm_reduce_matches_reference_values_along_axis_zero(tnorm_name):
     """Validate NumPy reduce outputs against independent expected values."""
     obj = _build_tnorm(tnorm_name)
 
@@ -328,7 +339,7 @@ def test_reduce_matches_expected_axis0_values(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_backend_numpy_matches_expected_axis0_values(tnorm_name):
+def test_tnorm_numpy_reduce_backend_matches_reference_values_along_axis_zero(tnorm_name):
     """Validate direct NumPy backend reduction against expected values."""
     obj = _build_tnorm(tnorm_name)
 
@@ -338,7 +349,7 @@ def test_reduce_backend_numpy_matches_expected_axis0_values(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_backend_cupy_matches_expected_axis0_values(tnorm_name):
+def test_tnorm_cupy_reduce_backend_matches_reference_values_along_axis_zero(tnorm_name):
     """Validate CuPy backend reduction against independent expected values."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -353,7 +364,7 @@ def test_reduce_backend_cupy_matches_expected_axis0_values(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_backend_cupy_matches_numpy_for_one_dimensional_input(tnorm_name):
+def test_tnorm_cupy_reduce_backend_matches_numpy_for_vector_input(tnorm_name):
     """Compare CuPy and NumPy reduction for one-dimensional input."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -366,7 +377,7 @@ def test_reduce_backend_cupy_matches_numpy_for_one_dimensional_input(tnorm_name)
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_backend_cupy_single_row_returns_same_values(tnorm_name):
+def test_tnorm_cupy_reduce_backend_returns_single_row_values(tnorm_name):
     """Check CuPy reduction behavior for a single-row matrix."""
     cp = _cupy_module()
     obj = _build_tnorm(tnorm_name)
@@ -377,7 +388,7 @@ def test_reduce_backend_cupy_single_row_returns_same_values(tnorm_name):
     np.testing.assert_allclose(_cupy_to_numpy(result_cp, cp), single_row_np[0], atol=1e-8)
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_matches_expected_for_one_dimensional_input(tnorm_name):
+def test_tnorm_reduce_vector_matches_reference_scalar(tnorm_name):
     """Check reduce behavior for a one-dimensional membership vector."""
     obj = _build_tnorm(tnorm_name)
     vector = REDUCE_TEST_ARRAY[:, 0]
@@ -388,7 +399,7 @@ def test_reduce_matches_expected_for_one_dimensional_input(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_reduce_single_row_returns_same_row_values(tnorm_name):
+def test_tnorm_reduce_returns_single_row_values(tnorm_name):
     """Check that reducing a single row returns that row unchanged."""
     obj = _build_tnorm(tnorm_name)
     single_row = REDUCE_TEST_ARRAY[:1, :]
@@ -399,7 +410,7 @@ def test_reduce_single_row_returns_same_row_values(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_equivalence_of_constructor_create_fromdict_with_random_data(tnorm_name):
+def test_tnorm_construction_paths_produce_equal_outputs_on_random_data(tnorm_name):
     """Test that constructor, create(), and from_dict() produce identical outputs."""
     rng = np.random.default_rng(seed=123)
     a = rng.uniform(0, 1, size=1000)
@@ -422,7 +433,7 @@ def test_equivalence_of_constructor_create_fromdict_with_random_data(tnorm_name)
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_equivalence_of_constructor_create_fromdict(tnorm_name, testset):
+def test_tnorm_construction_paths_produce_equal_outputs_on_reference_data(tnorm_name, testset):
     """Verify constructor, factory, and from_dict equivalence on test data."""
     cls = TNorm.get_class(tnorm_name)
     params = _default_params_for_tnorm(tnorm_name)
@@ -444,7 +455,7 @@ def test_equivalence_of_constructor_create_fromdict(tnorm_name, testset):
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
-def test_scalar_call_matches_vectorized_outputs(tnorm_name, testset):
+def test_tnorm_scalar_calls_match_vectorized_call_outputs(tnorm_name, testset):
     """Ensure scalar T-norm calls match vectorized results for each test pair."""
     obj = _build_tnorm(tnorm_name)
     a_b = testset["a_b"]
@@ -462,7 +473,7 @@ def test_scalar_call_matches_vectorized_outputs(tnorm_name, testset):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_matrix_consistency_with_scalar_application(tnorm_name):
+def test_tnorm_matrix_call_matches_elementwise_scalar_calls(tnorm_name):
     """Ensure matrix-wise T-norm application matches scalar application."""
     rng = np.random.default_rng(seed=42)
     n = 64
@@ -496,7 +507,7 @@ def test_tnorm_matrix_consistency_with_scalar_application(tnorm_name):
 ###                                         ###
 ###############################################
 
-def test_registered_tnorm_aliases_include_expected_names():
+def test_tnorm_registry_contains_expected_public_aliases():
     """Ensure the registry exposes the expected public T-norm aliases."""
     for primary_name, expected_aliases in EXPECTED_TNORM_ALIASES.items():
         assert primary_name in REGISTERED_TNORMS
@@ -504,7 +515,7 @@ def test_registered_tnorm_aliases_include_expected_names():
 
 
 @pytest.mark.parametrize("primary_name, alias", REGISTERED_TNORM_ALIASES)
-def test_all_registered_aliases_create_equivalent_tnorms(primary_name, alias):
+def test_tnorm_create_resolves_each_registered_alias_to_primary_class(primary_name, alias):
     """Check that every registered alias creates the expected T-norm class."""
     primary = _build_tnorm(primary_name)
     alias_obj = TNorm.create(alias, **_default_params_for_tnorm(primary_name))
@@ -513,13 +524,13 @@ def test_all_registered_aliases_create_equivalent_tnorms(primary_name, alias):
 
 
 @pytest.mark.parametrize("primary_name, alias", REGISTERED_TNORM_ALIASES)
-def test_all_registered_aliases_get_same_class(primary_name, alias):
+def test_tnorm_get_class_resolves_each_registered_alias_to_primary_class(primary_name, alias):
     """Check that get_class resolves every alias to its primary class."""
     assert TNorm.get_class(alias) is TNorm.get_class(primary_name)
 
 
 @pytest.mark.parametrize("primary_name, alias", REGISTERED_TNORM_ALIASES)
-def test_registered_aliases_are_case_insensitive(primary_name, alias):
+def test_tnorm_create_resolves_registered_aliases_case_insensitively(primary_name, alias):
     """Check that aliases can be used with mixed-case names."""
     mixed_case_alias = alias.upper()
     obj = TNorm.create(mixed_case_alias, **_default_params_for_tnorm(primary_name))
@@ -528,7 +539,7 @@ def test_registered_aliases_are_case_insensitive(primary_name, alias):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_yager_serialization_preserves_parameters_and_roundtrips(tnorm_name):
+def test_tnorm_serialization_roundtrip_preserves_constructor_parameters(tnorm_name):
     """Check that serialized T-norm parameters survive from_dict round-tripping."""
     params = {"p": 5.0} if tnorm_name == "yager" else {}
     obj = TNorm.create(tnorm_name, **params)
@@ -544,7 +555,7 @@ def test_yager_serialization_preserves_parameters_and_roundtrips(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_create_from_spec_with_preferred_nested_format(tnorm_name):
+def test_tnorm_create_from_spec_builds_instance_from_nested_spec(tnorm_name):
     """Create T-norms from the preferred internal nested spec format."""
     params = _default_params_for_tnorm(tnorm_name)
     spec = {"name": tnorm_name, "params": params}
@@ -556,7 +567,7 @@ def test_create_from_spec_with_preferred_nested_format(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_create_from_spec_with_legacy_compact_format(tnorm_name):
+def test_tnorm_create_from_spec_builds_instance_from_legacy_compact_spec(tnorm_name):
     """Create T-norms from the backward-compatible compact spec format."""
     params = _default_params_for_tnorm(tnorm_name)
     spec = {"type": tnorm_name, **params}
@@ -567,7 +578,7 @@ def test_create_from_spec_with_legacy_compact_format(tnorm_name):
     assert obj._get_params() == params
 
 
-def test_create_from_spec_returns_existing_instance_unchanged():
+def test_tnorm_create_from_spec_returns_existing_instance_by_identity():
     """Check that existing T-norm instances pass through create_from_spec."""
     obj = TNorm.create("minimum")
 
@@ -576,7 +587,7 @@ def test_create_from_spec_returns_existing_instance_unchanged():
     assert result is obj
 
 
-def test_create_from_spec_returns_internal_marker_instance_unchanged():
+def test_tnorm_create_from_spec_returns_internal_marker_instance_by_identity():
     """Check the internal __instance__ marker pass-through contract."""
     obj = TNorm.create("yager", p=3.0)
 
@@ -585,56 +596,56 @@ def test_create_from_spec_returns_internal_marker_instance_unchanged():
     assert result is obj
 
 
-def test_create_from_spec_allows_none_as_empty_optional_spec():
+def test_tnorm_create_from_spec_returns_none_for_none_spec():
     """Document the optional-spec behavior for create_from_spec(None)."""
     assert TNorm.create_from_spec(None) is None
 
 
-def test_create_raises_for_unknown_alias():
+def test_tnorm_create_raises_value_error_for_unknown_name():
     """Check factory error handling for unknown T-norm names."""
     with pytest.raises(ValueError):
         TNorm.create("unknown_tnorm")
 
 
-def test_get_class_raises_for_unknown_alias():
+def test_tnorm_get_class_raises_value_error_for_unknown_name():
     """Check registry lookup error handling for unknown T-norm names."""
     with pytest.raises(ValueError):
         TNorm.get_class("unknown_tnorm")
 
 
-def test_from_dict_raises_for_missing_name():
+def test_tnorm_from_dict_raises_key_error_when_name_is_missing():
     """Check from_dict error handling for malformed serialized data."""
     with pytest.raises(KeyError):
         TNorm.from_dict({"params": {}})
 
 
-def test_create_from_spec_raises_for_non_dict_params():
+def test_tnorm_create_from_spec_raises_type_error_for_non_mapping_params():
     """Check nested spec validation when params is not a dictionary."""
     with pytest.raises(TypeError):
         TNorm.create_from_spec({"name": "minimum", "params": [("unused", 1)]})
 
 
-def test_create_from_spec_raises_for_invalid_object():
+def test_tnorm_create_from_spec_raises_type_error_for_unsupported_spec():
     """Check create_from_spec error handling for unsupported objects."""
     with pytest.raises(TypeError):
         TNorm.create_from_spec(object())
 
 
-def test_create_strict_mode_rejects_unused_parameters():
+def test_tnorm_create_strict_mode_raises_value_error_for_unused_parameters():
     """Check that strict factory construction rejects unused parameters."""
     with pytest.raises(ValueError):
         TNorm.create("minimum", strict=True, unused_parameter=1.0)
 
 
 @pytest.mark.parametrize("bad_p", [0, -1.0, None, "2.0"])
-def test_yager_rejects_invalid_p_values(bad_p):
+def test_yager_tnorm_raises_value_error_for_invalid_p(bad_p):
     """Validate constructor-time rejection of invalid Yager parameters."""
     with pytest.raises(ValueError):
         TNorm.create("yager", p=bad_p)
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_instances_are_distinct(tnorm_name):
+def test_tnorm_construction_paths_return_distinct_instances(tnorm_name):
     """Ensure direct, create(), and from_dict instances are separate objects."""
     params = _default_params_for_tnorm(tnorm_name)
     cls = TNorm.get_class(tnorm_name)
@@ -650,7 +661,7 @@ def test_tnorm_instances_are_distinct(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_create_and_to_dict_from_dict_roundtrip(tnorm_name):
+def test_tnorm_serialized_schema_and_roundtrip_preserve_registered_name(tnorm_name):
     """Test to_dict(), from_dict(), and create() round-tripping."""
     obj = _build_tnorm(tnorm_name)
     assert isinstance(obj, TNorm)
@@ -666,7 +677,7 @@ def test_create_and_to_dict_from_dict_roundtrip(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_describe_params_detailed(tnorm_name):
+def test_tnorm_describe_params_detailed_returns_all_parameter_entries(tnorm_name):
     """Check detailed parameter introspection for all registered T-norms."""
     obj = _build_tnorm(tnorm_name)
     details = obj.describe_params_detailed()
@@ -676,7 +687,7 @@ def test_describe_params_detailed(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_registry_get_class_and_name(tnorm_name):
+def test_tnorm_get_registered_name_returns_string_for_registered_instance(tnorm_name):
     """Check class lookup and reverse registered-name lookup."""
     cls = TNorm.get_class(tnorm_name)
     instance = cls(**_default_params_for_tnorm(tnorm_name))
@@ -688,7 +699,7 @@ def test_registry_get_class_and_name(tnorm_name):
 #region <axiom testing>
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_exhaustive_validity_and_properties(tnorm_name):
+def test_tnorm_dense_grid_satisfies_range_commutativity_and_identity_axioms(tnorm_name):
     """Check output range, commutativity, and identity over a fixed grid."""
     obj = _build_tnorm(tnorm_name)
     values = np.linspace(0, 1, 11)
@@ -719,7 +730,7 @@ def test_tnorm_exhaustive_validity_and_properties(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_zero_and_one_boundary_axioms(tnorm_name):
+def test_tnorm_satisfies_zero_annihilator_and_one_identity_axioms(tnorm_name):
     """Verify the standard zero and one boundary axioms for T-norms."""
     obj = _build_tnorm(tnorm_name)
     values = np.linspace(0.0, 1.0, 21)
@@ -733,7 +744,7 @@ def test_tnorm_zero_and_one_boundary_axioms(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_monotonicity_axiom(tnorm_name):
+def test_tnorm_is_monotone_in_both_arguments(tnorm_name):
     """Verify that each T-norm is monotone in both arguments."""
     obj = _build_tnorm(tnorm_name)
     rng = np.random.default_rng(seed=20240614)
@@ -749,7 +760,7 @@ def test_tnorm_monotonicity_axiom(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_tnorm_associativity(tnorm_name):
+def test_tnorm_is_associative_on_fixed_grid(tnorm_name):
     """Verify associativity over a fixed grid of membership values."""
     obj = _build_tnorm(tnorm_name)
     values = np.linspace(0, 1, 11)
@@ -778,7 +789,7 @@ def test_tnorm_associativity(tnorm_name):
 
 
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
-def test_help(tnorm_name):
+def test_tnorm_help_returns_nonempty_string(tnorm_name):
     """Check that each T-norm provides a valid help string."""
     obj = _build_tnorm(tnorm_name)
     doc = obj.help()

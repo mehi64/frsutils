@@ -340,18 +340,18 @@ placeholder identifier.
 
 Fill this section after the final local run.
 
-- Final validation date: 2026-07-12; final clean rerun still pending after the unrelated logger UTF-8 fix
-- Python version: 3.11.6 for the real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
+- Final validation date: 2026-07-13
+- Python version: 3.11.6 for the recorded real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
 - Operating system: Ubuntu 24.04.4 LTS, Linux 6.8.0-111-generic, x86_64
 - GPU: NVIDIA GeForce GTX 1050 Mobile, 4 GiB, compute capability 6.1
 - NVIDIA/CUDA environment: driver 535.309.01, driver-reported CUDA 12.2, system CUDA Toolkit 12.0
 - Python GPU packages: NumPy 2.3.5, CuPy 14.1.1, `nvidia-cuda-runtime-cu12` 12.0.146, and `cuda-pathfinder` 1.5.6
 - Real-CUDA smoke result: device discovery, element-wise kernel execution, and 1000 x 1000 matrix multiplication completed successfully
-- Ordinary-suite result with real CuPy enabled: 2802 passed, 1 failed, 10518 deselected; no CuPy/CUDA skips were reported
-- Remaining failure: `tests/core_tests/test_implicators.py::test_help[goedel]` failed because the CSV logger opened its output with ASCII rather than UTF-8; this failure is unrelated to CUDA
-- Exhaustive slow result from the prior release-validation run: all 10518 OWAFRS slow cases passed in equivalent test-function batches
-- JOSS paper citation check: rerun `python scripts/validate_joss_submission.py` after Phase 4 changes
-- Documentation link check: 22 Markdown files checked; no broken relative links
+- Current default-suite result after the JSON reference-data migration: 2677 passed, 149 optional-backend skips, and 10518 slow cases deselected
+- Former logger regression: `tests/core_tests/test_implicators.py::test_help[goedel]` now passes
+- Exhaustive slow result: the prior release-validation record reports all 10518 OWAFRS slow cases passing in equivalent test-function batches; a fresh complete run from the final release checkout remains pending
+- JOSS paper and metadata validation: `python scripts/validate_joss_submission.py` passed
+- Documentation validation: `mkdocs build --strict` passed with no unreferenced migration page remaining
 - Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments
 - Release tag: pending `v0.1.0` after the release commit is pushed and CI is green
 - Software archive DOI: pending release publication and archival

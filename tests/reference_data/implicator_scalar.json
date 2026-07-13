@@ -1,0 +1,671 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "implicator_scalar",
+  "provenance": {
+    "migration_date": "2026-07-13",
+    "migration_policy": "Legacy scalar-call values were copied verbatim from the former Python data store. Boundary and branch-sensitive values were copied verbatim from their reviewed test modules and frozen without regeneration from FRsutils production implementations.",
+    "origins": [
+      "Former tests/synthetic_data_store.py:get_implicator_scalar_testsets (removed after the 2026-07-13 JSON reference-data migration; preserved in Git history)",
+      "tests/core_tests/test_implicators.py:BOUNDARY_CASES",
+      "tests/core_tests/test_implicators.py:BRANCH_EDGE_CASES"
+    ]
+  },
+  "data": {
+    "scalar_call_testsets": [
+      {
+        "name": "basic_implicators",
+        "a_b": {
+          "__ndarray__": [
+            [
+              0.73,
+              0.18
+            ],
+            [
+              0.18,
+              0.73
+            ],
+            [
+              0.88,
+              0.88
+            ],
+            [
+              0.91,
+              0.48
+            ],
+            [
+              1.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0
+            ],
+            [
+              1.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.65
+            ],
+            [
+              0.65,
+              1.0
+            ],
+            [
+              0.55,
+              0.0
+            ],
+            [
+              0.0,
+              0.55
+            ]
+          ],
+          "dtype": "float64",
+          "shape": [
+            12,
+            2
+          ]
+        },
+        "expected": {
+          "goedel": {
+            "__ndarray__": [
+              0.18,
+              1.0,
+              1.0,
+              0.48,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "lukasiewicz": {
+            "__ndarray__": [
+              0.45,
+              1.0,
+              1.0,
+              0.57,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.45,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "kleenedienes": {
+            "__ndarray__": [
+              0.27,
+              0.82,
+              0.88,
+              0.48,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.45,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "reichenbach": {
+            "__ndarray__": [
+              0.4014,
+              0.9514,
+              0.8944,
+              0.5268,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.45,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "goguen": {
+            "__ndarray__": [
+              0.246575,
+              1.0,
+              1.0,
+              0.527473,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "rescher": {
+            "__ndarray__": [
+              0.0,
+              1.0,
+              1.0,
+              0.0,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "yager": {
+            "__ndarray__": [
+              0.285989,
+              0.944927,
+              0.893603,
+              0.512778,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "weber": {
+            "__ndarray__": [
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          },
+          "fodor": {
+            "__ndarray__": [
+              0.27,
+              1.0,
+              1.0,
+              0.48,
+              1.0,
+              1.0,
+              1.0,
+              0.0,
+              0.65,
+              1.0,
+              0.45,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              12
+            ]
+          }
+        }
+      }
+    ],
+    "boundary_cases": [
+      {
+        "implicator": "lukasiewicz",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "lukasiewicz",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "lukasiewicz",
+        "a": 1.0,
+        "b": 1.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "lukasiewicz",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.5
+      },
+      {
+        "implicator": "goedel",
+        "a": 0.2,
+        "b": 0.2,
+        "expected": 1.0
+      },
+      {
+        "implicator": "goedel",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.2
+      },
+      {
+        "implicator": "goedel",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "goedel",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "kleenedienes",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "kleenedienes",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "kleenedienes",
+        "a": 1.0,
+        "b": 0.4,
+        "expected": 0.4
+      },
+      {
+        "implicator": "kleenedienes",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.3
+      },
+      {
+        "implicator": "reichenbach",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "reichenbach",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "reichenbach",
+        "a": 1.0,
+        "b": 0.4,
+        "expected": 0.4
+      },
+      {
+        "implicator": "reichenbach",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.44
+      },
+      {
+        "implicator": "goguen",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "goguen",
+        "a": 0.0,
+        "b": 1.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "goguen",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.2857142857142857
+      },
+      {
+        "implicator": "goguen",
+        "a": 0.2,
+        "b": 0.7,
+        "expected": 1.0
+      },
+      {
+        "implicator": "rescher",
+        "a": 0.2,
+        "b": 0.2,
+        "expected": 1.0
+      },
+      {
+        "implicator": "rescher",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.0
+      },
+      {
+        "implicator": "rescher",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "rescher",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "yager",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "yager",
+        "a": 0.0,
+        "b": 0.2,
+        "expected": 1.0
+      },
+      {
+        "implicator": "yager",
+        "a": 1.0,
+        "b": 0.2,
+        "expected": 0.2
+      },
+      {
+        "implicator": "yager",
+        "a": 0.5,
+        "b": 0.25,
+        "expected": 0.5
+      },
+      {
+        "implicator": "weber",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "weber",
+        "a": 0.5,
+        "b": 0.0,
+        "expected": 1.0
+      },
+      {
+        "implicator": "weber",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "weber",
+        "a": 1.0,
+        "b": 0.7,
+        "expected": 0.7
+      },
+      {
+        "implicator": "fodor",
+        "a": 0.2,
+        "b": 0.2,
+        "expected": 1.0
+      },
+      {
+        "implicator": "fodor",
+        "a": 0.7,
+        "b": 0.2,
+        "expected": 0.3
+      },
+      {
+        "implicator": "fodor",
+        "a": 1.0,
+        "b": 0.0,
+        "expected": 0.0
+      },
+      {
+        "implicator": "fodor",
+        "a": 0.0,
+        "b": 0.0,
+        "expected": 1.0
+      }
+    ],
+    "branch_edge_cases": [
+      {
+        "implicator": "goguen",
+        "a": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "b": {
+          "__ndarray__": [
+            0.0,
+            1.0,
+            0.25,
+            0.75
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "expected": {
+          "__ndarray__": [
+            1.0,
+            1.0,
+            0.5,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        }
+      },
+      {
+        "implicator": "rescher",
+        "a": {
+          "__ndarray__": [
+            0.2,
+            0.7,
+            1.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "b": {
+          "__ndarray__": [
+            0.2,
+            0.2,
+            0.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "expected": {
+          "__ndarray__": [
+            1.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        }
+      },
+      {
+        "implicator": "yager",
+        "a": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.5,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "b": {
+          "__ndarray__": [
+            0.0,
+            0.25,
+            0.25,
+            0.25
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "expected": {
+          "__ndarray__": [
+            1.0,
+            1.0,
+            0.5,
+            0.25
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        }
+      },
+      {
+        "implicator": "weber",
+        "a": {
+          "__ndarray__": [
+            0.999999999,
+            1.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            3
+          ]
+        },
+        "b": {
+          "__ndarray__": [
+            0.2,
+            0.2,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            3
+          ]
+        },
+        "expected": {
+          "__ndarray__": [
+            1.0,
+            0.2,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            3
+          ]
+        }
+      },
+      {
+        "implicator": "fodor",
+        "a": {
+          "__ndarray__": [
+            0.2,
+            0.7,
+            1.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "b": {
+          "__ndarray__": [
+            0.2,
+            0.2,
+            0.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        },
+        "expected": {
+          "__ndarray__": [
+            1.0,
+            0.3,
+            0.0,
+            1.0
+          ],
+          "dtype": "float64",
+          "shape": [
+            4
+          ]
+        }
+      }
+    ]
+  }
+}

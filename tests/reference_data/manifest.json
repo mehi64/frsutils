@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "hash_algorithm": "sha256",
+  "files": {
+    "approximation_baselines.json": {
+      "dataset_kind": "approximation_baselines",
+      "sha256": "3166bf93af4a204cb0f8ed49b36033c5ee7c61dc169e2e2c4fec4df44443d403"
+    },
+    "fuzzy_quantifiers.json": {
+      "dataset_kind": "fuzzy_quantifiers",
+      "sha256": "a2875873a6468d9a46b9fe244c3bcb53ad3794260f1890d71638f319b66562dd"
+    },
+    "implicator_scalar.json": {
+      "dataset_kind": "implicator_scalar",
+      "sha256": "c52232209efb65053cc4ae0892da4dde099697f8a1801eb88f338d1b17b8671a"
+    },
+    "itfrs.json": {
+      "dataset_kind": "itfrs",
+      "sha256": "907ab38294055db160e1599e0a901de1878b999f356c2e703276b65cb7f2b5dd"
+    },
+    "owa_weights.json": {
+      "dataset_kind": "owa_weights",
+      "sha256": "d6b7c5a4e02652d27b289649ee33fb4d6a71baead7f211eaec3a7e628a2cd8d1"
+    },
+    "owafrs.json": {
+      "dataset_kind": "owafrs",
+      "sha256": "f954d8e36673c83099ff940be8d6281f9e2324bbfd6aec88d1bc19585dbe5848"
+    },
+    "similarities.json": {
+      "dataset_kind": "similarities",
+      "sha256": "92b8519cd6ee0af9f1b354b21a177160ba1ab092d26f7ce83c436454a34dace4"
+    },
+    "tnorm_call.json": {
+      "dataset_kind": "tnorm_call",
+      "sha256": "32d210f2b1a4a14384c3b499f1e6c29f8a63dba5789197fce822f10c9a06ae55"
+    },
+    "tnorm_reduce.json": {
+      "dataset_kind": "tnorm_reduce",
+      "sha256": "19e3aca43e0ab6a20560e0117f4141c1c91478dcc38f0e34db8396e9bd8f13ed"
+    },
+    "tnorm_regression.json": {
+      "dataset_kind": "tnorm_regression",
+      "sha256": "ad6418418110e2c9c07b90ddc8f58e95df4c13ffb99981c7aff061f167b18c0b"
+    },
+    "vqrs.json": {
+      "dataset_kind": "vqrs",
+      "sha256": "148c22f29cfde5c71da1a93c5d52757d9733b10c2c36df279463088642f679c3"
+    }
+  }
+}

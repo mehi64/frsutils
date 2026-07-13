@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "fuzzy_quantifiers",
+  "provenance": {
+    "migration_date": "2026-07-13",
+    "migration_policy": "Inputs and expected outputs were copied verbatim from reviewed Python tests. The phase-one migration inventory independently verified each expected array against the defining piecewise formula before this file was created.",
+    "origin": "tests/core_tests/test_fuzzy_quantifiers.py"
+  },
+  "data": [
+    {
+      "name": "fuzzy_quantifier_linear_piecewise_1d",
+      "quantifier": {
+        "name": "linear",
+        "params": {
+          "alpha": 0.2,
+          "beta": 0.8
+        }
+      },
+      "x": {
+        "__ndarray__": [
+          0.0,
+          0.2,
+          0.35,
+          0.5,
+          0.65,
+          0.8,
+          1.0
+        ],
+        "dtype": "float64",
+        "shape": [
+          7
+        ]
+      },
+      "expected": {
+        "__ndarray__": [
+          0.0,
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.0
+        ],
+        "dtype": "float64",
+        "shape": [
+          7
+        ]
+      }
+    },
+    {
+      "name": "fuzzy_quantifier_quadratic_piecewise_1d",
+      "quantifier": {
+        "name": "quadratic",
+        "params": {
+          "alpha": 0.2,
+          "beta": 0.8
+        }
+      },
+      "x": {
+        "__ndarray__": [
+          0.0,
+          0.2,
+          0.35,
+          0.5,
+          0.65,
+          0.8,
+          1.0
+        ],
+        "dtype": "float64",
+        "shape": [
+          7
+        ]
+      },
+      "expected": {
+        "__ndarray__": [
+          0.0,
+          0.0,
+          0.125,
+          0.5,
+          0.875,
+          1.0,
+          1.0
+        ],
+        "dtype": "float64",
+        "shape": [
+          7
+        ]
+      }
+    },
+    {
+      "name": "fuzzy_quantifier_linear_piecewise_2d",
+      "quantifier": {
+        "name": "linear",
+        "params": {
+          "alpha": 0.2,
+          "beta": 0.8
+        }
+      },
+      "x": {
+        "__ndarray__": [
+          [
+            0.0,
+            0.2,
+            0.35
+          ],
+          [
+            0.5,
+            0.65,
+            1.0
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          2,
+          3
+        ]
+      },
+      "expected": {
+        "__ndarray__": [
+          [
+            0.0,
+            0.0,
+            0.25
+          ],
+          [
+            0.5,
+            0.75,
+            1.0
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "name": "fuzzy_quantifier_quadratic_piecewise_2d",
+      "quantifier": {
+        "name": "quadratic",
+        "params": {
+          "alpha": 0.2,
+          "beta": 0.8
+        }
+      },
+      "x": {
+        "__ndarray__": [
+          [
+            0.0,
+            0.2,
+            0.35
+          ],
+          [
+            0.5,
+            0.65,
+            1.0
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          2,
+          3
+        ]
+      },
+      "expected": {
+        "__ndarray__": [
+          [
+            0.0,
+            0.0,
+            0.125
+          ],
+          [
+            0.5,
+            0.875,
+            1.0
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          2,
+          3
+        ]
+      }
+    }
+  ]
+}

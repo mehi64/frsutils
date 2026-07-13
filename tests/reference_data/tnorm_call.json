@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "tnorm_call",
+  "provenance": {
+    "migration_date": "2026-07-13",
+    "migration_policy": "Values were copied verbatim from the former Python reference-data store and were not regenerated from FRsutils production implementations.",
+    "origin": "Former tests/synthetic_data_store.py:get_tnorm_call_testsets (removed after the 2026-07-13 JSON reference-data migration; preserved in Git history)"
+  },
+  "data": [
+    {
+      "name": "basic_tnorms_DS_1",
+      "a_b": {
+        "__ndarray__": [
+          [0.73, 0.18],
+          [0.18, 0.73],
+          [0.88, 0.88],
+          [0.91, 0.48],
+          [1.0, 1.0],
+          [0.0, 0.0],
+          [1.0, 0.65],
+          [0.37, 1.0]
+        ],
+        "dtype": "float64",
+        "shape": [8, 2]
+      },
+      "expected": {
+        "minimum": {
+          "__ndarray__": [
+            0.18,
+            0.18,
+            0.88,
+            0.48,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "product": {
+          "__ndarray__": [
+            0.1314,
+            0.1314,
+            0.7744,
+            0.4368,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "lukasiewicz": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.76,
+            0.39,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "drastic": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "hamacher": {
+          "__ndarray__": [
+            0.168764,
+            0.168764,
+            0.785714,
+            0.458246,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "einstein": {
+          "__ndarray__": [
+            0.107581,
+            0.107581,
+            0.763407,
+            0.417271,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "nilpotent": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.88,
+            0.48,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "yager_p=0.835": {
+          "__ndarray__": [
+            0.0,
+            0.0,
+            0.724771,
+            0.332934,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        },
+        "yager_p=5.0": {
+          "__ndarray__": [
+            0.179366244,
+            0.179366244,
+            0.8621561974,
+            0.4799838489,
+            1.0,
+            0.0,
+            0.65,
+            0.37
+          ],
+          "dtype": "float64",
+          "shape": [
+            8
+          ]
+        }
+      }
+    }
+  ]
+}

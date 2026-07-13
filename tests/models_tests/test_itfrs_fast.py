@@ -4,34 +4,33 @@
 import numpy as np
 import pytest
 
-from frsutils.core.implicators import LukasiewiczImplicator
+from frsutils.core.implicators import Implicator, LukasiewiczImplicator
 from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 from frsutils.core.models.itfrs import ITFRS
 from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
 from frsutils.core.tnorms import MinTNorm, TNorm, YagerTNorm
+from tests import reference_data_store as reference_data
 
 
-SIMILARITY_MATRIX = np.array(
-    [
-        [1.0, 0.8, 0.2, 0.0],
-        [0.8, 1.0, 0.5, 0.1],
-        [0.2, 0.5, 1.0, 0.7],
-        [0.0, 0.1, 0.7, 1.0],
-    ],
-    dtype=float,
-)
-LABELS = np.array([0, 0, 1, 1])
-EXPECTED_LOWER = np.array([0.8, 0.5, 0.5, 0.9])
-EXPECTED_UPPER = np.array([0.8, 0.8, 0.7, 0.7])
+ITFRS_REFERENCE_CASE = reference_data.get_itfrs_dense_baseline_testsets()[0]
+SIMILARITY_MATRIX = ITFRS_REFERENCE_CASE["similarity_matrix"]
+LABELS = ITFRS_REFERENCE_CASE["labels"]
+EXPECTED_LOWER = ITFRS_REFERENCE_CASE["expected"]["lower"]
+EXPECTED_UPPER = ITFRS_REFERENCE_CASE["expected"]["upper"]
+EXPECTED_BOUNDARY = ITFRS_REFERENCE_CASE["expected"]["boundary"]
+EXPECTED_POSITIVE_REGION = ITFRS_REFERENCE_CASE["expected"]["positive_region"]
+ITFRS_COMPONENTS = ITFRS_REFERENCE_CASE["components"]
 
 
 def _build_reference_model(labels=LABELS):
     """Build the small dense ITFRS reference fixture."""
+    upper_spec = ITFRS_COMPONENTS["upper_tnorm"]
+    lower_spec = ITFRS_COMPONENTS["lower_implicator"]
     return ITFRS(
         SIMILARITY_MATRIX.copy(),
         labels,
-        ub_tnorm=MinTNorm(),
-        lb_implicator=LukasiewiczImplicator(),
+        ub_tnorm=TNorm.create(upper_spec["name"], **upper_spec["params"]),
+        lb_implicator=Implicator.create(lower_spec["name"], **lower_spec["params"]),
     )
 
 
@@ -41,8 +40,8 @@ def test_itfrs_dense_reference_matches_hand_computed_values():
 
     np.testing.assert_allclose(model.lower_approximation(), EXPECTED_LOWER, atol=1e-12)
     np.testing.assert_allclose(model.upper_approximation(), EXPECTED_UPPER, atol=1e-12)
-    np.testing.assert_allclose(model.boundary_region(), EXPECTED_UPPER - EXPECTED_LOWER, atol=1e-12)
-    np.testing.assert_allclose(model.positive_region(), EXPECTED_LOWER, atol=1e-12)
+    np.testing.assert_allclose(model.boundary_region(), EXPECTED_BOUNDARY, atol=1e-12)
+    np.testing.assert_allclose(model.positive_region(), EXPECTED_POSITIVE_REGION, atol=1e-12)
 
 
 def test_itfrs_dense_approximations_do_not_mutate_similarity_matrix():

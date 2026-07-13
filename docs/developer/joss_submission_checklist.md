@@ -19,7 +19,7 @@ Before final acceptance, require the archive DOI as well:
 python scripts/validate_joss_submission.py --require-archive-doi
 ```
 
-Current repository status prepared by Phase 4:
+Current repository status:
 
 - [x] Required JOSS paper sections are present.
 - [x] The paper is within the 750–1750 word range.
@@ -77,7 +77,7 @@ Current repository status prepared by Phase 4:
 
 ## Release and archive
 
-- [ ] Commit and push all Phase 3 and Phase 4 changes.
+- [ ] Commit and push all release-preparation and reference-data migration changes.
 - [ ] Confirm `main` is clean and all workflows pass.
 - [ ] Create annotated tag `v0.1.0`.
 - [ ] Create the GitHub release using `RELEASE_NOTES_v0.1.0.md`.

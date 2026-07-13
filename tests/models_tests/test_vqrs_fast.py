@@ -11,18 +11,15 @@ from frsutils.core.fuzzy_quantifiers import (
 )
 from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 from frsutils.core.models.vqrs import VQRS
+from tests import reference_data_store as reference_data
 
 
-VQRS_SIMILARITY_MATRIX = np.array(
-    [
-        [1.00, 0.40, 0.60, 0.50],
-        [0.40, 1.00, 0.30, 0.50],
-        [0.60, 0.30, 1.00, 0.20],
-        [0.50, 0.50, 0.20, 1.00],
-    ],
-    dtype=float,
-)
-VQRS_LABELS = np.array(["minority", "minority", "majority", "majority"], dtype=object)
+VQRS_REFERENCE_CASE = reference_data.get_vqrs_dense_baseline_testsets()[0]
+VQRS_SIMILARITY_MATRIX = VQRS_REFERENCE_CASE["similarity_matrix"]
+VQRS_LABELS = np.asarray(VQRS_REFERENCE_CASE["labels"]["values"], dtype=object)
+VQRS_LABELS.setflags(write=False)
+VQRS_COMPONENTS = VQRS_REFERENCE_CASE["components"]
+VQRS_EXPECTED = VQRS_REFERENCE_CASE["expected"]
 
 
 def _manual_vqrs_values(
@@ -58,12 +55,14 @@ def _manual_vqrs_values(
 
 
 def _build_reference_model(labels=VQRS_LABELS):
-    """Return a dense VQRS model with asymmetric quantifier settings."""
+    """Return the JSON-backed dense VQRS reference model."""
+    lower_spec = VQRS_COMPONENTS["lower_quantifier"]
+    upper_spec = VQRS_COMPONENTS["upper_quantifier"]
     return VQRS(
         VQRS_SIMILARITY_MATRIX.copy(),
         labels,
-        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
-        QuadraticFuzzyQuantifier(alpha=0.0, beta=0.8),
+        FuzzyQuantifier.create(lower_spec["name"], **lower_spec["params"]),
+        FuzzyQuantifier.create(upper_spec["name"], **upper_spec["params"]),
     )
 
 
@@ -72,24 +71,19 @@ def test_vqrs_is_registered_under_model_alias():
     assert FuzzyRoughModel.get_class("vqrs") is VQRS
 
 
-def test_dense_vqrs_matches_manual_interim_and_approximations():
-    """Dense VQRS must match a hand-computed reference formula."""
-    lb_quantifier = LinearFuzzyQuantifier(alpha=0.1, beta=0.6)
-    ub_quantifier = QuadraticFuzzyQuantifier(alpha=0.0, beta=0.8)
-    model = VQRS(VQRS_SIMILARITY_MATRIX.copy(), VQRS_LABELS, lb_quantifier, ub_quantifier)
+def test_dense_vqrs_matches_reference_interim_and_approximations():
+    """Dense VQRS must match independently verified JSON reference values."""
+    model = _build_reference_model()
 
-    expected_lower, expected_upper, expected_boundary, expected_positive, expected_interim = _manual_vqrs_values(
-        VQRS_SIMILARITY_MATRIX,
-        VQRS_LABELS,
-        lb_fuzzy_quantifier=lb_quantifier,
-        ub_fuzzy_quantifier=ub_quantifier,
+    np.testing.assert_allclose(model._interim_calculations(), VQRS_EXPECTED["interim"], atol=1e-12)
+    np.testing.assert_allclose(model.lower_approximation(), VQRS_EXPECTED["lower"], atol=1e-12)
+    np.testing.assert_allclose(model.upper_approximation(), VQRS_EXPECTED["upper"], atol=1e-12)
+    np.testing.assert_allclose(model.boundary_region(), VQRS_EXPECTED["boundary"], atol=1e-12)
+    np.testing.assert_allclose(
+        model.positive_region(),
+        VQRS_EXPECTED["positive_region"],
+        atol=1e-12,
     )
-
-    np.testing.assert_allclose(model._interim_calculations(), expected_interim, atol=1e-12)
-    np.testing.assert_allclose(model.lower_approximation(), expected_lower, atol=1e-12)
-    np.testing.assert_allclose(model.upper_approximation(), expected_upper, atol=1e-12)
-    np.testing.assert_allclose(model.boundary_region(), expected_boundary, atol=1e-12)
-    np.testing.assert_allclose(model.positive_region(), expected_positive, atol=1e-12)
 
 
 def test_dense_vqrs_accepts_list_labels_and_stores_numpy_labels():
@@ -97,7 +91,11 @@ def test_dense_vqrs_accepts_list_labels_and_stores_numpy_labels():
     model = _build_reference_model(labels=["minority", "minority", "majority", "majority"])
 
     assert isinstance(model.labels, np.ndarray)
-    np.testing.assert_allclose(model.lower_approximation(), _build_reference_model().lower_approximation(), atol=1e-12)
+    np.testing.assert_allclose(
+        model.lower_approximation(),
+        _build_reference_model().lower_approximation(),
+        atol=1e-12,
+    )
 
 
 @pytest.mark.parametrize(
@@ -296,6 +294,7 @@ class _PrecomputedSimilarityEngine(BaseSimilarityEngine):
     """Minimal engine that yields a precomputed similarity matrix for tests."""
 
     def __init__(self, similarity_matrix):
+        """Initialize the engine with a precomputed dense matrix."""
         self.similarity_matrix = np.asarray(similarity_matrix, dtype=float)
         super().__init__(np.zeros((self.similarity_matrix.shape[0], 1), dtype=float))
 

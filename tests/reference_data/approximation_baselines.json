@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "approximation_baselines",
+  "provenance": {
+    "migration_date": "2026-07-13",
+    "origin": "tests/api/test_dense_approximation_baseline_contract.py",
+    "verification": "Literal expected values were copied from the locked phase-one inventory; values were not regenerated from FRsutils production implementations."
+  },
+  "data": [
+    {
+      "name": "dense_approximation_four_sample_linear_similarity",
+      "X": {
+        "__ndarray__": [
+          [
+            0.0
+          ],
+          [
+            0.1
+          ],
+          [
+            0.8
+          ],
+          [
+            0.9
+          ]
+        ],
+        "dtype": "float64",
+        "shape": [
+          4,
+          1
+        ]
+      },
+      "labels": {
+        "__ndarray__": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "dtype": "int64",
+        "shape": [
+          4
+        ]
+      },
+      "similarity": {
+        "name": "linear",
+        "params": {}
+      },
+      "expected_by_model": {
+        "itfrs": {
+          "lower": {
+            "__ndarray__": [
+              0.8,
+              0.7,
+              0.7,
+              0.8
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "upper": {
+            "__ndarray__": [
+              0.9,
+              0.9,
+              0.9,
+              0.9
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "boundary": {
+            "__ndarray__": [
+              0.1,
+              0.2,
+              0.2,
+              0.1
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "positive_region": {
+            "__ndarray__": [
+              0.8,
+              0.7,
+              0.7,
+              0.8
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          }
+        },
+        "vqrs": {
+          "lower": {
+            "__ndarray__": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "upper": {
+            "__ndarray__": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "boundary": {
+            "__ndarray__": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "positive_region": {
+            "__ndarray__": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          }
+        },
+        "owafrs": {
+          "lower": {
+            "__ndarray__": [
+              0.8666666666666667,
+              0.7833333333333333,
+              0.7833333333333333,
+              0.8666666666666667
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "upper": {
+            "__ndarray__": [
+              0.45,
+              0.45,
+              0.45,
+              0.45
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "boundary": {
+            "__ndarray__": [
+              -0.4166666666666667,
+              -0.3333333333333333,
+              -0.3333333333333333,
+              -0.4166666666666667
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          },
+          "positive_region": {
+            "__ndarray__": [
+              0.8666666666666667,
+              0.7833333333333333,
+              0.7833333333333333,
+              0.8666666666666667
+            ],
+            "dtype": "float64",
+            "shape": [
+              4
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

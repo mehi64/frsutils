@@ -4,89 +4,67 @@
 import numpy as np
 
 from frsutils import build_similarity_matrix, normalize_flat_config_to_nested
+from tests import reference_data_store as ds
 
 
-X_ONE_FEATURE = np.array([[0.0], [0.1], [0.8], [0.9]], dtype=float)
-X_TWO_FEATURES = np.array(
-    [
-        [0.0, 0.0],
-        [0.1, 0.2],
-        [0.8, 0.7],
-        [0.9, 1.0],
-    ],
-    dtype=float,
-)
+DENSE_BASELINES = {
+    case["name"]: case for case in ds.get_dense_similarity_baseline_testsets()
+}
+LINEAR_ONE_FEATURE = DENSE_BASELINES["dense_linear_one_feature"]
+LINEAR_TWO_FEATURES_MINIMUM = DENSE_BASELINES[
+    "dense_linear_two_features_minimum"
+]
+GAUSSIAN_ONE_FEATURE_SIGMA_05 = DENSE_BASELINES[
+    "dense_gaussian_one_feature_sigma_0_5"
+]
+X_ONE_FEATURE = LINEAR_ONE_FEATURE["X"]
+X_TWO_FEATURES = LINEAR_TWO_FEATURES_MINIMUM["X"]
 
 
-EXPECTED_LINEAR_ONE_FEATURE = np.array(
-    [
-        [1.0, 0.9, 0.2, 0.1],
-        [0.9, 1.0, 0.3, 0.2],
-        [0.2, 0.3, 1.0, 0.9],
-        [0.1, 0.2, 0.9, 1.0],
-    ],
-    dtype=float,
-)
-
-
-EXPECTED_LINEAR_TWO_FEATURES_MINIMUM = np.array(
-    [
-        [1.0, 0.8, 0.2, 0.0],
-        [0.8, 1.0, 0.3, 0.2],
-        [0.2, 0.3, 1.0, 0.7],
-        [0.0, 0.2, 0.7, 1.0],
-    ],
-    dtype=float,
-)
-
-
-EXPECTED_GAUSSIAN_ONE_FEATURE_SIGMA_05 = np.array(
-    [
-        [1.0, 0.9801986733067553, 0.27803730045319414, 0.19789869908361465],
-        [0.9801986733067553, 1.0, 0.37531109885139957, 0.27803730045319414],
-        [0.27803730045319414, 0.37531109885139957, 1.0, 0.9801986733067553],
-        [0.19789869908361465, 0.27803730045319414, 0.9801986733067553, 1.0],
-    ],
-    dtype=float,
-)
+def _build_similarity_from_reference_case(reference_case):
+    """Build a similarity matrix using one reference case configuration."""
+    similarity = reference_case["similarity"]
+    params = similarity["params"]
+    kwargs = {
+        "similarity": similarity["name"],
+        "similarity_tnorm": params["tnorm"],
+    }
+    if "sigma" in params:
+        kwargs["similarity_sigma"] = params["sigma"]
+    return build_similarity_matrix(reference_case["X"], **kwargs)
 
 
 def test_dense_linear_similarity_baseline_exact_one_feature():
     """Dense linear similarity with one feature returns the locked baseline matrix."""
-    sim = build_similarity_matrix(
-        X_ONE_FEATURE,
-        similarity="linear",
-        similarity_tnorm="minimum",
-    )
+    sim = _build_similarity_from_reference_case(LINEAR_ONE_FEATURE)
 
-    np.testing.assert_allclose(sim, EXPECTED_LINEAR_ONE_FEATURE, atol=1e-12)
+    np.testing.assert_allclose(sim, LINEAR_ONE_FEATURE["expected"], atol=1e-12)
     np.testing.assert_allclose(sim, sim.T, atol=1e-12)
     np.testing.assert_allclose(np.diag(sim), np.ones(X_ONE_FEATURE.shape[0]))
 
 
 def test_dense_linear_similarity_baseline_exact_two_features_minimum_tnorm():
     """Dense linear similarity across two features uses the minimum T-norm baseline."""
-    sim = build_similarity_matrix(
-        X_TWO_FEATURES,
-        similarity="linear",
-        similarity_tnorm="minimum",
-    )
+    sim = _build_similarity_from_reference_case(LINEAR_TWO_FEATURES_MINIMUM)
 
-    np.testing.assert_allclose(sim, EXPECTED_LINEAR_TWO_FEATURES_MINIMUM, atol=1e-12)
+    np.testing.assert_allclose(
+        sim,
+        LINEAR_TWO_FEATURES_MINIMUM["expected"],
+        atol=1e-12,
+    )
     np.testing.assert_allclose(sim, sim.T, atol=1e-12)
     np.testing.assert_allclose(np.diag(sim), np.ones(X_TWO_FEATURES.shape[0]))
 
 
 def test_dense_gaussian_similarity_baseline_exact_one_feature():
     """Dense Gaussian similarity keeps the current sigma parameter contract."""
-    sim = build_similarity_matrix(
-        X_ONE_FEATURE,
-        similarity="gaussian",
-        similarity_sigma=0.5,
-        similarity_tnorm="minimum",
-    )
+    sim = _build_similarity_from_reference_case(GAUSSIAN_ONE_FEATURE_SIGMA_05)
 
-    np.testing.assert_allclose(sim, EXPECTED_GAUSSIAN_ONE_FEATURE_SIGMA_05, atol=1e-12)
+    np.testing.assert_allclose(
+        sim,
+        GAUSSIAN_ONE_FEATURE_SIGMA_05["expected"],
+        atol=1e-12,
+    )
     np.testing.assert_allclose(sim, sim.T, atol=1e-12)
     np.testing.assert_allclose(np.diag(sim), np.ones(X_ONE_FEATURE.shape[0]))
 

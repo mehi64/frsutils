@@ -4,38 +4,59 @@
 import numpy as np
 import pytest
 
-from frsutils.core.implicators import GoedelImplicator, KleeneDienesImplicator, LukasiewiczImplicator
+from frsutils.core.implicators import (
+    GoedelImplicator,
+    Implicator,
+    KleeneDienesImplicator,
+    LukasiewiczImplicator,
+)
 from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 from frsutils.core.models.owafrs import OWAFRS
-from frsutils.core.owa_weights import ExponentialOWAWeights, HarmonicOWAWeights, LinearOWAWeights
-from frsutils.core.tnorms import MinTNorm, ProductTNorm, YagerTNorm
+from frsutils.core.owa_weights import (
+    ExponentialOWAWeights,
+    HarmonicOWAWeights,
+    LinearOWAWeights,
+    OWAWeights,
+)
+from frsutils.core.tnorms import MinTNorm, ProductTNorm, TNorm, YagerTNorm
+from tests import reference_data_store as reference_data
+
+
+OWAFRS_REFERENCE_CASE = reference_data.get_owafrs_dense_baseline_testsets()[0]
+OWAFRS_SIMILARITY_MATRIX = OWAFRS_REFERENCE_CASE["similarity_matrix"]
+OWAFRS_LABELS = np.asarray(OWAFRS_REFERENCE_CASE["labels"]["values"], dtype=object)
+OWAFRS_LABELS.setflags(write=False)
+OWAFRS_COMPONENTS = OWAFRS_REFERENCE_CASE["components"]
+OWAFRS_EXPECTED = OWAFRS_REFERENCE_CASE["expected"]
 
 
 def _small_similarity_matrix():
-    return np.array(
-        [
-            [1.0, 0.7, 0.2, 0.4],
-            [0.7, 1.0, 0.3, 0.5],
-            [0.2, 0.3, 1.0, 0.8],
-            [0.4, 0.5, 0.8, 1.0],
-        ],
-        dtype=float,
-    )
+    """Return a writable copy of the JSON-backed OWAFRS matrix."""
+    return OWAFRS_SIMILARITY_MATRIX.copy()
 
 
 def _build_model(labels=None):
-    labels = np.array(["a", "a", "b", "b"], dtype=object) if labels is None else labels
+    """Return the JSON-backed dense OWAFRS reference model."""
+    labels = OWAFRS_LABELS if labels is None else labels
+    upper_tnorm_spec = OWAFRS_COMPONENTS["upper_tnorm"]
+    lower_implicator_spec = OWAFRS_COMPONENTS["lower_implicator"]
+    upper_owa_spec = OWAFRS_COMPONENTS["upper_owa"]
+    lower_owa_spec = OWAFRS_COMPONENTS["lower_owa"]
     return OWAFRS(
         _small_similarity_matrix(),
         labels,
-        MinTNorm(),
-        LukasiewiczImplicator(),
-        LinearOWAWeights(),
-        LinearOWAWeights(),
+        TNorm.create(upper_tnorm_spec["name"], **upper_tnorm_spec["params"]),
+        Implicator.create(
+            lower_implicator_spec["name"],
+            **lower_implicator_spec["params"],
+        ),
+        OWAWeights.create(upper_owa_spec["name"], **upper_owa_spec["params"]),
+        OWAWeights.create(lower_owa_spec["name"], **lower_owa_spec["params"]),
     )
 
 
 def _manual_owafrs_values(similarity_matrix, labels):
+    """Compute comparison values for alternate label partitions."""
     labels = np.asarray(labels)
     label_mask = (labels[:, None] == labels[None, :]).astype(float)
 
@@ -57,18 +78,17 @@ def _manual_owafrs_values(similarity_matrix, labels):
     return lower, upper, upper - lower, lower.copy()
 
 
-def test_owafrs_exact_manual_lower_upper_boundary_and_positive_region():
-    """Dense OWAFRS matches a small hand-computed reference calculation."""
-    sim = _small_similarity_matrix()
-    labels = np.array(["a", "a", "b", "b"], dtype=object)
-    model = _build_model(labels)
+def test_owafrs_matches_reference_lower_upper_boundary_and_positive_region():
+    """Dense OWAFRS matches independently verified JSON reference values."""
+    model = _build_model()
 
-    expected_lower, expected_upper, expected_boundary, expected_positive = _manual_owafrs_values(sim, labels)
-
-    np.testing.assert_allclose(model.lower_approximation(), expected_lower)
-    np.testing.assert_allclose(model.upper_approximation(), expected_upper)
-    np.testing.assert_allclose(model.boundary_region(), expected_boundary)
-    np.testing.assert_allclose(model.positive_region(), expected_positive)
+    np.testing.assert_allclose(model.lower_approximation(), OWAFRS_EXPECTED["lower"])
+    np.testing.assert_allclose(model.upper_approximation(), OWAFRS_EXPECTED["upper"])
+    np.testing.assert_allclose(model.boundary_region(), OWAFRS_EXPECTED["boundary"])
+    np.testing.assert_allclose(
+        model.positive_region(),
+        OWAFRS_EXPECTED["positive_region"],
+    )
 
 
 def test_owafrs_accepts_list_labels_and_stores_numpy_array():
@@ -76,7 +96,10 @@ def test_owafrs_accepts_list_labels_and_stores_numpy_array():
     model = _build_model(labels=["a", "a", "b", "b"])
 
     assert isinstance(model.labels, np.ndarray)
-    np.testing.assert_allclose(model.lower_approximation(), _manual_owafrs_values(_small_similarity_matrix(), model.labels)[0])
+    np.testing.assert_allclose(
+        model.lower_approximation(),
+        _manual_owafrs_values(_small_similarity_matrix(), model.labels)[0],
+    )
 
 
 @pytest.mark.parametrize(
