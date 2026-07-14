@@ -14,10 +14,10 @@ They are non-decreasing and satisfy `Q(0) = 0` and `Q(1) = 1`.
 
 ## 2. Fuzzy Quantifier Table
 
-| Name | Formula | Parameters | Aliases | Reference | Tested in frsutils |
-|------|---------|------------|---------|-----------|--------------------|
-| **Linear** | Piecewise-linear quantifier shown below | `alpha`, `beta` | linear | [1], Eq. (7) | yes |
-| **Quadratic** | Quadratic S-shaped quantifier shown below | `alpha`, `beta` | quadratic, quad | [2], Eq. (12) | yes |
+| Name          | Formula                                   | Parameters      | Aliases         | Reference     |
+| ------------- | ----------------------------------------- | --------------- | --------------- | ------------- |
+| **Linear**    | Piecewise-linear quantifier shown below   | `alpha`, `beta` | linear          | [1], Eq. (7)  |
+| **Quadratic** | Quadratic S-shaped quantifier shown below | `alpha`, `beta` | quadratic, quad | [2], Eq. (12) |
 
 The linear quantifier is:
 
