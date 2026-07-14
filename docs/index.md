@@ -32,6 +32,7 @@ component can be reviewed independently:
 - [T-norms](concepts/tnorms_info.md)
 - [Implicators](concepts/implicators_info.md)
 - [OWA weights](concepts/owa_weights_info.md)
+- [Fuzzy quantifiers](concepts/fuzzy_quantifiers_info.md)
 
 ## Developer and release documentation
 
