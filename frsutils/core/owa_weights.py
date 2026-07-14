@@ -125,7 +125,7 @@ class OWAWeights(RegistryFactoryMixin):
         return norm
 
 
-@OWAWeights.register("linear")
+@OWAWeights.register("linear", "additive")
 class LinearOWAWeights(OWAWeights):
     """Linear OWA weighting strategy.
     

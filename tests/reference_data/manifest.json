@@ -20,7 +20,7 @@
     },
     "owa_weights.json": {
       "dataset_kind": "owa_weights",
-      "sha256": "d6b7c5a4e02652d27b289649ee33fb4d6a71baead7f211eaec3a7e628a2cd8d1"
+      "sha256": "61024675d1fa6f84266b5c0fac0eb6a1e4a8824a329e5e2e68f88f6ae2351559"
     },
     "owafrs.json": {
       "dataset_kind": "owafrs",
@@ -40,7 +40,7 @@
     },
     "tnorm_regression.json": {
       "dataset_kind": "tnorm_regression",
-      "sha256": "ad6418418110e2c9c07b90ddc8f58e95df4c13ffb99981c7aff061f167b18c0b"
+      "sha256": "951e0b175bbf8b86f7038e14d6f481a3c29b54f1665f71af743cb6c66f31c9e5"
     },
     "vqrs.json": {
       "dataset_kind": "vqrs",

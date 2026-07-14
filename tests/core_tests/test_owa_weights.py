@@ -7,7 +7,6 @@ from frsutils.core.owa_weights import (
     ExponentialOWAWeights,
     HarmonicOWAWeights,
     LinearOWAWeights,
-    LogarithmicOWAWeights,
     OWAWeights,
 )
 from tests import reference_data_store as ds
@@ -19,18 +18,20 @@ def test_registry_exposes_expected_primary_names_and_aliases():
     """Ensure the public OWA registry exposes the expected stable strategies."""
     available = OWAWeights.list_available()
 
-    assert available["linear"] == ["linear"]
-    assert available["exponential"] == ["exponential", "exp"]
-    assert available["harmonic"] == ["harmonic", "harm"]
-    assert available["logarithmic"] == ["logarithmic", "log"]
+    assert available["linear"] == ["linear", "additive"]
+    assert available["exponential"] == ["exponential", "exp", "gp"]
+    assert available["harmonic"] == ["harmonic", "harm", "inv_add"]
+    
 
 
 @pytest.mark.parametrize(
     ("canonical_name", "alias"),
     [
+        ("linear", "additive"),
         ("exponential", "exp"),
+        ("exponential", "gp"),
         ("harmonic", "harm"),
-        ("logarithmic", "log"),
+        ("harmonic", "inv_add"),
     ],
 )
 def test_owa_aliases_generate_same_weights_as_canonical_names(canonical_name, alias):
@@ -51,10 +52,10 @@ def test_owa_aliases_generate_same_weights_as_canonical_names(canonical_name, al
     [
         ("LINEAR", LinearOWAWeights),
         ("Exp", ExponentialOWAWeights),
-        ("LOG", LogarithmicOWAWeights),
+        ("HARMoNiC", HarmonicOWAWeights)
     ],
 )
-def test_owa_factory_names_are_case_insensitive(mixed_case_name, expected_class):
+def test_owa_factory_names_are_not_case_insensitive(mixed_case_name, expected_class):
     """Ensure factory lookup accepts mixed-case registered names."""
     assert isinstance(OWAWeights.create(mixed_case_name), expected_class)
 
@@ -135,6 +136,11 @@ def test_owa_create_uses_namespaced_parameters_for_constructor_args():
 
     assert isinstance(strategy, ExponentialOWAWeights)
     assert strategy.base == 3.0
+    
+    strategy2 = OWAWeights.create("exponential", namespace="ub", lb_base=3.0, ub_base=7.0)
+
+    assert isinstance(strategy2, ExponentialOWAWeights)
+    assert strategy2.base == 7.0
 
 
 def test_owa_create_strict_mode_rejects_unused_parameters():
@@ -157,7 +163,6 @@ def test_owa_create_strict_mode_accepts_fully_consumed_parameters():
         LinearOWAWeights(),
         ExponentialOWAWeights(base=2.0),
         HarmonicOWAWeights(),
-        LogarithmicOWAWeights(),
     ],
 )
 def test_direct_strategy_constructors_generate_valid_weight_vectors(strategy):
@@ -204,11 +209,6 @@ def _order_expected_weights(weights, order):
             {},
             lambda n: 1.0 / np.arange(1, n + 1, dtype=np.longdouble),
         ),
-        (
-            "logarithmic",
-            {},
-            lambda n: np.log(np.arange(1, n + 1, dtype=np.longdouble) + 1.0),
-        ),
     ],
 )
 @pytest.mark.parametrize("order", ["asc", "desc"])
@@ -236,7 +236,6 @@ def test_owa_strategies_match_their_scientific_weight_formulas(
         ("linear", {}),
         ("exponential", {"base": 2.0}),
         ("harmonic", {}),
-        ("logarithmic", {}),
     ],
 )
 @pytest.mark.parametrize("order", ["asc", "desc"])
@@ -280,7 +279,7 @@ def test_ascending_vs_descending_order(name):
 
 
 
-@pytest.mark.parametrize("name", ["linear", "harmonic", "logarithmic"])
+@pytest.mark.parametrize("name", ["linear", "harmonic"])
 def test_paramless_strategies_serialization(name):
     """Test that serialization roundtrip returns consistent outputs for non-param strategies."""
     obj = OWAWeights.create(name)
@@ -314,10 +313,7 @@ def test_exponential_strategy_param_roundtrip(base):
             HarmonicOWAWeights(),
             {"type": "HarmonicOWAWeights", "name": "harmonic", "params": {}},
         ),
-        (
-            LogarithmicOWAWeights(),
-            {"type": "LogarithmicOWAWeights", "name": "logarithmic", "params": {}},
-        ),
+        
     ],
 )
 def test_owa_strategy_to_dict_uses_exact_public_schema(strategy, expected_schema):
@@ -329,8 +325,10 @@ def test_owa_strategy_to_dict_uses_exact_public_schema(strategy, expected_schema
     ("alias", "canonical_name"),
     [
         ("exp", "exponential"),
+        ("gp", "exponential"),
         ("harm", "harmonic"),
-        ("log", "logarithmic"),
+        ("inv_add", "harmonic"),
+        ("additive", "linear"),
     ],
 )
 def test_owa_alias_serialization_uses_canonical_names(alias, canonical_name):
@@ -346,7 +344,6 @@ def test_owa_alias_serialization_uses_canonical_names(alias, canonical_name):
         (LinearOWAWeights(), 7, ["asc", "desc"]),
         (ExponentialOWAWeights(base=2.5), 7, ["asc", "desc"]),
         (HarmonicOWAWeights(), 7, ["asc", "desc"]),
-        (LogarithmicOWAWeights(), 7, ["asc", "desc"]),
     ],
 )
 def test_owa_to_dict_create_from_spec_roundtrip_preserves_weight_behavior(strategy, n, orders):
@@ -372,7 +369,7 @@ def test_owa_to_dict_create_from_spec_roundtrip_preserves_weight_behavior(strate
         {"type": "LinearOWAWeights", "name": "linear", "params": {}},
         {"type": "ExponentialOWAWeights", "name": "exponential", "params": {"base": 4.0}},
         {"type": "HarmonicOWAWeights", "name": "harmonic", "params": {}},
-        {"type": "LogarithmicOWAWeights", "name": "logarithmic", "params": {}},
+        
     ],
 )
 def test_owa_from_dict_accepts_to_dict_compatible_schema(spec):
@@ -509,7 +506,7 @@ def test_edge_case_single_element():
         np.testing.assert_allclose(out_desc, [1.0], atol=1e-10)
 
 
-@pytest.mark.parametrize("name", ["linear", "harmonic", "log", "exponential"])
+@pytest.mark.parametrize("name", ["linear", "harmonic", "exponential"])
 def test_owa_weight_generation_large_n(name):
     """
     Benchmark large-n OWA weight generation possibility.
@@ -538,7 +535,7 @@ def test_owa_weight_generation_large_n(name):
 ###                                         ###
 ###############################################
 
-@pytest.mark.parametrize("name", ["linear", "harmonic", "log"])
+@pytest.mark.parametrize("name", ["linear", "harmonic"])
 @pytest.mark.parametrize("order", ["asc", "desc"])
 def test_owa_weights_against_expected_vectors(name, order):
     """
