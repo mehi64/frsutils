@@ -10,7 +10,7 @@ OWA strategies produce normalized weight vectors of length `n` based on predefin
 
 All strategies are used as follows:
 
-Assume OWA weights are represented by OWA=<w1, w2, w3, ..., wn> where OWA vector is sorted in either ascending or descending order. And another vector V=<v1, v2, ... , vn> and V is not sorted (This could be the values of tnorm or implicator gotten in the interim calculations of upper and lower approximations). The sorted version of V is represented by t=<t1, t2, t3, ... , tn> which t1>t2>t3>...>tn. **t is always sorted in descending order** 
+Assume OWA weights are represented by OWA= $\langle w_1, w_2, w_3, \ldots, w_n \rangle$ where OWA vector is sorted in either ascending or descending order. And another vector V=<v1, v2, ... , vn> and V is not sorted (This could be the values of tnorm or implicator gotten in the interim calculations of upper and lower approximations). The sorted version of V is represented by t= $\langle t_1, t_2, t_3, \ldots, t_n \rangle$ which t1>t2>t3>...>tn. **t is always sorted in descending order** 
 
 - For fuzzy **infimum**:
   - since infimum operator is basically a minimum, we need to assign higher OWA weights to the lower values of vector V to accentuate on lower values. Hence if OWA is ordered as ascending order (namely w1<w2<w3<...<wn), then sum(wi*ti ) will mimic infimum operator.  
