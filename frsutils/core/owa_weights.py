@@ -125,7 +125,7 @@ class OWAWeights(RegistryFactoryMixin):
         return norm
 
 
-@OWAWeights.register("linear")
+@OWAWeights.register("linear", "additive")
 class LinearOWAWeights(OWAWeights):
     """Linear OWA weighting strategy.
     
@@ -147,7 +147,7 @@ class LinearOWAWeights(OWAWeights):
         return {"type": self.__class__.__name__, "name": "linear", "params": self._get_params()}
 
 
-@OWAWeights.register("exponential", "exp")
+@OWAWeights.register("exponential", "exp", "gp")
 class ExponentialOWAWeights(OWAWeights):
     """Exponential OWA weighting strategy.
     
@@ -182,7 +182,7 @@ class ExponentialOWAWeights(OWAWeights):
             raise ValueError("Parameter 'base' must be > 1")
 
 
-@OWAWeights.register("harmonic", "harm")
+@OWAWeights.register("harmonic", "harm", "inv_add")
 class HarmonicOWAWeights(OWAWeights):
     """Harmonic OWA weighting strategy.
     
@@ -203,24 +203,3 @@ class HarmonicOWAWeights(OWAWeights):
         """Serialize the component configuration to a dictionary."""
         return {"type": self.__class__.__name__, "name": "harmonic", "params": self._get_params()}
 
-
-@OWAWeights.register("logarithmic", "log")
-class LogarithmicOWAWeights(OWAWeights):
-    """Logarithmic OWA weighting strategy.
-    
-    Uses log(i + 1) as raw weights.
-    """
-    def _raw_weights(self, n: int) -> np.ndarray:
-        return np.log(np.arange(1, n + 1, dtype=np.longdouble) + 1.0)
-
-    def _get_params(self) -> dict:
-        return {}
-
-    @classmethod
-    def validate_params(cls, **kwargs):
-        """Validate constructor parameters for this component."""
-        pass
-
-    def to_dict(self) -> dict:
-        """Serialize the component configuration to a dictionary."""
-        return {"type": self.__class__.__name__, "name": "logarithmic", "params": self._get_params()}

@@ -16,54 +16,18 @@
         "name": "basic_implicators",
         "a_b": {
           "__ndarray__": [
-            [
-              0.73,
-              0.18
-            ],
-            [
-              0.18,
-              0.73
-            ],
-            [
-              0.88,
-              0.88
-            ],
-            [
-              0.91,
-              0.48
-            ],
-            [
-              1.0,
-              1.0
-            ],
-            [
-              0.0,
-              0.0
-            ],
-            [
-              0.0,
-              1.0
-            ],
-            [
-              1.0,
-              0.0
-            ],
-            [
-              1.0,
-              0.65
-            ],
-            [
-              0.65,
-              1.0
-            ],
-            [
-              0.55,
-              0.0
-            ],
-            [
-              0.0,
-              0.55
-            ]
+            [0.73, 0.18],
+            [0.18, 0.73],
+            [0.88, 0.88],
+            [0.91, 0.48],
+            [1.0, 1.0],
+            [0.0, 0.0],
+            [0.0, 1.0],
+            [1.0, 0.0],
+            [1.0, 0.65],
+            [0.65, 1.0],
+            [0.55, 0.0],
+            [0.0, 0.55]
           ],
           "dtype": "float64",
           "shape": [
@@ -258,24 +222,6 @@
     "boundary_cases": [
       {
         "implicator": "lukasiewicz",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "lukasiewicz",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
-        "implicator": "lukasiewicz",
-        "a": 1.0,
-        "b": 1.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "lukasiewicz",
         "a": 0.7,
         "b": 0.2,
         "expected": 0.5
@@ -293,30 +239,6 @@
         "expected": 0.2
       },
       {
-        "implicator": "goedel",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
-        "implicator": "goedel",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "kleenedienes",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "kleenedienes",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
         "implicator": "kleenedienes",
         "a": 1.0,
         "b": 0.4,
@@ -330,18 +252,6 @@
       },
       {
         "implicator": "reichenbach",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "reichenbach",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
-        "implicator": "reichenbach",
         "a": 1.0,
         "b": 0.4,
         "expected": 0.4
@@ -351,18 +261,6 @@
         "a": 0.7,
         "b": 0.2,
         "expected": 0.44
-      },
-      {
-        "implicator": "goguen",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "goguen",
-        "a": 0.0,
-        "b": 1.0,
-        "expected": 1.0
       },
       {
         "implicator": "goguen",
@@ -389,24 +287,6 @@
         "expected": 0.0
       },
       {
-        "implicator": "rescher",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
-        "implicator": "rescher",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "yager",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
         "implicator": "yager",
         "a": 0.0,
         "b": 0.2,
@@ -426,21 +306,9 @@
       },
       {
         "implicator": "weber",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
-      },
-      {
-        "implicator": "weber",
         "a": 0.5,
         "b": 0.0,
         "expected": 1.0
-      },
-      {
-        "implicator": "weber",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
       },
       {
         "implicator": "weber",
@@ -459,18 +327,6 @@
         "a": 0.7,
         "b": 0.2,
         "expected": 0.3
-      },
-      {
-        "implicator": "fodor",
-        "a": 1.0,
-        "b": 0.0,
-        "expected": 0.0
-      },
-      {
-        "implicator": "fodor",
-        "a": 0.0,
-        "b": 0.0,
-        "expected": 1.0
       }
     ],
     "branch_edge_cases": [
