@@ -49,7 +49,7 @@ markdown_extensions:
   - md_in_html
   - tables
   - pymdownx.arithmatex:
-	generic: true
+      generic: true
   - toc:
       permalink: true
       
