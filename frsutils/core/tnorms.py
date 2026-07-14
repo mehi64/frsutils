@@ -129,7 +129,7 @@ class LukasiewiczTNorm(TNorm):
 @TNorm.register("drastic", "drasticproduct")
 class DrasticProductTNorm(TNorm):
     """Drastic Product T-norm. 
-        T(a, b) = a if b = 1, b if a = 1, and 0 otherwise."""
+        T(a, b) = a if b == 1, b if a == 1, and; 0 otherwise."""
 
     def __init__(self):
         """Initialize the DrasticProductTNorm instance."""
@@ -189,7 +189,7 @@ class EinsteinProductTNorm(TNorm):
 @TNorm.register("hamacher", "hamacherproduct")
 class HamacherProductTNorm(TNorm):
     """Hamacher Product T-norm.
-        T(a, b) = (a * b) / (a + b - a * b), returning 0 when a = b = 0."""
+        T(a, b) = (a * b) / (a + b - a * b), returning 0 when a == b == 0."""
 
     def __init__(self):
         """Initialize the HamacherProductTNorm instance."""
@@ -248,7 +248,7 @@ class NilpotentMinimumTNorm(TNorm):
 
 @TNorm.register('yager', 'yg')
 class YagerTNorm(TNorm):
-    """Yager T-norm: 1 - min(1, [(1 - a)^p + (1 - b)^p]^(1/p))."""
+    """Yager T-norm: 1 - min(1, [(1 - a)^p + (1 - b)^p]^(1/p)). NOTE: (p>0)"""
 
     def __init__(self, p: float = 2.0):
         """Initialize the YagerTNorm instance."""

@@ -36,7 +36,7 @@
     },
     "tnorm_reduce.json": {
       "dataset_kind": "tnorm_reduce",
-      "sha256": "19e3aca43e0ab6a20560e0117f4141c1c91478dcc38f0e34db8396e9bd8f13ed"
+      "sha256": "6c964d35efc79ee0ef1cedbc94ee6cf5b126ec98a3183b993b9a6153ea9439ed"
     },
     "tnorm_regression.json": {
       "dataset_kind": "tnorm_regression",
