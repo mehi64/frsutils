@@ -14,10 +14,21 @@ They are non-decreasing and satisfy `Q(0) = 0` and `Q(1) = 1`.
 
 ## 2. Fuzzy Quantifier Table
 
-| Name          | Formula                                                                                       | Parameters      | Aliases         | Reference     |
-| ------------- | --------------------------------------------------------------------------------------------- | --------------- | --------------- | ------------- |
-| **Linear**    | `0` if `x <= alpha`; `(x - alpha) / (beta - alpha)` if `alpha < x < beta`; `1` if `x >= beta` | `alpha`, `beta` | linear          | [1], Eq. (7)  |
-| **Quadratic** | Quadratic S-shaped quantifier shown below                                                     | `alpha`, `beta` | quadratic, quad | [2], Eq. (12) |
+| Name | Formula | Parameters | Aliases | Reference | Tested in frsutils |
+|------|---------|------------|---------|-----------|--------------------|
+| **Linear** | Piecewise-linear quantifier shown below | `alpha`, `beta` | linear | [1], Eq. (7) | yes |
+| **Quadratic** | Quadratic S-shaped quantifier shown below | `alpha`, `beta` | quadratic, quad | [2], Eq. (12) | yes |
+
+The linear quantifier is:
+
+\[
+Q_{\alpha,\beta}(x) =
+\begin{cases}
+0, & x \leq \alpha \\
+\dfrac{x-\alpha}{\beta-\alpha}, & \alpha < x < \beta \\
+1, & x \geq \beta
+\end{cases}
+\]
 
 The quadratic quantifier is:
 
