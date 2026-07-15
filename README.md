@@ -14,16 +14,56 @@ The package is intended for researchers and downstream libraries that need a sma
 
 ## Installation
 
-Install from PyPI:
+`frsutils` requires Python 3.10 or newer. The package is distributed through
+PyPI; Conda may be used to create the environment, but `frsutils` itself is
+installed with `pip`.
+
+### For users
+
+Use an isolated environment before installing the package.
+
+#### Option 1: Conda environment
 
 ```bash
-pip install frsutils
+conda create -n frsutils python=3.12 -y
+conda activate frsutils
+python -m pip install --upgrade pip
+python -m pip install frsutils
 ```
 
-For local development from a source checkout:
+#### Option 2: `venv` environment
+
+Linux or macOS:
 
 ```bash
-pip install -e .
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install frsutils
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install frsutils
+```
+
+Windows Git Bash:
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate
+python -m pip install --upgrade pip
+python -m pip install frsutils
+```
+
+Verify the installed package:
+
+```bash
+python -c "import frsutils; from importlib.metadata import version; print(version('frsutils'))"
 ```
 
 Core requirements are intentionally small:
@@ -32,29 +72,16 @@ Core requirements are intentionally small:
 - NumPy >= 1.21.0
 - scikit-learn
 
-Optional extras are used only for specific workflows:
-
-```bash
-pip install -e ".[dev]"
-pip install -e ".[docs]"
-```
-
-### Optional CUDA 12 backend
+#### Optional CUDA 12 backend
 
 The stable default backend is NumPy. CUDA support is optional and currently
 applies only to the documented CuPy-backed blockwise paths. A compatible NVIDIA
 driver and CUDA-capable GPU are required.
 
-Install the CUDA 12 dependencies from PyPI with:
+Install the CUDA 12 extra instead of the plain package install:
 
 ```bash
 python -m pip install "frsutils[gpu-cuda12x]"
-```
-
-For local development from a source checkout:
-
-```bash
-python -m pip install -e ".[gpu-cuda12x]"
 ```
 
 Verify device discovery and a real CUDA computation with:
@@ -64,9 +91,143 @@ python -c "import cupy as cp; print(cp.cuda.runtime.getDeviceCount()); print(cp.
 ```
 
 A result containing one or more devices and the array `[0 1 4 9 16]` confirms
-that a CUDA computation completed successfully. See
+that a CUDA computation completed successfully.
+
+If CuPy or the first numerical CUDA operation fails, inspect the detected GPU and
+CuPy configuration first:
+
+```bash
+nvidia-smi
+python -c "import cupy as cp; cp.show_config()"
+```
+
+Prefer reinstalling or upgrading the FRsutils CUDA extra before manually adding
+CUDA component packages:
+
+```bash
+python -m pip install --upgrade "frsutils[gpu-cuda12x]"
+```
+
+For an existing plain `cupy-cuda12x` installation that reports missing CUDA
+headers, install runtime headers matching the local CUDA 12 toolkit minor
+version. For example, a CUDA 12.0 environment can use:
+
+```bash
+python -m pip install "nvidia-cuda-runtime-cu12==12.0.*"
+```
+
+Then run `cupy.show_config()` again and verify a real CUDA operation. See
 [backends and execution behavior](docs/user/backends.md) for the validated
-environment, model-specific GPU boundaries, and troubleshooting guidance.
+environment and model-specific GPU claim boundaries.
+
+### For developers and contributors
+
+Clone the repository and create an isolated development environment. Either
+Conda or `venv` can be used.
+
+#### Conda development environment
+
+```bash
+git clone https://github.com/mehi64/frsutils.git
+cd frsutils
+conda create -n frsutils-dev python=3.12 -y
+conda activate frsutils-dev
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,docs,study]"
+python -m pip check
+```
+
+#### `venv` development environment
+
+Linux or macOS:
+
+```bash
+git clone https://github.com/mehi64/frsutils.git
+cd frsutils
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,docs,study]"
+python -m pip check
+```
+
+On Windows, activate the environment with one of the following before running
+the same `pip` commands:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+or, in Git Bash:
+
+```bash
+source .venv/Scripts/activate
+```
+
+The editable install keeps the source checkout linked to the active environment,
+so local code changes are immediately visible without reinstalling the package.
+
+Available optional dependency groups are:
+
+| Extra | Purpose |
+| --- | --- |
+| `dev` | Tests and development utilities |
+| `docs` | MkDocs documentation build |
+| `study` | Reproducible reference-study dependencies |
+| `gpu-cuda12x` | Optional CuPy/CUDA 12 backend |
+
+For GPU development, install the CUDA extra together with the development
+extras:
+
+```bash
+python -m pip install -e ".[dev,docs,study,gpu-cuda12x]"
+```
+
+For a narrower editable environment, install only the extras needed for the
+current task, for example:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pip install -e ".[docs]"
+python -m pip install -e ".[study]"
+```
+
+### Maintainer and release tooling
+
+Release validation additionally uses `build` and `twine`:
+
+```bash
+python -m pip install build twine
+rm -rf build dist frsutils.egg-info
+python -m build
+python -m twine check dist/*
+```
+
+Built wheel and source-distribution artifacts should be installation-smoke-tested
+in fresh environments before release. For example, on Linux or macOS:
+
+```bash
+python -m venv /tmp/frsutils-wheel-smoke
+/tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
+/tmp/frsutils-wheel-smoke/bin/python -m pip install dist/frsutils-*.whl
+/tmp/frsutils-wheel-smoke/bin/python -c "import frsutils; print(frsutils.__file__)"
+/tmp/frsutils-wheel-smoke/bin/python -m pip check
+```
+
+Repeat the same check for the source distribution:
+
+```bash
+python -m venv /tmp/frsutils-sdist-smoke
+/tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
+/tmp/frsutils-sdist-smoke/bin/python -m pip install dist/frsutils-*.tar.gz
+/tmp/frsutils-sdist-smoke/bin/python -c "import frsutils; print(frsutils.__file__)"
+/tmp/frsutils-sdist-smoke/bin/python -m pip check
+```
+
+On Windows, use `Scripts/python.exe` instead of `bin/python` for these isolated
+artifact checks. Detailed test and release procedures remain in
+[`tests/test_procedures.md`](tests/test_procedures.md) and
+[`docs/developer/release.md`](docs/developer/release.md).
 
 ## Quick start
 
@@ -203,8 +364,9 @@ VQRS, and OWAFRS through the stable package-root API, verifies exact
 dense/blockwise agreement, records repeated runtimes and per-sample outputs,
 and captures the execution environment:
 
+After installing the developer environment with the `study` extra, run:
+
 ```bash
-python -m pip install -e ".[study]"
 python studies/fuzzy_rough_reference_study/run_study.py
 ```
 
@@ -235,17 +397,18 @@ Repository sources:
 - [Final JOSS submission checklist](docs/developer/joss_submission_checklist.md)
 - [Software archive and DOI guide](docs/developer/archive_and_doi.md)
 
-Build the documentation locally with:
+After installing the developer environment with the `docs` extra, build the
+documentation locally with:
 
 ```bash
-python -m pip install -e ".[docs]"
 mkdocs build --strict
 mkdocs serve
 ```
 
 ## Development and validation
 
-Run the main test suite from the repository root:
+After completing the developer installation above, run the main test suite from
+the repository root:
 
 ```bash
 python -m pytest tests -q

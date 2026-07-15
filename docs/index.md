@@ -13,7 +13,7 @@ benchmark guidance, and the scientific definitions implemented by the library.
   objects, scorer usage, and downstream-package boundaries.
 - [Backends](user/backends.md): dense, blockwise, NumPy/CuPy behavior, backend
   metadata, and model-specific GPU claim boundaries.
-- [Benchmarks](user/benchmarks.md): benchmark commands, recorded fields, paired
+- [Performance Benchmarking](user/benchmarks.md): benchmark commands, recorded fields, paired
   NumPy/CuPy comparison, and safe interpretation rules.
 - [Reproducible reference study](user/reference_study.md): real-dataset analysis,
   dense/blockwise equivalence evidence, environment capture, and committed results.

@@ -15,7 +15,7 @@ nav:
   - User guide:
       - Public API: user/public_api.md
       - Backends and execution: user/backends.md
-      - Benchmarks: user/benchmarks.md
+      - Benchmarks: user/performance_benchmarking.md
       - Reproducible reference study: user/reference_study.md
       - Glossary: user/glossary.md
   - Scientific concepts:

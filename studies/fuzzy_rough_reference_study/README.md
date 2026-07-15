@@ -30,11 +30,11 @@ as interchangeable performance measures.
 All datasets are bundled with scikit-learn and require no external download.
 Features are transformed independently to `[0, 1]` with `MinMaxScaler`.
 
-| Study task | Source | Target construction |
-| --- | --- | --- |
-| `breast_cancer` | scikit-learn breast-cancer dataset | Original binary target |
-| `wine_class_0_vs_rest` | scikit-learn wine dataset | Class 0 versus all remaining classes |
-| `digits_3_vs_8` | scikit-learn digits dataset | Keep digits 3 and 8; digit 8 is the positive class |
+| Study task             | Source                             | Target construction                                |
+| ---------------------- | ---------------------------------- | -------------------------------------------------- |
+| `breast_cancer`        | scikit-learn breast-cancer dataset | Original binary target                             |
+| `wine_class_0_vs_rest` | scikit-learn wine dataset          | Class 0 versus all remaining classes               |
+| `digits_3_vs_8`        | scikit-learn digits dataset        | Keep digits 3 and 8; digit 8 is the positive class |
 
 The original target value is retained in `sample_scores.csv` for traceability.
 
@@ -62,7 +62,6 @@ large lower/upper gaps for inspection.
 From the repository root:
 
 ```bash
-python -m pip install -e ".[study]"
 python studies/fuzzy_rough_reference_study/run_study.py
 ```
 

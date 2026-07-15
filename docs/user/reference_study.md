@@ -13,7 +13,6 @@ hardware environment, and writes checksums for generated outputs.
 ## Run it
 
 ```bash
-python -m pip install -e ".[study]"
 python studies/fuzzy_rough_reference_study/run_study.py
 ```
 
@@ -45,10 +44,4 @@ It does not claim that one fuzzy-rough model is universally superior, that
 runtime values generalize to other hardware, or that the benchmark fully
 measures native allocator memory.
 
-## Relationship to downstream methods
-
-The reference study is deliberately independent of unpublished downstream
-algorithms. It demonstrates the reusable fuzzy-rough core without requiring
-FRSMOTE or any private repository. Future sample-selection or oversampling work
-can cite and depend on the same public API after those methods are ready for
-publication.
+# 
