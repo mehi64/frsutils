@@ -1,37 +1,43 @@
 # frsutils public API
 
-FRsutils exposes its stable user-facing and downstream-package API through the package root:
+`frsutils` exposes its stable user-facing API from the package root:
 
 ```python
 from frsutils import compute_approximations
 ```
 
-User examples, notebooks, tests, and downstream packages should prefer imports from `frsutils` instead of deep internal paths such as `frsutils.core` or `frsutils.utils`. Internal modules may change more often than the package-root public API.
+The grouped `frsutils.api` namespace exposes the same facade objects. User code,
+notebooks, examples, and downstream research packages should prefer one of these
+public import paths instead of importing from `frsutils.core` or `frsutils.utils`.
 
 ## Purpose
 
-FRsutils is the fuzzy-rough core package. It provides reusable fuzzy-rough building blocks and task-oriented helpers for:
+FRsutils is a fuzzy-rough computation library for research workflows. Its public
+API provides task-oriented helpers for:
 
-- similarity-matrix construction,
-- lower approximation,
-- upper approximation,
-- boundary-region computation,
-- positive-region computation,
-- reusable positive-region scoring workflows,
-- fuzzy-rough model construction for advanced users and downstream packages.
+- pairwise similarity construction,
+- lower and upper fuzzy-rough approximations,
+- boundary and positive regions,
+- dense and exact blockwise execution,
+- dense fuzzy-rough model construction,
+- reusable positive-region scoring.
+
+The supported fuzzy-rough model aliases are:
+
+- `"itfrs"` — implicator/T-norm fuzzy-rough sets,
+- `"owafrs"` — ordered weighted averaging fuzzy-rough sets,
+- `"vqrs"` — vaguely quantified rough sets.
 
 ## Main public entry points
 
-The public API is organized around a small set of task-oriented names:
-
-| Task                                                       | Public API                                                                                                         |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Compute lower, upper, boundary, and positive-region values | `compute_approximations`                                                                                           |
-| Compute one approximation output                           | `compute_lower_approximation`, `compute_upper_approximation`, `compute_boundary_region`, `compute_positive_region` |
-| Build a pairwise similarity matrix                         | `build_similarity_matrix`                                                                                          |
-| Build a dense or blockwise similarity engine               | `build_similarity_engine`                                                                                          |
-| Build a dense fuzzy-rough model object                     | `build_fuzzy_rough_model`                                                                                          |
-| Use a scikit-learn-style positive-region scorer            | `FuzzyRoughPositiveRegionScorer`                                                                                   |
+| Task | Public API |
+| --- | --- |
+| Compute all approximation outputs | `compute_approximations` |
+| Compute one output | `compute_lower_approximation`, `compute_upper_approximation`, `compute_boundary_region`, `compute_positive_region` |
+| Build a pairwise similarity matrix | `build_similarity_matrix` |
+| Build a dense or blockwise similarity engine | `build_similarity_engine` |
+| Build a dense fuzzy-rough model object | `build_fuzzy_rough_model` |
+| Compute and cache positive-region scores | `FuzzyRoughPositiveRegionScorer` |
 
 Preferred imports:
 
@@ -49,12 +55,6 @@ from frsutils import (
     compute_upper_approximation,
 )
 ```
-
-Supported fuzzy-rough model aliases are:
-
-- `"itfrs"` for implicator/t-norm fuzzy-rough sets,
-- `"vqrs"` for vaguely quantified rough sets,
-- `"owafrs"` for ordered weighted averaging fuzzy-rough sets.
 
 ## Quick start
 
@@ -85,7 +85,7 @@ result = compute_approximations(
 print(result.positive_region)
 ```
 
-For a runnable example, see `examples/public_api_quickstart.py` in the project root.
+A runnable version is available in `examples/public_api_quickstart.py`.
 
 ## Computing approximations
 
@@ -103,7 +103,8 @@ result = compute_approximations(
 )
 ```
 
-It returns a `FuzzyRoughApproximationResult`, not a positional tuple. Downstream code should access named fields:
+It returns a `FuzzyRoughApproximationResult`, so downstream code accesses named
+fields rather than positional tuple entries:
 
 ```python
 result.lower
@@ -112,18 +113,20 @@ result.boundary
 result.positive_region
 ```
 
-The current public contracts are:
+The public result contract is:
 
 ```python
 np.allclose(result.boundary, result.upper - result.lower)
 np.allclose(result.positive_region, result.lower)
 ```
 
-Public result arrays are always **NumPy arrays**, even when optional CuPy-backed blockwise execution is used internally.
+Public result arrays are NumPy arrays, including results produced by optional
+CuPy-backed blockwise internals.
 
 ### Dense execution
 
-Dense execution builds or consumes a full pairwise similarity matrix and then uses the dense model implementation:
+Dense execution materializes or consumes a full pairwise similarity matrix and
+uses the dense reference model implementations:
 
 ```python
 result = compute_approximations(
@@ -150,9 +153,14 @@ result = compute_approximations(
 )
 ```
 
+When a precomputed matrix is supplied, do not also pass `similarity` or
+`similarity_*` settings. FRsutils did not construct that matrix and therefore
+reports `result.similarity is None` rather than claiming an unknown provenance.
+
 ### Blockwise execution
 
-Blockwise execution computes exact approximations without materializing the full similarity matrix by default:
+Blockwise execution computes exact approximations without materializing the full
+similarity matrix by default:
 
 ```python
 result = compute_approximations(
@@ -166,7 +174,8 @@ result = compute_approximations(
 )
 ```
 
-Blockwise mode requires `X` and does not accept a precomputed `similarity_matrix`. To inspect the matrix produced by blockwise execution, set
+Blockwise mode requires `X` and does not accept a precomputed
+`similarity_matrix`. To materialize the matrix for inspection, set
 `return_similarity_matrix=True`:
 
 ```python
@@ -183,65 +192,137 @@ result = compute_approximations(
 S = result.similarity_matrix
 ```
 
+## Model examples
+
+The three public model aliases use the same flat configuration contract. These
+examples intentionally configure model-specific components so the routing rules
+are visible.
+
+### ITFRS
+
+```python
+result = compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    similarity="gaussian",
+    similarity_sigma=0.4,
+    similarity_tnorm="yager",
+    similarity_tnorm_p=2.0,
+    ub_tnorm_name="yager",
+    ub_tnorm_p=1.7,
+    lb_implicator_name="goguen",
+)
+```
+
+### OWAFRS
+
+```python
+result = compute_approximations(
+    X,
+    y,
+    model="owafrs",
+    similarity="linear",
+    ub_tnorm_name="minimum",
+    lb_implicator_name="lukasiewicz",
+    ub_owa_method_name="exponential",
+    ub_owa_method_base=2.5,
+    lb_owa_method_name="harmonic",
+)
+```
+
+### VQRS
+
+```python
+result = compute_approximations(
+    X,
+    y,
+    model="vqrs",
+    similarity="linear",
+    lb_fuzzy_quantifier_name="linear",
+    lb_fuzzy_quantifier_alpha=0.0,
+    lb_fuzzy_quantifier_beta=0.5,
+    ub_fuzzy_quantifier_name="quadratic",
+    ub_fuzzy_quantifier_alpha=0.1,
+    ub_fuzzy_quantifier_beta=0.8,
+)
+```
+
+The public defaults are ITFRS with a minimum upper T-norm and Lukasiewicz lower
+implicator; linear similarity aggregated by the minimum T-norm is used when
+similarity settings are omitted. OWAFRS defaults to linear upper and lower OWA
+weights. VQRS defaults to linear lower and upper quantifiers with
+`alpha=0.1` and `beta=0.6`.
+
+See [Public configuration contract](configuration.md) for the complete selector,
+prefix, alias, parameter, default, validation, and backward-compatibility rules.
+
 ## Approximation wrapper functions
 
 Wrapper functions are available when only one output is needed:
 
 ```python
-from frsutils import (
-    compute_lower_approximation,
-    compute_upper_approximation,
-    compute_boundary_region,
-    compute_positive_region,
-)
+from frsutils import compute_positive_region
 
-positive = compute_positive_region(X, y, model="itfrs", similarity="linear")
+positive = compute_positive_region(
+    X,
+    y,
+    model="itfrs",
+    similarity="linear",
+)
 ```
 
-These wrappers delegate to `compute_approximations` and return plain NumPy arrays, not result objects.
+The wrappers delegate to `compute_approximations` and return NumPy arrays.
 
 ## Result object and execution metadata
 
-`FuzzyRoughApproximationResult` is the stable public result container.
+`FuzzyRoughApproximationResult` is a frozen public result container:
 
 ```python
 data = result.as_dict()
 ```
 
-By default, `as_dict()` does not include `similarity_matrix`, because that matrix can be large. Include it explicitly when needed:
+`as_dict()` omits `similarity_matrix` by default because the matrix can be large.
+Include it explicitly when needed:
 
 ```python
 data = result.as_dict(include_similarity_matrix=True)
 ```
 
-Important metadata fields include:
+`frozen` prevents reassigning result attributes; contained NumPy arrays and the
+configuration dictionary are not deep-immutable objects.
 
-| Field                                 | Meaning                                                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `model`                               | Canonical fuzzy-rough model alias.                                                                           |
-| `similarity`                          | Canonical similarity configuration or alias.                                                                 |
-| `engine`                              | Canonical approximation engine, usually `"dense"` or `"blockwise"`.                                          |
-| `backend`                             | Canonical resolved backend. <mark>Dense execution reports</mark> `"numpy"`.                                  |
-| `block_size`                          | Positive integer for blockwise execution; `None` for dense execution.                                        |
-| `used_blockwise`                      | Whether blockwise approximation execution was used.                                                          |
-| `used_gpu_similarity_blocks`          | Whether similarity blocks used the optional CuPy backend.                                                    |
-| `used_gpu_approximation_accumulators` | Whether model-specific approximation accumulators stayed CuPy-resident before final NumPy output conversion. |
+Important metadata fields are:
 
-**NOTE**: The standard dense path uses NumPy and reports the backend as "numpy". CuPy may be used only by supported backend-aware paths when explicitly requested and available.
+| Field | Meaning |
+| --- | --- |
+| `model` | Canonical fuzzy-rough model alias. |
+| `similarity` | Similarity alias used by FRsutils to build the matrix, or `None` for externally supplied matrices. |
+| `engine` | Canonical approximation engine: `"dense"` or `"blockwise"`. |
+| `backend` | Canonical resolved backend. Dense execution reports `"numpy"`. |
+| `block_size` | Positive integer for blockwise execution; `None` for dense execution. |
+| `used_blockwise` | Whether blockwise approximation execution was used. |
+| `used_gpu_similarity_blocks` | Whether similarity blocks used the optional CuPy backend. |
+| `used_gpu_approximation_accumulators` | Whether model-specific approximation accumulators stayed CuPy-resident before final NumPy conversion. |
 
-The same above fields are included in `FuzzyRoughApproximationResult.as_dict()`.
+For OWAFRS, CuPy-backed blockwise execution currently accelerates similarity
+blocks; the OWA approximation accumulators are not claimed to be GPU-resident.
 
 ## Similarity API
 
-Use `build_similarity_matrix` for ordinary dense pairwise matrices:
+Use `build_similarity_matrix` for an ordinary dense pairwise matrix:
 
 ```python
 from frsutils import build_similarity_matrix
 
-S = build_similarity_matrix(X, similarity="linear")
+S = build_similarity_matrix(
+    X,
+    similarity="gaussian",
+    similarity_sigma=0.5,
+)
 ```
 
-Use `build_similarity_engine` when blockwise iteration is needed:
+Use `build_similarity_engine` when block iteration is needed:
 
 ```python
 from frsutils import build_similarity_engine
@@ -257,9 +338,13 @@ for block in engine.iter_blocks():
     print(block.row_slice, block.col_slice, block.values.shape)
 ```
 
+Similarity builders accept only similarity-related flat configuration. Model
+parameters such as `ub_tnorm_name` are rejected instead of being ignored.
+
 ## Building dense model objects
 
-`build_fuzzy_rough_model` constructs dense model objects from a precomputed similarity matrix and labels:
+`build_fuzzy_rough_model` constructs a dense model object from a precomputed
+similarity matrix and labels:
 
 ```python
 from frsutils import build_fuzzy_rough_model, build_similarity_matrix
@@ -274,12 +359,14 @@ model = build_fuzzy_rough_model(
 lower = model.lower_approximation()
 ```
 
-This builder supports the same model aliases as `compute_approximations`:
-`"itfrs"`, `"vqrs"`, and `"owafrs"`.
+The builder applies the same authoritative model defaults as
+`compute_approximations`. It accepts model-related flat configuration only;
+similarity settings are rejected because the matrix has already been built.
 
 ## Positive-region scorer
 
-`FuzzyRoughPositiveRegionScorer` provides a reusable estimator-like API for fuzzy-rough positive-region scores:
+`FuzzyRoughPositiveRegionScorer` provides an estimator-like API for fitted-sample
+positive-region scores:
 
 ```python
 from frsutils import FuzzyRoughPositiveRegionScorer
@@ -296,15 +383,33 @@ scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
 
-The scorer exposes `fit`, `fit_score`, `score_samples`, `as_result`,
-`get_params`, and `set_params`. It follows scikit-learn estimator conventions for parameter handling, cloning, and grid-search-style workflows.
+The scorer follows scikit-learn conventions for parameter handling, cloning,
+`get_params`, and `set_params`. It computes fuzzy-rough scores for the fitted
+training relation; unseen-sample scoring is not currently defined. After `fit`,
+request the cached fitted scores with no argument:
 
-The scorer computes scores for fitted training samples. It does not yet score unseen samples, because the current fuzzy-rough approximation models are based
-on a fitted pairwise similarity matrix.
+```python
+scores = scorer.score_samples()
+```
 
-## Flat and nested configuration
+Passing `X` to `score_samples(X)` raises `ValueError` instead of silently
+returning training scores for unrelated samples.
 
-The public API accepts flat, sklearn-friendly parameters:
+`extra_params` may hold contract-defined flat keys not represented by an
+explicit scorer constructor parameter. It cannot duplicate or alias an explicit
+constructor parameter, because hidden overrides would break reproducibility.
+
+## Flat public configuration
+
+The stable public configuration boundary is **flat only**. A selector chooses a
+registered component, and component parameters use the same component prefix:
+
+```text
+<component>_name = <registered alias>
+<component>_<constructor parameter> = <value>
+```
+
+For example:
 
 ```python
 result = compute_approximations(
@@ -313,65 +418,90 @@ result = compute_approximations(
     model="itfrs",
     similarity="gaussian",
     similarity_sigma=0.5,
-    ub_tnorm_name="minimum",
+    ub_tnorm_name="yager",
+    ub_tnorm_p=2.0,
     lb_implicator_name="lukasiewicz",
 )
 ```
 
-Internally, FRsutils may normalize these flat parameters into a nested component configuration. Nested configuration is also accepted at the public API boundary for advanced users:
+Similarity selectors use the shorter public names `similarity` and
+`similarity_tnorm`; their parameters still use `similarity_` and
+`similarity_tnorm_` prefixes.
+
+| Component role | Selector | Parameter prefix |
+| --- | --- | --- |
+| Similarity | `similarity` | `similarity_` |
+| Similarity aggregation T-norm | `similarity_tnorm` | `similarity_tnorm_` |
+| Upper T-norm | `ub_tnorm_name` | `ub_tnorm_` |
+| Lower implicator | `lb_implicator_name` | `lb_implicator_` |
+| Upper OWA weighting | `ub_owa_method_name` | `ub_owa_method_` |
+| Lower OWA weighting | `lb_owa_method_name` | `lb_owa_method_` |
+| Lower fuzzy quantifier | `lb_fuzzy_quantifier_name` | `lb_fuzzy_quantifier_` |
+| Upper fuzzy quantifier | `ub_fuzzy_quantifier_name` | `ub_fuzzy_quantifier_` |
+
+A flat configuration dictionary can be passed through `config`:
 
 ```python
 config = {
-    "similarity": {"name": "linear", "params": {}},
-    "similarity_tnorm": {"name": "minimum", "params": {}},
-    "fr_model": {
-        "type": "itfrs",
-        "ub_tnorm": {"name": "minimum", "params": {}},
-        "lb_implicator": {"name": "lukasiewicz", "params": {}},
-    },
+    "type": "itfrs",
+    "similarity": "gaussian",
+    "similarity_sigma": 0.5,
+    "ub_tnorm_name": "minimum",
+    "lb_implicator_name": "lukasiewicz",
 }
 
 result = compute_approximations(X, y, config=config)
 ```
 
-Do not mix nested config with additional flat keyword parameters in the same call. This keeps the public API unambiguous.
+Additional flat keyword arguments override ordinary values from `config`.
+Explicit model sources are stricter: `model="vqrs"` and `config={"type":
+"itfrs"}` are a conflict and raise `ValueError` rather than silently choosing one.
+If no model source is supplied, the public default is `"itfrs"`.
 
-## Advanced and semi-internal exports
+Nested component dictionaries are an internal normalized representation and are
+rejected at public API boundaries. This is intentional: one flat configuration
+contract keeps parameter names searchable, typo-checkable, reproducible, and
+compatible with estimator-style parameter workflows.
 
-The following names are public but intended mainly for advanced users, experiments, and downstream packages:
+The detailed source of truth is [Public configuration contract](configuration.md).
+
+## Advanced public exports
+
+The facade also exposes registry discovery and concrete model/similarity types
+for advanced inspection and downstream research code:
 
 ```python
 from frsutils import (
-    build_fuzzy_rough_model,
+    FuzzyRoughModel,
+    ITFRS,
+    OWAFRS,
+    Similarity,
+    VQRS,
     get_fuzzy_rough_model_class,
     list_fuzzy_rough_models,
     list_similarities,
-    normalize_flat_config_to_nested,
 )
 ```
 
-Some low-level classes and helpers may also be importable from `frsutils` for inspection, backwards compatibility, or advanced experimentation:
+Similarity engine classes, `SimilarityBlock`, and
+`calculate_similarity_matrix` are also exported for advanced workflows. They are
+not the preferred starting point for tutorials; use the task-level builders and
+computation functions when possible.
 
-- `Similarity`
-- `FuzzyRoughModel`
-- `ITFRS`
-- `OWAFRS`
-- `VQRS`
-- `apply_config_aliases`
-- `extract_prefixed_params`
-- `calculate_similarity_matrix`
-
-These should not be the first choice for tutorials, README examples, or external package integration. Prefer the task-level API unless there is a clear advanced use case.
+Internal flat-to-nested construction helpers such as
+`normalize_flat_config_to_nested`, `apply_config_aliases`, and
+`extract_prefixed_params` are deliberately **not** exported by `frsutils` or
+`frsutils.api`.
 
 ## Downstream-package rule
 
-Downstream packages should depend on `frsutils` only:
+Downstream packages should depend on the public facade:
 
 ```python
 from frsutils import build_similarity_matrix, compute_positive_region
 ```
 
-Avoid relying on internal modules in downstream user code:
+Avoid deep internal imports in downstream user-facing code:
 
 ```python
 # Avoid this in user-facing examples and downstream packages.
@@ -380,11 +510,13 @@ from frsutils.core.similarities import build_similarity_matrix
 from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 ```
 
-The `frsutils` namespace is the compatibility boundary. Internal modules may change between releases.
+The `frsutils` namespace is the compatibility boundary. Internal modules may
+change between releases.
 
 ## Backend behavior
 
-The stable backend is NumPy. CuPy support is optional and only used through explicit blockwise execution:
+NumPy is the stable backend. CuPy support is optional and used only through
+explicit supported blockwise paths:
 
 ```python
 result = compute_approximations(
@@ -397,14 +529,5 @@ result = compute_approximations(
 )
 ```
 
-Regardless of the backend, public outputs remain NumPy arrays for compatibility with scientific Python and scikit-learn-style workflows. See [Backends](backends.md) for the detailed model-specific backend contract.
-
-## Minimum public contract tests
-
-The repository should keep tests that verify:
-
-1. public imports work from `frsutils`,
-2. `compute_approximations` returns a named result object,
-3. `compute_positive_region` matches `compute_approximations(...).positive_region`,
-4. A precomputed similarity matrix can feed approximation helpers,
-5. downstream-style code can use only `frsutils` without importing internals.
+Public outputs remain NumPy arrays regardless of the internal backend. See
+[Backends](backends.md) for the model-specific backend contract.

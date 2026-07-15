@@ -14,11 +14,6 @@ from .approximations import (
     compute_upper_approximation,
 )
 
-from .config import (
-    apply_config_aliases,
-    extract_prefixed_params,
-    normalize_flat_config_to_nested,
-)
 from .results import FuzzyRoughApproximationResult
 from .scoring import FuzzyRoughPositiveRegionScorer
 from .models import (
@@ -54,7 +49,6 @@ __all__ = [
     "ITFRS",
     "OWAFRS",
     "VQRS",
-    "apply_config_aliases",
     "build_fuzzy_rough_model",
     "build_similarity_engine",
     "build_similarity_matrix",
@@ -64,9 +58,7 @@ __all__ = [
     "compute_lower_approximation",
     "compute_positive_region",
     "compute_upper_approximation",
-    "extract_prefixed_params",
     "get_fuzzy_rough_model_class",
     "list_fuzzy_rough_models",
     "list_similarities",
-    "normalize_flat_config_to_nested",
 ]

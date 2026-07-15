@@ -81,23 +81,16 @@ def test_approximation_wrappers_accept_precomputed_similarity_matrix(field, wrap
 
 
 @pytest.mark.parametrize("field,wrapper", WRAPPERS.items())
-def test_approximation_wrappers_forward_nested_config(field, wrapper):
-    """Wrappers preserve nested-config behavior from the full public API."""
+def test_approximation_wrappers_reject_nested_config(field, wrapper):
+    """Convenience wrappers preserve the flat-only public config contract."""
     nested_config = {
         "similarity": {"name": "linear", "params": {}},
         "similarity_tnorm": {"name": "minimum", "params": {}},
-        "fr_model": {
-            "type": "vqrs",
-            "lb_fuzzy_quantifier": {"name": "linear", "params": {"alpha": 0.0, "beta": 0.7}},
-            "ub_fuzzy_quantifier": {"name": "linear", "params": {"alpha": 0.0, "beta": 1.0}},
-        },
+        "fr_model": {"type": "vqrs"},
     }
-    result = compute_approximations(X_WRAPPER, Y_WRAPPER, model="vqrs", config=nested_config)
 
-    values = wrapper(X_WRAPPER, Y_WRAPPER, model="vqrs", config=nested_config)
-
-    assert isinstance(values, np.ndarray)
-    np.testing.assert_allclose(values, getattr(result, field))
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        wrapper(X_WRAPPER, Y_WRAPPER, model="vqrs", config=nested_config)
 
 
 @pytest.mark.parametrize("field,wrapper", WRAPPERS.items())

@@ -161,7 +161,7 @@ def test_compute_approximations_rejects_unknown_blockwise_backend():
         )
 
 
-def test_compute_approximations_rejects_nested_config_with_extra_flat_kwargs():
+def test_compute_approximations_rejects_nested_config():
     nested_config = {
         "similarity": {"name": "linear", "params": {}},
         "fr_model": {
@@ -171,7 +171,7 @@ def test_compute_approximations_rejects_nested_config_with_extra_flat_kwargs():
         },
     }
 
-    with pytest.raises(ValueError, match="Do not mix nested config"):
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
         compute_approximations(
             X_SMALL,
             Y_SMALL,

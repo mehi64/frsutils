@@ -11,7 +11,7 @@ This page is the user-facing source of truth for:
 - registered aliases,
 - component-specific parameters,
 - model-specific configuration,
-- flat and nested configuration rules.
+- flat-only public configuration and validation rules.
 
 ## The naming rule
 
@@ -343,12 +343,53 @@ on this page. `extra_params` remains available for contract-defined flat
 parameters that are not represented explicitly by a scorer release; unknown or
 misspelled parameters are still rejected during computation.
 
-## Passing a flat config dictionary
+## Public API scopes
 
-The same names can be stored in a dictionary and passed through `config`:
+The flat naming rule is shared across public endpoints, but each endpoint accepts
+only parameters it can actually consume. This prevents irrelevant settings from
+being silently ignored.
+
+| Public endpoint | Accepted configuration scope |
+| --- | --- |
+| `compute_approximations` and approximation wrappers | similarity components plus components used by the selected fuzzy-rough model |
+| `build_similarity_matrix` | similarity and similarity T-norm only |
+| `build_similarity_engine` | similarity and similarity T-norm only |
+| `build_fuzzy_rough_model` | components used by the selected fuzzy-rough model only |
+| `FuzzyRoughPositiveRegionScorer` | approximation configuration through explicit constructor parameters or `extra_params` |
+
+Execution controls such as `engine`, `block_size`, `backend`,
+`return_similarity_matrix`, and `similarity_matrix` are named API arguments. They
+are not flat component-configuration keys.
+
+For example, this is rejected because a similarity builder cannot consume an
+ITFRS upper T-norm setting:
+
+```python
+build_similarity_matrix(
+    X,
+    similarity="linear",
+    ub_tnorm_name="minimum",
+)
+```
+
+Likewise, this is rejected because ITFRS does not use OWA components:
+
+```python
+compute_approximations(
+    X,
+    y,
+    model="itfrs",
+    ub_owa_method_name="exponential",
+)
+```
+
+## Flat config dictionaries and precedence
+
+The same canonical names can be passed through a flat `config` mapping:
 
 ```python
 config = {
+    "type": "itfrs",
     "similarity": "gaussian",
     "similarity_sigma": 0.5,
     "similarity_tnorm": "minimum",
@@ -356,73 +397,81 @@ config = {
     "lb_implicator_name": "lukasiewicz",
 }
 
-result = compute_approximations(
+result = compute_approximations(X, y, config=config)
+```
+
+For ordinary component values, additional flat keyword arguments override values
+from `config`. The named `similarity` argument also acts as an explicit similarity
+selection.
+
+Model selection is deliberately stricter. The model can be supplied through the
+`model`/`model_type` argument or the flat `type` key. Explicit model sources must
+agree:
+
+```python
+compute_approximations(
     X,
     y,
-    model="itfrs",
-    config=config,
+    model="vqrs",
+    config={"type": "itfrs"},
 )
 ```
 
-Flat keyword arguments override values from a flat `config` mapping.
+This raises `ValueError` instead of silently choosing one model. When no model
+source is supplied, the public default is `"itfrs"`.
 
-## Nested configuration for advanced use
+## Nested configuration is internal
 
-Internally, flat configuration is normalized into component specifications of
-the form:
+FRsutils internally normalizes flat parameters into component specifications such
+as:
 
 ```python
 {"name": "yager", "params": {"p": 2.5}}
 ```
 
-Advanced users and downstream packages may pass a nested configuration directly:
+That nested representation is an implementation detail and is **not accepted at
+the public API boundary**. For example, this is rejected:
 
 ```python
 config = {
-    "similarity": {
-        "name": "gaussian",
-        "params": {"sigma": 0.5},
-    },
-    "similarity_tnorm": {
-        "name": "minimum",
-        "params": {},
-    },
+    "similarity": {"name": "gaussian", "params": {"sigma": 0.5}},
     "fr_model": {
-        "type": "owafrs",
-        "ub_tnorm": {
-            "name": "minimum",
-            "params": {},
-        },
-        "lb_implicator": {
-            "name": "lukasiewicz",
-            "params": {},
-        },
-        "ub_owa_method": {
-            "name": "exponential",
-            "params": {"base": 2.5},
-        },
-        "lb_owa_method": {
-            "name": "harmonic",
-            "params": {},
-        },
+        "type": "itfrs",
+        "ub_tnorm": {"name": "minimum", "params": {}},
+        "lb_implicator": {"name": "lukasiewicz", "params": {}},
     },
 }
 
-result = compute_approximations(
-    X,
-    y,
-    model="owafrs",
-    config=config,
-)
+compute_approximations(X, y, config=config)
 ```
 
-Do not mix nested configuration with extra flat component keyword parameters in
-the same `compute_approximations`, `build_similarity_matrix`, or
-`build_similarity_engine` call. A nested configuration is authoritative.
+Keep public research configuration flat. This gives all public endpoints one
+searchable naming contract, enables alias-specific typo validation, and avoids
+exposing internal construction structure as a compatibility promise.
 
-For ordinary research code, prefer flat configuration. Nested configuration is
-mainly useful for serialization, advanced composition, and downstream package
-integration.
+## Precomputed similarity matrices
+
+A precomputed `similarity_matrix` can be supplied to dense approximation
+execution. Because FRsutils did not construct that matrix, similarity provenance is
+unknown unless it is tracked by the caller. Therefore similarity configuration must
+not be supplied in the same call:
+
+```python
+S = build_similarity_matrix(X, similarity="gaussian", similarity_sigma=0.5)
+
+result = compute_approximations(
+    None,
+    y,
+    model="itfrs",
+    similarity_matrix=S,
+)
+
+assert result.similarity is None
+```
+
+Passing `similarity`, `similarity_sigma`, `similarity_tnorm`, or other
+`similarity_*` settings together with `similarity_matrix` is rejected because those
+settings would not be used.
 
 ## Validation and typo protection
 

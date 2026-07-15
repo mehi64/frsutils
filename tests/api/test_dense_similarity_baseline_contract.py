@@ -2,8 +2,10 @@
 """Baseline tests for the dense similarity-matrix contract."""
 
 import numpy as np
+import pytest
 
-from frsutils import build_similarity_matrix, normalize_flat_config_to_nested
+from frsutils import build_similarity_matrix
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from tests import reference_data_store as ds
 
 
@@ -69,8 +71,8 @@ def test_dense_gaussian_similarity_baseline_exact_one_feature():
     np.testing.assert_allclose(np.diag(sim), np.ones(X_ONE_FEATURE.shape[0]))
 
 
-def test_dense_similarity_nested_config_matches_flat_config():
-    """Normalized nested config must produce the same dense matrix as flat params."""
+def test_dense_similarity_rejects_internal_nested_config():
+    """Dense public similarity construction accepts flat configuration only."""
     flat_config = {
         "type": "itfrs",
         "similarity": "linear",
@@ -80,10 +82,8 @@ def test_dense_similarity_nested_config_matches_flat_config():
     }
     nested_config = normalize_flat_config_to_nested(flat_config)
 
-    flat_sim = build_similarity_matrix(X_TWO_FEATURES, **flat_config)
-    nested_sim = build_similarity_matrix(X_TWO_FEATURES, config=nested_config)
-
-    np.testing.assert_allclose(nested_sim, flat_sim, atol=1e-12)
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        build_similarity_matrix(X_TWO_FEATURES, config=nested_config)
 
 
 def test_dense_similarity_does_not_mutate_input_matrix():

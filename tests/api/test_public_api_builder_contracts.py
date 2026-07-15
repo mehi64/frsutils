@@ -10,13 +10,13 @@ from frsutils import (
     build_similarity_matrix,
     list_fuzzy_rough_models,
     list_similarities,
-    normalize_flat_config_to_nested,
 )
 
 from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from frsutils.core.implicators import Implicator
 from frsutils.core.owa_weights import OWAWeights
 from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 X_SMALL = np.array(
@@ -46,9 +46,9 @@ def test_public_similarity_builder_accepts_flat_config():
     assert np.all(sim <= 1.0)
 
 
-def test_public_similarity_builder_accepts_nested_config():
-    """Downstream packages can reuse normalized nested config."""
-    config = normalize_flat_config_to_nested(
+def test_public_similarity_builder_rejects_internal_nested_config():
+    """The public similarity builder accepts flat configuration only."""
+    nested_config = normalize_flat_config_to_nested(
         {
             "type": "itfrs",
             "similarity": "linear",
@@ -58,10 +58,8 @@ def test_public_similarity_builder_accepts_nested_config():
         }
     )
 
-    flat_sim = build_similarity_matrix(X_SMALL, similarity="linear")
-    nested_sim = build_similarity_matrix(X_SMALL, config=config)
-
-    np.testing.assert_allclose(flat_sim, nested_sim)
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        build_similarity_matrix(X_SMALL, config=nested_config)
 
 
 def test_public_model_builder_accepts_type_from_flat_config():
@@ -79,44 +77,27 @@ def test_public_model_builder_accepts_type_from_flat_config():
     assert model.positive_region().shape == (len(Y_SMALL),)
 
 
-def test_public_model_builder_accepts_nested_config_with_extra_flat_kwargs():
-    """Mixed nested config plus flat runtime kwargs supports frsampling's bridge."""
-    config = normalize_flat_config_to_nested(
-        {
-            "type": "itfrs",
-            "similarity": "linear",
-            "similarity_tnorm": "minimum",
-            "ub_tnorm_name": "minimum",
-            "lb_implicator_name": "lukasiewicz",
-        }
-    )
-    sim = build_similarity_matrix(X_SMALL, config=config)
+def test_public_model_builder_rejects_oversampler_parameters():
+    """Model construction rejects unrelated oversampling configuration."""
+    sim = build_similarity_matrix(X_SMALL, similarity="linear")
 
-    model = build_fuzzy_rough_model(
-        similarity_matrix=sim,
-        labels=Y_SMALL,
-        config=config,
-        type="itfrs",
-        k_neighbors=3,
-        sampling_strategy="auto",
-    )
-
-    assert isinstance(model, FuzzyRoughModel)
-    assert model.lower_approximation().shape == (len(Y_SMALL),)
+    with pytest.raises(ValueError, match="k_neighbors"):
+        build_fuzzy_rough_model(
+            similarity_matrix=sim,
+            labels=Y_SMALL,
+            type="itfrs",
+            k_neighbors=3,
+        )
 
 
 def test_public_model_builder_rejects_conflicting_model_types():
     """Public boundary fails fast when explicit and config model types conflict."""
-    config = normalize_flat_config_to_nested(
-        {
-            "type": "itfrs",
-            "similarity": "linear",
-            "similarity_tnorm": "minimum",
-            "ub_tnorm_name": "minimum",
-            "lb_implicator_name": "lukasiewicz",
-        }
-    )
-    sim = build_similarity_matrix(X_SMALL, config=config)
+    config = {
+        "type": "itfrs",
+        "ub_tnorm_name": "minimum",
+        "lb_implicator_name": "lukasiewicz",
+    }
+    sim = build_similarity_matrix(X_SMALL, similarity="linear")
 
     with pytest.raises(ValueError, match="Conflicting fuzzy-rough model types"):
         build_fuzzy_rough_model(
@@ -181,19 +162,17 @@ def test_public_model_builder_supports_each_model_from_flat_config(model_type):
 
 
 @pytest.mark.parametrize("model_type", ["itfrs", "vqrs", "owafrs"])
-def test_public_model_builder_supports_each_model_from_nested_config(model_type):
-    """Nested configs produced by the public normalizer work for all models."""
+def test_public_model_builder_rejects_nested_config_for_each_model(model_type):
+    """Normalized nested config is internal for every public model builder call."""
     sim = build_similarity_matrix(X_SMALL, similarity="linear")
     nested_config = normalize_flat_config_to_nested(MODEL_FLAT_CONFIGS[model_type])
 
-    model = build_fuzzy_rough_model(
-        similarity_matrix=sim,
-        labels=Y_SMALL,
-        config=nested_config,
-    )
-
-    assert isinstance(model, FuzzyRoughModel)
-    assert model.lower_approximation().shape == (len(Y_SMALL),)
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        build_fuzzy_rough_model(
+            similarity_matrix=sim,
+            labels=Y_SMALL,
+            config=nested_config,
+        )
 
 
 @pytest.mark.parametrize("model_type", ["itfrs", "vqrs", "owafrs"])
@@ -278,21 +257,15 @@ def test_public_model_builder_accepts_serialized_component_specs():
     assert owafrs.upper_approximation().shape == (len(Y_SMALL),)
 
 
-def test_public_model_builder_does_not_mutate_config():
-    """The public builder must not rewrite caller-owned config dictionaries."""
+def test_public_model_builder_does_not_mutate_flat_config():
+    """The public builder does not rewrite caller-owned flat config mappings."""
     sim = build_similarity_matrix(X_SMALL, similarity="linear")
-    config = normalize_flat_config_to_nested(MODEL_FLAT_CONFIGS["vqrs"])
-    original = {
-        "fr_type": config["fr_model"]["type"],
-        "lb_name": config["fr_model"]["lb_fuzzy_quantifier"]["name"],
-        "ub_name": config["fr_model"]["ub_fuzzy_quantifier"]["name"],
-    }
+    config = dict(MODEL_FLAT_CONFIGS["vqrs"])
+    original = dict(config)
 
     build_fuzzy_rough_model(similarity_matrix=sim, labels=Y_SMALL, config=config)
 
-    assert config["fr_model"]["type"] == original["fr_type"]
-    assert config["fr_model"]["lb_fuzzy_quantifier"]["name"] == original["lb_name"]
-    assert config["fr_model"]["ub_fuzzy_quantifier"]["name"] == original["ub_name"]
+    assert config == original
 
 
 def test_public_model_builder_rejects_unknown_model_alias():

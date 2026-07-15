@@ -13,7 +13,7 @@ import numpy as np
 
 @dataclass(frozen=True)
 class FuzzyRoughApproximationResult:
-    """Immutable public result object for fuzzy-rough approximations.
+    """Frozen public result container for fuzzy-rough approximations.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ class FuzzyRoughApproximationResult:
         Optional pairwise similarity matrix. It is omitted by default from
         ``as_dict`` to avoid unexpectedly serializing large matrices.
     config : dict or None, default=None
-        Optional effective flat or nested configuration snapshot.
+        Optional effective flat public configuration snapshot.
     engine : {"dense", "blockwise"}, default="dense"
         Canonical execution engine used by ``compute_approximations``.
     backend : str, default="numpy"

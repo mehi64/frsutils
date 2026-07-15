@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 
@@ -125,6 +125,62 @@ def run_approximation_example() -> np.ndarray:
     return blockwise.positive_region
 
 
+def run_model_examples() -> Dict[str, np.ndarray]:
+    """Run representative ITFRS, OWAFRS, and VQRS public API calls.
+
+    Returns
+    -------
+    scores_by_model : dict of str to ndarray
+        Positive-region scores produced by each public model alias.
+    """
+    X, y = make_demo_dataset()
+    results = {
+        "itfrs": compute_approximations(
+            X,
+            y,
+            model="itfrs",
+            similarity="gaussian",
+            similarity_sigma=0.4,
+            similarity_tnorm="yager",
+            similarity_tnorm_p=2.0,
+            ub_tnorm_name="yager",
+            ub_tnorm_p=1.7,
+            lb_implicator_name="goguen",
+        ),
+        "owafrs": compute_approximations(
+            X,
+            y,
+            model="owafrs",
+            similarity="linear",
+            ub_tnorm_name="minimum",
+            lb_implicator_name="lukasiewicz",
+            ub_owa_method_name="exponential",
+            ub_owa_method_base=2.5,
+            lb_owa_method_name="harmonic",
+        ),
+        "vqrs": compute_approximations(
+            X,
+            y,
+            model="vqrs",
+            similarity="linear",
+            lb_fuzzy_quantifier_name="linear",
+            lb_fuzzy_quantifier_alpha=0.0,
+            lb_fuzzy_quantifier_beta=0.5,
+            ub_fuzzy_quantifier_name="quadratic",
+            ub_fuzzy_quantifier_alpha=0.1,
+            ub_fuzzy_quantifier_beta=0.8,
+        ),
+    }
+    scores_by_model = {
+        model: result.positive_region for model, result in results.items()
+    }
+
+    print("Model configuration examples")
+    for model, scores in scores_by_model.items():
+        print(f"  {model}: {_format_array(scores)}")
+    return scores_by_model
+
+
 def run_scorer_example() -> np.ndarray:
     """Compute positive-region scores with the sklearn-style scorer.
 
@@ -156,6 +212,7 @@ def main() -> int:
     """
     print("frsutils public API quickstart")
     run_approximation_example()
+    run_model_examples()
     run_scorer_example()
     return 0
 

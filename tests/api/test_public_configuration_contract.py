@@ -3,10 +3,14 @@
 
 import numpy as np
 import pytest
+
+import frsutils
 from sklearn.base import clone
 
 from frsutils import (
     FuzzyRoughPositiveRegionScorer,
+    build_fuzzy_rough_model,
+    build_similarity_engine,
     build_similarity_matrix,
     compute_approximations,
 )
@@ -147,3 +151,60 @@ def test_scorer_exposes_parameterized_component_contract_to_sklearn():
     assert params["similarity_tnorm_p"] == 2.5
     assert params["ub_tnorm_p"] == 1.7
     assert cloned.fit_score(X_SMALL, Y_SMALL).shape == (len(Y_SMALL),)
+
+@pytest.mark.parametrize(
+    "bad_param",
+    [
+        {"k_neighbors": 3},
+        {"sampling_strategy": "auto"},
+        {"bias_interpolation": True},
+    ],
+)
+def test_approximation_api_rejects_oversampler_only_parameters(bad_param):
+    """Approximation endpoints do not silently accept oversampler settings."""
+    with pytest.raises(ValueError, match=next(iter(bad_param))):
+        compute_approximations(X_SMALL, Y_SMALL, **bad_param)
+
+
+@pytest.mark.parametrize(
+    "builder",
+    [
+        lambda: build_similarity_matrix(X_SMALL, ub_tnorm_name="minimum"),
+        lambda: build_similarity_engine(
+            X_SMALL,
+            engine="dense",
+            lb_implicator_name="lukasiewicz",
+        ),
+    ],
+)
+def test_similarity_endpoints_reject_model_parameters(builder):
+    """Similarity-only endpoints reject fuzzy-rough model configuration."""
+    with pytest.raises(ValueError, match="not accepted by the similarity public API"):
+        builder()
+
+
+def test_model_builder_rejects_similarity_parameters():
+    """Model-only construction rejects similarity configuration it cannot consume."""
+    similarity_matrix = build_similarity_matrix(X_SMALL)
+
+    with pytest.raises(ValueError, match="not accepted by the model public API"):
+        build_fuzzy_rough_model(
+            similarity_matrix=similarity_matrix,
+            labels=Y_SMALL,
+            type="itfrs",
+            similarity="gaussian",
+        )
+
+
+def test_internal_config_helpers_are_not_exported_from_public_facades():
+    """Nested-config implementation helpers stay outside stable public facades."""
+    internal_names = {
+        "apply_config_aliases",
+        "extract_prefixed_params",
+        "normalize_flat_config_to_nested",
+    }
+
+    for name in internal_names:
+        assert not hasattr(frsutils, name)
+        assert not hasattr(frsutils.api, name)
+

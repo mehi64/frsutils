@@ -13,11 +13,11 @@ from frsutils import (
     DenseSimilarityEngine,
     build_similarity_engine,
     build_similarity_matrix,
-    normalize_flat_config_to_nested,
 )
 from frsutils.core.similarity_engine import calculate_similarity_block
 from frsutils.core.similarities import Similarity
 from frsutils.core.tnorms import TNorm
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
 
 
@@ -78,7 +78,7 @@ def test_public_build_similarity_matrix_supports_flat_config_mapping_with_kwargs
     assert config == {"similarity": "linear", "similarity_tnorm": "minimum"}
 
 
-def test_public_build_similarity_matrix_rejects_nested_config_mixed_with_flat_kwargs():
+def test_public_build_similarity_matrix_rejects_nested_config():
     nested_config = normalize_flat_config_to_nested(
         {"similarity": "linear", "similarity_tnorm": "minimum"}
     )
@@ -232,34 +232,30 @@ def test_blockwise_similarity_engine_reconstructs_dense_matrix_from_public_block
     np.testing.assert_allclose(reconstructed, expected, atol=1e-12)
 
 
-def test_similarity_engine_nested_config_matches_flat_config():
-    flat_config = {
-        "type": "itfrs",
-        "similarity": "linear",
-        "similarity_tnorm": "minimum",
-        "ub_tnorm_name": "minimum",
-        "lb_implicator_name": "lukasiewicz",
-    }
-    nested_config = normalize_flat_config_to_nested(flat_config)
-
-    flat_engine = build_similarity_engine(X_ENGINE, engine="blockwise", block_size=2, **flat_config)
-    nested_engine = build_similarity_engine(X_ENGINE, engine="blockwise", block_size=2, config=nested_config)
-
-    np.testing.assert_allclose(nested_engine.to_dense(), flat_engine.to_dense(), atol=1e-12)
+def test_similarity_engine_rejects_model_configuration_parameters():
+    """Similarity endpoints reject fuzzy-rough model configuration parameters."""
+    with pytest.raises(ValueError, match="ub_tnorm_name"):
+        build_similarity_engine(
+            X_ENGINE,
+            engine="blockwise",
+            block_size=2,
+            similarity="linear",
+            ub_tnorm_name="minimum",
+        )
 
 
-def test_similarity_engine_rejects_nested_config_mixed_with_extra_flat_kwargs():
+def test_similarity_engine_rejects_nested_config():
+    """Similarity engines accept the documented flat public contract only."""
     nested_config = normalize_flat_config_to_nested(
         {"similarity": "linear", "similarity_tnorm": "minimum"}
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
         build_similarity_engine(
             X_ENGINE,
             engine="blockwise",
             block_size=2,
             config=nested_config,
-            similarity="gaussian",
         )
 
 
