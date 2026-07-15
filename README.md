@@ -169,12 +169,12 @@ so local code changes are immediately visible without reinstalling the package.
 
 Available optional dependency groups are:
 
-| Extra | Purpose |
-| --- | --- |
-| `dev` | Tests and development utilities |
-| `docs` | MkDocs documentation build |
-| `study` | Reproducible reference-study dependencies |
-| `gpu-cuda12x` | Optional CuPy/CUDA 12 backend |
+| Extra         | Purpose                                   |
+| ------------- | ----------------------------------------- |
+| `dev`         | Tests and development utilities           |
+| `docs`        | MkDocs documentation build                |
+| `study`       | Reproducible reference-study dependencies |
+| `gpu-cuda12x` | Optional CuPy/CUDA 12 backend             |
 
 For GPU development, install the CUDA extra together with the development
 extras:
@@ -315,11 +315,11 @@ Concept notes are kept separate for review and maintenance:
 - [T-norms](docs/concepts/tnorms_info.md)
 - [Implicators](docs/concepts/implicators_info.md)
 - [OWA weights](docs/concepts/owa_weights_info.md)
+- [Fuzzy quantifiers](docs/concepts/fuzzy_quantifiers_info.md)
 
 ## Execution modes and backends
 
-`frsutils` supports dense and exact blockwise execution through the public API.
-Dense NumPy is the stable reference path. Blockwise execution can reduce memory pressure by avoiding materialization of a full `n x n` similarity matrix.
+`frsutils` supports **dense** and exact **blockwise** execution through the public API. Dense execution processes the full data at once, while blockwise execution splits the computation into smaller exact chunks to reduce memory usage without changing the result. Dense NumPy is the stable reference path. Blockwise execution can reduce memory pressure by avoiding materialization of a full `n x n` similarity matrix.
 
 ```python
 from frsutils import compute_approximations
@@ -335,27 +335,11 @@ result = compute_approximations(
 )
 ```
 
-CuPy is optional and currently limited to selected backend-aware computation paths. The stable default backend is NumPy. Public result arrays are always NumPy arrays, even when a CuPy-backed blockwise path is used internally. See [backends and execution behavior](docs/user/backends.md) for the precise backend
-claim boundaries.
+When CuPy is available, `frsutils` can use GPU acceleration for supported computations to improve execution performance on compatible hardware. CuPy is optional and currently limited to selected backend-aware computation paths. The stable default backend is NumPy. Public result arrays are always NumPy arrays, even when a CuPy-backed blockwise path is used internally. See [backends and execution behavior](docs/user/backends.md) for the precise backend claim boundaries.
 
 ## Benchmarking
 
-The repository includes a benchmark harness for dense NumPy, blockwise NumPy, and optional CuPy-backed blockwise execution:
-
-```bash
-python benchmarks/benchmark_fuzzy_rough_execution.py \
-    --models itfrs,vqrs,owafrs \
-    --sample-sizes 128,256,512 \
-    --n-features 8 \
-    --block-sizes 64,128 \
-    --scenarios dense_numpy,blockwise_numpy,blockwise_cupy \
-    --repeats 3 \
-    --output-json benchmark_results.json \
-    --output-csv benchmark_results.csv
-```
-
-See the [benchmark guide](docs/user/benchmarks.md) for larger synthetic runs,
-paired NumPy/CuPy comparisons, and interpretation rules.
+The repository includes a benchmark harness for dense NumPy, blockwise NumPy, and optional CuPy-backed blockwise execution. See the [benchmark guide](docs/user/benchmarks.md) for larger synthetic runs, paired NumPy/CuPy comparisons, and interpretation rules.
 
 ## Reproducible reference study
 
@@ -370,15 +354,12 @@ After installing the developer environment with the `study` extra, run:
 python studies/fuzzy_rough_reference_study/run_study.py
 ```
 
-The study uses public scikit-learn datasets and does not depend on FRSMOTE or
-any unpublished downstream code. See the
-[reference-study documentation](studies/fuzzy_rough_reference_study/README.md)
+See the [reference-study documentation](studies/fuzzy_rough_reference_study/README.md)
 and the [committed result snapshot](studies/fuzzy_rough_reference_study/results/README.md).
 
 ## Project boundary
 
-`frsutils` is the fuzzy-rough core library. This keeps `frsutils` focused on reusable fuzzy-rough computations that can be
-used by multiple research and application packages.
+`frsutils` is the fuzzy-rough core library. This keeps `frsutils` focused on reusable fuzzy-rough computations that can be used by multiple research and application packages.
 
 ## Documentation
 
@@ -428,8 +409,8 @@ Run slow model-combination tests only when needed:
 python -m pytest tests/models_tests -m slow -o addopts="" -q
 ```
 
-Before tagging or submitting to JOSS, run the automated validator and follow
-the maintainer guides:
+<mark>Before tagging or submitting to JOSS, run the automated validator and follow
+the maintainer guides:</mark>
 
 ```bash
 python scripts/validate_joss_submission.py
