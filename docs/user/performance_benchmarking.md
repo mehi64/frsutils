@@ -1,4 +1,4 @@
-# Benchmark suite
+# Performance Benchmarking suite
 
 This document describes the reproducible benchmark suite for the dense, blockwise, and
 optional CuPy execution paths exposed through the public `frsutils` namespace.
@@ -9,19 +9,18 @@ manual timing.
 ## Added artifact
 
 ```text
-benchmarks/benchmark_fuzzy_rough_execution.py
+frsutils/benchmarks/benchmark_fuzzy_rough_execution.py
 ```
 
 The benchmark script compares:
 
-| Scenario | Meaning |
-|---|---|
-| `dense_numpy` | Historical dense NumPy full-matrix approximation path. |
-| `blockwise_numpy` | Exact blockwise NumPy approximation path. |
-| `blockwise_cupy` | Optional CuPy-backed blockwise path. For ITFRS/VQRS this may use GPU-resident approximation accumulators; for OWAFRS it remains non-GPU-resident by the OWAFRS non-GPU-resident decision. |
+| Scenario          | Meaning                                                                                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dense_numpy`     | Historical dense NumPy full-matrix approximation path.                                                                                                                                    |
+| `blockwise_numpy` | Exact blockwise NumPy approximation path.                                                                                                                                                 |
+| `blockwise_cupy`  | Optional CuPy-backed blockwise path. For ITFRS/VQRS this may use GPU-resident approximation accumulators; for OWAFRS it remains non-GPU-resident by the OWAFRS non-GPU-resident decision. |
 
-The script writes machine-readable JSON and CSV reports. These reports are the
-preferred source for later paper tables, plots, and release notes.
+The script writes machine-readable JSON and CSV reports.
 
 ## Synthetic dataset size control
 
@@ -191,7 +190,7 @@ or GPU memory tooling.
 
 ## Expected interpretation
 
-The benchmark suite supports these paper-safe comparisons:
+The benchmark suite supports these comparisons:
 
 ```text
 dense NumPy

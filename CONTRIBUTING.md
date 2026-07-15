@@ -17,16 +17,7 @@ behavior, and a stable public API for researchers and downstream packages.
 
 ## Development setup
 
-Use Python 3.10 or newer. From a source checkout:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows Git Bash: source .venv/Scripts/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev,docs]"
-```
-
-Run the default test suite:
+Use Python 3.10 or newer. install package. Run the default test suite:
 
 ```bash
 python -m pytest tests -ra
@@ -71,7 +62,6 @@ should include:
 
 Do not make performance, GPU-residency, numerical-equivalence, or scalability
 claims that are not covered by tests or reproducible benchmarks.
-
 
 ## Scientific reference data
 

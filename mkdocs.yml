@@ -15,7 +15,7 @@ nav:
   - User guide:
       - Public API: user/public_api.md
       - Backends and execution: user/backends.md
-      - Benchmarks: user/benchmarks.md
+      - Benchmarks: user/performance_benchmarking.md
       - Reproducible reference study: user/reference_study.md
       - Glossary: user/glossary.md
   - Scientific concepts:
@@ -26,6 +26,7 @@ nav:
       - T-norms: concepts/tnorms_info.md
       - Implicators: concepts/implicators_info.md
       - OWA weights: concepts/owa_weights_info.md
+      - Fuzzy Quantifiers: concepts/fuzzy_quantifiers_info.md
   - Maintainer guide:
       - Release and JOSS validation: developer/release.md
       - Final JOSS submission checklist: developer/joss_submission_checklist.md

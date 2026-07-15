@@ -1,19 +1,17 @@
 # Backends and execution behavior
 
-This page merges the previous CuPy, backend-status, backend-aware-component, and
-GPU decision notes into one active backend document. Terms such as dense execution, blockwise execution, backend,
-and public output are defined in the [glossary](glossary.md).
+This page describes the possible backends in frsutils. Terms such as dense execution, blockwise execution, backend, and public output are defined in the [glossary](glossary.md).
 
 ## Execution modes
 
 FRsutils exposes execution modes through the canonical public API,
 `frsutils.compute_approximations`.
 
-| Execution mode | User-facing option | Intended use |
-| --- | --- | --- |
-| Dense NumPy | `engine="dense"` | Reference behavior and small datasets. |
-| Exact blockwise NumPy | `engine="blockwise", backend="numpy"` | In-memory datasets where the full similarity matrix should not be materialized. |
-| Optional CuPy blockwise | `engine="blockwise", backend="cupy"` | GPU-backed blockwise execution for supported paths. |
+| Execution mode          | User-facing option                    | Intended use                                                                    |
+| ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------- |
+| Dense NumPy             | `engine="dense"`                      | Reference behavior and small datasets.                                          |
+| Exact blockwise NumPy   | `engine="blockwise", backend="numpy"` | In-memory datasets where the full similarity matrix should not be materialized. |
+| Optional CuPy blockwise | `engine="blockwise", backend="cupy"`  | GPU-backed blockwise execution for supported paths.                             |
 
 The public output type is stable across all modes: approximation arrays are
 returned as NumPy arrays.
@@ -63,20 +61,20 @@ The core package does not install CuPy or CUDA dependencies.
 The real-CUDA numerical tests for the 0.1.0 release candidate were executed in
 the following environment:
 
-| Component | Validated value |
-| --- | --- |
-| Operating system | Ubuntu 24.04.4 LTS |
-| Linux kernel | 6.8.0-111-generic |
-| GPU | NVIDIA GeForce GTX 1050 Mobile, 4 GiB |
-| GPU compute capability | 6.1 |
-| NVIDIA driver | 535.309.01 |
-| Driver-reported CUDA capability | CUDA 12.2 |
-| System CUDA Toolkit | CUDA 12.0 |
-| Python | 3.11.6 |
-| NumPy | 2.3.5 |
-| CuPy | 14.1.1 |
-| CUDA runtime header wheel | `nvidia-cuda-runtime-cu12` 12.0.146 |
-| CUDA path discovery | `cuda-pathfinder` 1.5.6 |
+| Component                       | Validated value                       |
+| ------------------------------- | ------------------------------------- |
+| Operating system                | Ubuntu 24.04.4 LTS                    |
+| Linux kernel                    | 6.8.0-111-generic                     |
+| GPU                             | NVIDIA GeForce GTX 1050 Mobile, 4 GiB |
+| GPU compute capability          | 6.1                                   |
+| NVIDIA driver                   | 535.309.01                            |
+| Driver-reported CUDA capability | CUDA 12.2                             |
+| System CUDA Toolkit             | CUDA 12.0                             |
+| Python                          | 3.11.6                                |
+| NumPy                           | 2.3.5                                 |
+| CuPy                            | 14.1.1                                |
+| CUDA runtime header wheel       | `nvidia-cuda-runtime-cu12` 12.0.146   |
+| CUDA path discovery             | `cuda-pathfinder` 1.5.6               |
 
 This table records one successfully tested configuration. It is not an
 exhaustive compatibility matrix, and these exact versions are not mandatory for
@@ -125,11 +123,11 @@ python -c "import cupy as cp; x = cp.arange(10, dtype=cp.float32); print(cp.asnu
 
 ## Model-specific backend status
 
-| Model | Dense NumPy | Exact blockwise NumPy | CuPy-backed similarity blocks | GPU-resident approximation accumulators |
-| --- | --- | --- | --- | --- |
-| ITFRS | Yes | Yes | Yes | Yes, experimental |
-| VQRS | Yes | Yes | Yes | Yes, experimental |
-| OWAFRS | Yes | Yes | Yes | No |
+| Model  | Dense NumPy | Exact blockwise NumPy | CuPy-backed similarity blocks | GPU-resident approximation accumulators |
+| ------ | ----------- | --------------------- | ----------------------------- | --------------------------------------- |
+| ITFRS  | Yes         | Yes                   | Yes                           | Yes, experimental                       |
+| VQRS   | Yes         | Yes                   | Yes                           | Yes, experimental                       |
+| OWAFRS | Yes         | Yes                   | Yes                           | No                                      |
 
 ## Public result contract
 
@@ -210,30 +208,19 @@ OWAFRS supports dense NumPy and exact blockwise execution. With
 `backend="cupy"`, similarity blocks can be computed using CuPy, but exact OWA
 sorting and aggregation remain on a NumPy-compatible row-buffer path.
 
-This is intentional for the current JOSS/release cycle. Exact OWAFRS requires
-collecting values for each row, sorting them, and applying OWA weights. Making
-that path fully GPU-resident would require a separate design and benchmark pass
-for row-wise buffering, sorting, memory layout, and numerical equivalence.
-
-Safe OWAFRS claim:
+This is intentional for the current release cycle. 
 
 > OWAFRS supports dense NumPy and exact blockwise execution. With
 > `backend="cupy"`, similarity blocks can be computed using the CuPy backend,
-> but OWAFRS aggregation does not currently claim GPU-resident approximation
-> accumulators. Public outputs remain NumPy arrays.
+> but OWAFRS aggregation are not currently GPU-resident approximation
+> accumulators. Public outputs remain NumPy arrays. So OWAFRS is partially GPU-native and does not guarantee speedup with CuPy.
 
-Do not claim:
 
-- full GPU-native OWAFRS,
-- GPU-resident OWAFRS OWA aggregation,
-- guaranteed speedup for OWAFRS with CuPy.
 
 ## Backend-aware components
 
-Backend-specific mathematical formulas should live in the core fuzzy-rough
-components, not as mirrored formulas inside the similarity engine.
-
-Implemented component-level backend hooks include:
+Backend-specific mathematical formulas live in the core fuzzy-rough
+components. Implemented component-level backend hooks include:
 
 - `Similarity.compute_backend(diff, xp=...)`
 - `TNorm.compute_backend(a, b, xp=...)`
@@ -242,9 +229,9 @@ Implemented component-level backend hooks include:
 - `FuzzyQuantifier.compute_backend(x, xp=..., validate_inputs=...)`
 
 Existing ordinary calls such as `similarity(x, y)`, `tnorm(a, b)`,
-`implicator(a, b)`, and `quantifier(x)` should remain NumPy-compatible.
+`implicator(a, b)`, and `quantifier(x)` remain NumPy-compatible.
 
-The engine should delegate formula execution back to the component:
+The engine delegates formula execution back to the component:
 
 ```python
 feature_sim = similarity_func.compute_backend(diff, xp=backend.xp)
@@ -289,35 +276,6 @@ Fuzzy quantifiers:
 - `linear`
 - `quadratic`
 
-## Recommended wording
 
-Safe wording for documentation, benchmark reports, and the JOSS paper:
 
-> FRsutils provides dense NumPy and exact blockwise fuzzy-rough approximation
-> APIs. Optional CuPy-backed blockwise execution is available for similarity
-> blocks, with experimental GPU-resident approximation accumulators for ITFRS
-> and VQRS. Public outputs remain NumPy arrays. OWAFRS uses GPU-backed
-> similarity blocks only and does not currently claim GPU-resident OWA
-> aggregation.
-
-Avoid these claims unless future tests and benchmarks support them:
-
-- “FRsutils is fully GPU-native.”
-- “All fuzzy-rough models run fully on the GPU.”
-- “CuPy always improves performance.”
-- “OWAFRS aggregation is GPU-resident.”
-
-## Backend tests
-
-Core backend and GPU-boundary tests include:
-
-```bash
-python -m pytest tests/api/test_backend_aware_components_contract.py -q -rs
-python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
-python -m pytest tests/api/test_itfrs_blockwise_cupy_contract.py -q -rs
-python -m pytest tests/api/test_vqrs_blockwise_cupy_contract.py -q -rs
-python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
-```
-
-The fake-CuPy contract tests should run in CPU-only CI. Optional real-CuPy/CUDA
-numerical tests should run only when a compatible GPU environment is available.
+# 
