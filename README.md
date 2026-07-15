@@ -339,7 +339,7 @@ When CuPy is available, `frsutils` can use GPU acceleration for supported comput
 
 ## Benchmarking
 
-The repository includes a benchmark harness for dense NumPy, blockwise NumPy, and optional CuPy-backed blockwise execution. See the [benchmark guide](docs/user/benchmarks.md) for larger synthetic runs, paired NumPy/CuPy comparisons, and interpretation rules.
+The repository includes a benchmark harness for dense NumPy, blockwise NumPy, and optional CuPy-backed blockwise execution. See the [performance benchmarking guide](docs/user/performance_benchmarking.md) for larger synthetic runs, paired NumPy/CuPy comparisons, and interpretation rules.
 
 ## Reproducible reference study
 
