@@ -6,7 +6,8 @@ This module belongs to the stable public API layer.
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Optional
+from copy import deepcopy
+from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
@@ -23,6 +24,8 @@ from frsutils.core.similarity_engine import (
     build_similarity_components as _core_build_similarity_components,
     build_similarity_engine as _core_build_similarity_engine,
 )
+
+from .config import apply_config_aliases, validate_flat_public_config
 
 def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     """Convert and validate a public feature-matrix input.
@@ -49,6 +52,65 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     if X_array.ndim != 2:
         raise ValueError("X must be a 2D array-like feature matrix.")
     return X_array
+
+def _is_nested_similarity_config(config: Mapping[str, Any]) -> bool:
+    """Return True when a mapping contains nested similarity sections."""
+    return isinstance(config.get("similarity"), Mapping) or isinstance(
+        config.get("similarity_tnorm"), Mapping
+    )
+
+
+def _prepare_public_similarity_config(
+    config: Optional[Mapping[str, Any]],
+    flat_config: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return validated similarity config with stable public defaults.
+
+    Parameters
+    ----------
+    config : Mapping or None
+        Optional flat or nested configuration mapping.
+    flat_config : Mapping[str, Any]
+        Additional flat public configuration values.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Flat or nested configuration with ``linear`` similarity and ``minimum``
+        similarity T-norm defaults filled when omitted.
+
+    Raises
+    ------
+    ValueError
+        If nested configuration is mixed with flat keyword parameters.
+    """
+    if config is not None and _is_nested_similarity_config(config):
+        if flat_config:
+            raise ValueError("Do not mix nested config with extra flat keyword parameters.")
+        nested = deepcopy(dict(config))
+        nested.setdefault("similarity", {})
+        nested.setdefault("similarity_tnorm", {})
+        nested["similarity"].setdefault("name", "linear")
+        nested["similarity"].setdefault("params", {})
+        nested["similarity_tnorm"].setdefault("name", "minimum")
+        nested["similarity_tnorm"].setdefault("params", {})
+        return nested
+
+    explicit = dict(config or {})
+    explicit.update(dict(flat_config))
+    explicit_keys = set(explicit)
+    apply_config_aliases(explicit, explicit_keys=explicit_keys)
+    if "sigma" in explicit and "similarity_sigma" not in explicit:
+        explicit["similarity_sigma"] = explicit["sigma"]
+    validate_flat_public_config(explicit)
+
+    effective: Dict[str, Any] = {
+        "similarity": "linear",
+        "similarity_tnorm": "minimum",
+    }
+    effective.update(explicit)
+    return effective
+
 
 def list_similarities():
     """List registered public similarity aliases.
@@ -116,11 +178,15 @@ def build_similarity_matrix(
         raise TypeError("config must be a mapping when provided.")
 
     X_array = _as_2d_feature_matrix(X)
-    config_dict = dict(config) if config is not None else None
-    similarity_func, tnorm_func, _ = _core_build_similarity_components(
-        config=config_dict,
-        **flat_config,
-    )
+    effective_config = _prepare_public_similarity_config(config, flat_config)
+    if _is_nested_similarity_config(effective_config):
+        similarity_func, tnorm_func, _ = _core_build_similarity_components(
+            config=effective_config,
+        )
+    else:
+        similarity_func, tnorm_func, _ = _core_build_similarity_components(
+            **effective_config,
+        )
     return _core_calculate_similarity_matrix(X_array, similarity_func, tnorm_func)
 
 def build_similarity_engine(
@@ -170,14 +236,21 @@ def build_similarity_engine(
         raise TypeError("config must be a mapping when provided.")
 
     X_array = _as_2d_feature_matrix(X)
-    config_dict = dict(config) if config is not None else None
+    effective_config = _prepare_public_similarity_config(config, flat_config)
+    if _is_nested_similarity_config(effective_config):
+        return _core_build_similarity_engine(
+            X_array,
+            engine=engine,
+            block_size=block_size,
+            config=effective_config,
+            backend=backend,
+        )
     return _core_build_similarity_engine(
         X_array,
         engine=engine,
         block_size=block_size,
-        config=config_dict,
         backend=backend,
-        **flat_config,
+        **effective_config,
     )
 
 __all__ = [

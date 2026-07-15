@@ -307,8 +307,10 @@ Main user-facing entry points include:
 - `FuzzyRoughPositiveRegionScorer`
 
 See the [public API guide](docs/user/public_api.md) for the full public boundary
-and downstream-package contract. Common terms are defined in the
-[glossary](docs/user/glossary.md).
+and downstream-package contract. Component selectors, accepted aliases,
+parameter prefixes, and model-specific options are documented in the
+[public configuration contract](docs/user/configuration.md). Common terms are
+defined in the [glossary](docs/user/glossary.md).
 
 ## Supported fuzzy-rough models
 

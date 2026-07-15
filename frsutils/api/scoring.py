@@ -31,6 +31,32 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         ``"owafrs"``.
     similarity : str or None, default=None
         Similarity alias used when constructing a similarity matrix from ``X``.
+    similarity_sigma : float or None, default=None
+        Gaussian similarity ``sigma`` routed by the flat configuration contract.
+    similarity_tnorm : str or None, default=None
+        T-norm alias used to aggregate feature-level similarities.
+    similarity_tnorm_p : float or None, default=None
+        Yager similarity T-norm ``p`` parameter.
+    ub_tnorm_name : str or None, default=None
+        Upper T-norm alias for ITFRS or OWAFRS.
+    ub_tnorm_p : float or None, default=None
+        Yager upper T-norm ``p`` parameter.
+    lb_implicator_name : str or None, default=None
+        Lower implicator alias for ITFRS or OWAFRS.
+    ub_owa_method_name, lb_owa_method_name : str or None, default=None
+        Upper and lower OWA weighting aliases for OWAFRS.
+    ub_owa_method_base, lb_owa_method_base : float or None, default=None
+        Exponential OWA ``base`` parameters for OWAFRS.
+    lb_fuzzy_quantifier_name, ub_fuzzy_quantifier_name : str or None, default=None
+        Lower and upper fuzzy quantifier aliases for VQRS.
+    lb_fuzzy_quantifier_alpha, lb_fuzzy_quantifier_beta : float or None, default=None
+        Lower VQRS fuzzy quantifier parameters.
+    ub_fuzzy_quantifier_alpha, ub_fuzzy_quantifier_beta : float or None, default=None
+        Upper VQRS fuzzy quantifier parameters.
+    lb_fuzzy_quantifier_validate_inputs : bool or None, default=None
+        Optional lower fuzzy quantifier input-validation flag.
+    ub_fuzzy_quantifier_validate_inputs : bool or None, default=None
+        Optional upper fuzzy quantifier input-validation flag.
     similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
         Optional precomputed similarity matrix.
     config : Mapping or None, default=None
@@ -42,8 +68,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     backend : str, default="numpy"
         Backend alias for blockwise similarity-block execution.
     extra_params : Mapping or None, default=None
-        Optional flat parameters not represented by explicit constructor
-        arguments.
+        Optional contract-defined flat parameters not represented by explicit
+        constructor arguments.
     """
 
     def __init__(
@@ -52,7 +78,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         similarity: Optional[str] = None,
         similarity_sigma: Optional[float] = None,
         similarity_tnorm: Optional[str] = None,
+        similarity_tnorm_p: Optional[float] = None,
         ub_tnorm_name: Optional[str] = None,
+        ub_tnorm_p: Optional[float] = None,
         lb_implicator_name: Optional[str] = None,
         ub_owa_method_name: Optional[str] = None,
         lb_owa_method_name: Optional[str] = None,
@@ -64,6 +92,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         lb_fuzzy_quantifier_beta: Optional[float] = None,
         ub_fuzzy_quantifier_alpha: Optional[float] = None,
         ub_fuzzy_quantifier_beta: Optional[float] = None,
+        lb_fuzzy_quantifier_validate_inputs: Optional[bool] = None,
+        ub_fuzzy_quantifier_validate_inputs: Optional[bool] = None,
         similarity_matrix: Optional[np.ndarray] = None,
         config: Optional[Mapping[str, Any]] = None,
         return_similarity_matrix: bool = False,
@@ -77,7 +107,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.similarity = similarity
         self.similarity_sigma = similarity_sigma
         self.similarity_tnorm = similarity_tnorm
+        self.similarity_tnorm_p = similarity_tnorm_p
         self.ub_tnorm_name = ub_tnorm_name
+        self.ub_tnorm_p = ub_tnorm_p
         self.lb_implicator_name = lb_implicator_name
         self.ub_owa_method_name = ub_owa_method_name
         self.lb_owa_method_name = lb_owa_method_name
@@ -89,6 +121,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.lb_fuzzy_quantifier_beta = lb_fuzzy_quantifier_beta
         self.ub_fuzzy_quantifier_alpha = ub_fuzzy_quantifier_alpha
         self.ub_fuzzy_quantifier_beta = ub_fuzzy_quantifier_beta
+        self.lb_fuzzy_quantifier_validate_inputs = lb_fuzzy_quantifier_validate_inputs
+        self.ub_fuzzy_quantifier_validate_inputs = ub_fuzzy_quantifier_validate_inputs
         self.similarity_matrix = similarity_matrix
         self.config = config
         self.return_similarity_matrix = return_similarity_matrix
@@ -102,7 +136,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         params: Dict[str, Any] = {
             "similarity_sigma": self.similarity_sigma,
             "similarity_tnorm": self.similarity_tnorm,
+            "similarity_tnorm_p": self.similarity_tnorm_p,
             "ub_tnorm_name": self.ub_tnorm_name,
+            "ub_tnorm_p": self.ub_tnorm_p,
             "lb_implicator_name": self.lb_implicator_name,
             "ub_owa_method_name": self.ub_owa_method_name,
             "lb_owa_method_name": self.lb_owa_method_name,
@@ -114,6 +150,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
             "lb_fuzzy_quantifier_beta": self.lb_fuzzy_quantifier_beta,
             "ub_fuzzy_quantifier_alpha": self.ub_fuzzy_quantifier_alpha,
             "ub_fuzzy_quantifier_beta": self.ub_fuzzy_quantifier_beta,
+            "lb_fuzzy_quantifier_validate_inputs": self.lb_fuzzy_quantifier_validate_inputs,
+            "ub_fuzzy_quantifier_validate_inputs": self.ub_fuzzy_quantifier_validate_inputs,
         }
         if self.extra_params is not None:
             if not isinstance(self.extra_params, Mapping):

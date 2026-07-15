@@ -13,6 +13,7 @@ from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
+from .config import apply_config_aliases, validate_flat_public_config
 from .models import build_fuzzy_rough_model
 from .results import FuzzyRoughApproximationResult
 from .similarity import build_similarity_engine, build_similarity_matrix
@@ -22,23 +23,30 @@ from frsutils.core.approximation_engines import (
     compute_vqrs_blockwise,
 )
 
-_DEFAULT_MODEL_CONFIG: Dict[str, Any] = {
-    "type": "itfrs",
+_DEFAULT_BASE_CONFIG: Dict[str, Any] = {
     "similarity": "linear",
     "similarity_tnorm": "minimum",
-    "ub_tnorm_name": "minimum",
-    "ub_tnorm_p": 2.0,
-    "lb_implicator_name": "lukasiewicz",
-    "ub_owa_method_name": "linear",
-    "lb_owa_method_name": "linear",
-    "ub_owa_method_base": 2.0,
-    "lb_owa_method_base": 2.0,
-    "lb_fuzzy_quantifier_name": "linear",
-    "ub_fuzzy_quantifier_name": "linear",
-    "lb_fuzzy_quantifier_alpha": 0.1,
-    "lb_fuzzy_quantifier_beta": 0.6,
-    "ub_fuzzy_quantifier_alpha": 0.1,
-    "ub_fuzzy_quantifier_beta": 0.6,
+}
+
+_DEFAULT_MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
+    "itfrs": {
+        "ub_tnorm_name": "minimum",
+        "lb_implicator_name": "lukasiewicz",
+    },
+    "owafrs": {
+        "ub_tnorm_name": "minimum",
+        "lb_implicator_name": "lukasiewicz",
+        "ub_owa_method_name": "linear",
+        "lb_owa_method_name": "linear",
+    },
+    "vqrs": {
+        "lb_fuzzy_quantifier_name": "linear",
+        "ub_fuzzy_quantifier_name": "linear",
+        "lb_fuzzy_quantifier_alpha": 0.1,
+        "lb_fuzzy_quantifier_beta": 0.6,
+        "ub_fuzzy_quantifier_alpha": 0.1,
+        "ub_fuzzy_quantifier_beta": 0.6,
+    },
 }
 
 def _as_public_labels(y: Any) -> np.ndarray:
@@ -154,7 +162,8 @@ def _default_flat_config(model: str, similarity: Optional[str]) -> Dict[str, Any
     Dict[str, Any]
         Flat configuration dictionary with safe defaults.
     """
-    cfg = dict(_DEFAULT_MODEL_CONFIG)
+    cfg = dict(_DEFAULT_BASE_CONFIG)
+    cfg.update(_DEFAULT_MODEL_CONFIGS.get(model, {}))
     cfg["type"] = model
     if similarity is not None:
         cfg["similarity"] = similarity
@@ -189,12 +198,21 @@ def _default_nested_config(model: str, similarity: Optional[str], config: Mappin
 
     fr_cfg = nested["fr_model"]
     fr_cfg.setdefault("type", model)
-    fr_cfg.setdefault("ub_tnorm", {"name": "minimum", "params": {}})
-    fr_cfg.setdefault("lb_implicator", {"name": "lukasiewicz", "params": {}})
-    fr_cfg.setdefault("ub_owa_method", {"name": "linear", "params": {"base": 2.0}})
-    fr_cfg.setdefault("lb_owa_method", {"name": "linear", "params": {"base": 2.0}})
-    fr_cfg.setdefault("lb_fuzzy_quantifier", {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}})
-    fr_cfg.setdefault("ub_fuzzy_quantifier", {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}})
+    if model in {"itfrs", "owafrs"}:
+        fr_cfg.setdefault("ub_tnorm", {"name": "minimum", "params": {}})
+        fr_cfg.setdefault("lb_implicator", {"name": "lukasiewicz", "params": {}})
+    if model == "owafrs":
+        fr_cfg.setdefault("ub_owa_method", {"name": "linear", "params": {}})
+        fr_cfg.setdefault("lb_owa_method", {"name": "linear", "params": {}})
+    if model == "vqrs":
+        fr_cfg.setdefault(
+            "lb_fuzzy_quantifier",
+            {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}},
+        )
+        fr_cfg.setdefault(
+            "ub_fuzzy_quantifier",
+            {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}},
+        )
     return nested
 
 def _prepare_effective_config(
@@ -233,10 +251,16 @@ def _prepare_effective_config(
             raise ValueError("Do not mix nested config with extra flat keyword parameters.")
         return nested
 
+    explicit_flat: Dict[str, Any] = dict(config or {})
+    explicit_flat.update(dict(flat_config))
+    if similarity is not None:
+        explicit_flat["similarity"] = similarity
+    explicit_keys = set(explicit_flat)
+    apply_config_aliases(explicit_flat, explicit_keys=explicit_keys)
+    validate_flat_public_config(explicit_flat, model=model)
+
     effective = _default_flat_config(model, similarity)
-    if config is not None:
-        effective.update(dict(config))
-    effective.update(dict(flat_config))
+    effective.update(explicit_flat)
     effective["type"] = model
     if similarity is not None:
         effective["similarity"] = similarity

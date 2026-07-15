@@ -11,6 +11,8 @@ benchmark guidance, and the scientific definitions implemented by the library.
 
 - [Public API](user/public_api.md): canonical imports, task-level APIs, result
   objects, scorer usage, and downstream-package boundaries.
+- [Public configuration contract](user/configuration.md): selectors, naming
+  prefixes, registered aliases, component parameters, and model-specific usage.
 - [Backends](user/backends.md): dense, blockwise, NumPy/CuPy behavior, backend
   metadata, and model-specific GPU claim boundaries.
 - [Performance Benchmarking](user/performance_benchmarking.md): benchmark commands, recorded fields, paired

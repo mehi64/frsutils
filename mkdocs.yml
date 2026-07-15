@@ -14,6 +14,7 @@ nav:
   - Home: index.md
   - User guide:
       - Public API: user/public_api.md
+      - Configuration: user/configuration.md
       - Backends and execution: user/backends.md
       - Benchmarks: user/performance_benchmarking.md
       - Reproducible reference study: user/reference_study.md

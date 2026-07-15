@@ -19,6 +19,8 @@ from frsutils.core.models.owafrs import OWAFRS
 from frsutils.core.models.vqrs import VQRS
 from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
+from .config import validate_flat_public_config
+
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
     """Return True when config already looks like frsutils internal nested config.
 
@@ -244,6 +246,10 @@ def build_fuzzy_rough_model(
         external_config=external_config,
         nested_config=nested_config,
     )
+    if config is not None and _is_nested_frs_config(config):
+        validate_flat_public_config(flat_config, model=resolved_type)
+    else:
+        validate_flat_public_config(external_config, model=resolved_type)
     model_cls = get_fuzzy_rough_model_class(resolved_type)
 
     # Keep the original flat/mixed config for backwards-compatible `from_config`
