@@ -229,6 +229,18 @@ artifact checks. Detailed test and release procedures remain in
 [`tests/test_procedures.md`](tests/test_procedures.md) and
 [`docs/developer/release.md`](docs/developer/release.md).
 
+
+
+## Installing pytest to run tests
+
+The `dev` dependency group includes `pytest` and the test-related dependencies
+used by FRsutils:
+
+```bash
+python -m pip install pytest
+
+```
+
 ## Quick start
 
 Use the package root as the canonical public API:
@@ -295,8 +307,10 @@ Main user-facing entry points include:
 - `FuzzyRoughPositiveRegionScorer`
 
 See the [public API guide](docs/user/public_api.md) for the full public boundary
-and downstream-package contract. Common terms are defined in the
-[glossary](docs/user/glossary.md).
+and downstream-package contract. Component selectors, accepted aliases,
+parameter prefixes, and model-specific options are documented in the
+[public configuration contract](docs/user/configuration.md). Common terms are
+defined in the [glossary](docs/user/glossary.md).
 
 ## Supported fuzzy-rough models
 

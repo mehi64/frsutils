@@ -8,11 +8,16 @@ even when optional backend-aware blockwise internals use CuPy.
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
+from .config import (
+    build_default_flat_config,
+    prepare_flat_public_config,
+    resolve_public_model_type,
+    select_flat_public_config,
+)
 from .models import build_fuzzy_rough_model
 from .results import FuzzyRoughApproximationResult
 from .similarity import build_similarity_engine, build_similarity_matrix
@@ -21,25 +26,6 @@ from frsutils.core.approximation_engines import (
     compute_owafrs_blockwise,
     compute_vqrs_blockwise,
 )
-
-_DEFAULT_MODEL_CONFIG: Dict[str, Any] = {
-    "type": "itfrs",
-    "similarity": "linear",
-    "similarity_tnorm": "minimum",
-    "ub_tnorm_name": "minimum",
-    "ub_tnorm_p": 2.0,
-    "lb_implicator_name": "lukasiewicz",
-    "ub_owa_method_name": "linear",
-    "lb_owa_method_name": "linear",
-    "ub_owa_method_base": 2.0,
-    "lb_owa_method_base": 2.0,
-    "lb_fuzzy_quantifier_name": "linear",
-    "ub_fuzzy_quantifier_name": "linear",
-    "lb_fuzzy_quantifier_alpha": 0.1,
-    "lb_fuzzy_quantifier_beta": 0.6,
-    "ub_fuzzy_quantifier_alpha": 0.1,
-    "ub_fuzzy_quantifier_beta": 0.6,
-}
 
 def _as_public_labels(y: Any) -> np.ndarray:
     """Return public labels as a validated one-dimensional NumPy array.
@@ -124,79 +110,6 @@ def _as_validated_similarity_matrix(
         raise ValueError("similarity_matrix size must match the length of y.")
     return sim
 
-def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config looks like frsutils internal nested config.
-
-    Parameters
-    ----------
-    config : Mapping[str, Any]
-        Candidate config mapping.
-
-    Returns
-    -------
-    bool
-        True if fuzzy-rough nested sections are present.
-    """
-    return isinstance(config.get("fr_model"), Mapping) or isinstance(config.get("similarity"), Mapping)
-
-def _default_flat_config(model: str, similarity: Optional[str]) -> Dict[str, Any]:
-    """Build default flat config for public approximation APIs.
-
-    Parameters
-    ----------
-    model : str
-        Public fuzzy-rough model alias.
-    similarity : Optional[str]
-        Optional public similarity alias.
-
-    Returns
-    -------
-    Dict[str, Any]
-        Flat configuration dictionary with safe defaults.
-    """
-    cfg = dict(_DEFAULT_MODEL_CONFIG)
-    cfg["type"] = model
-    if similarity is not None:
-        cfg["similarity"] = similarity
-    return cfg
-
-def _default_nested_config(model: str, similarity: Optional[str], config: Mapping[str, Any]) -> Dict[str, Any]:
-    """Fill missing required pieces in a nested config without overwriting explicit values.
-
-    Parameters
-    ----------
-    model : str
-        Public fuzzy-rough model alias.
-    similarity : Optional[str]
-        Optional public similarity alias.
-    config : Mapping[str, Any]
-        User-provided nested config.
-
-    Returns
-    -------
-    Dict[str, Any]
-        Defensive copy with minimal defaults filled in.
-    """
-    nested = deepcopy(dict(config))
-    nested.setdefault("similarity", {})
-    nested.setdefault("similarity_tnorm", {})
-    nested.setdefault("fr_model", {})
-
-    nested["similarity"].setdefault("name", similarity or "linear")
-    nested["similarity"].setdefault("params", {})
-    nested["similarity_tnorm"].setdefault("name", "minimum")
-    nested["similarity_tnorm"].setdefault("params", {})
-
-    fr_cfg = nested["fr_model"]
-    fr_cfg.setdefault("type", model)
-    fr_cfg.setdefault("ub_tnorm", {"name": "minimum", "params": {}})
-    fr_cfg.setdefault("lb_implicator", {"name": "lukasiewicz", "params": {}})
-    fr_cfg.setdefault("ub_owa_method", {"name": "linear", "params": {"base": 2.0}})
-    fr_cfg.setdefault("lb_owa_method", {"name": "linear", "params": {"base": 2.0}})
-    fr_cfg.setdefault("lb_fuzzy_quantifier", {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}})
-    fr_cfg.setdefault("ub_fuzzy_quantifier", {"name": "linear", "params": {"alpha": 0.1, "beta": 0.6}})
-    return nested
-
 def _prepare_effective_config(
     *,
     model: str,
@@ -204,43 +117,52 @@ def _prepare_effective_config(
     config: Optional[Mapping[str, Any]],
     flat_config: Mapping[str, Any],
 ) -> Dict[str, Any]:
-    """Merge user config with public defaults for approximation computation.
+    """Merge flat public config with authoritative approximation defaults.
 
     Parameters
     ----------
     model : str
-        Public fuzzy-rough model alias.
-    similarity : Optional[str]
-        Optional public similarity alias.
-    config : Optional[Mapping[str, Any]]
-        Optional flat or nested config mapping.
+        Resolved fuzzy-rough model alias.
+    similarity : str or None
+        Optional explicit public similarity alias.
+    config : Mapping[str, Any] or None
+        Optional flat public approximation configuration mapping.
     flat_config : Mapping[str, Any]
-        Additional flat kwargs.
+        Additional flat public keyword parameters.
 
     Returns
     -------
     Dict[str, Any]
-        Effective flat or nested config.
+        Canonical effective flat approximation configuration.
+
+    Raises
+    ------
+    TypeError
+        If ``config`` is not mapping-like.
+    ValueError
+        If nested, unknown, out-of-scope, or model-incompatible parameters are
+        supplied.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
 
-    if config is not None and _is_nested_frs_config(config):
-        nested = _default_nested_config(model, similarity, config)
-        # Flat kwargs are intentionally not merged into nested config because a
-        # nested config should be authoritative at the public API boundary.
-        if flat_config:
-            raise ValueError("Do not mix nested config with extra flat keyword parameters.")
-        return nested
+    explicit_flat: Dict[str, Any] = dict(config or {})
+    explicit_flat.update(dict(flat_config))
+    if similarity is not None:
+        explicit_flat["similarity"] = similarity
+    explicit_flat = prepare_flat_public_config(
+        explicit_flat,
+        model=model,
+        scope="approximation",
+    )
 
-    effective = _default_flat_config(model, similarity)
-    if config is not None:
-        effective.update(dict(config))
-    effective.update(dict(flat_config))
+    effective = build_default_flat_config(model, similarity)
+    effective.update(explicit_flat)
     effective["type"] = model
     if similarity is not None:
         effective["similarity"] = similarity
     return effective
+
 
 def _normalize_execution_engine(engine: str) -> str:
     """Normalize the approximation execution-engine alias.
@@ -272,23 +194,42 @@ def _normalize_execution_engine(engine: str) -> str:
         return "blockwise"
     raise ValueError("Unknown approximation engine. Use engine='dense' or engine='blockwise'.")
 
-def _similarity_name_from_config(effective_config: Mapping[str, Any]) -> Optional[str]:
-    """Extract a public similarity name from flat or nested effective config.
+def _similarity_name_from_config(
+    effective_config: Mapping[str, Any],
+) -> Optional[str]:
+    """Return the similarity alias from effective flat configuration."""
+    similarity_name = effective_config.get("similarity")
+    return similarity_name if isinstance(similarity_name, str) else None
 
-    Parameters
-    ----------
-    effective_config : Mapping[str, Any]
-        Effective approximation config.
 
-    Returns
-    -------
-    Optional[str]
-        Similarity alias when available.
-    """
-    similarity_cfg = effective_config.get("similarity")
-    if isinstance(similarity_cfg, Mapping):
-        return similarity_cfg.get("name")
-    return similarity_cfg
+def _explicit_similarity_config(
+    *,
+    similarity: Optional[str],
+    config: Optional[Mapping[str, Any]],
+    flat_config: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return explicitly supplied similarity parameters from public inputs."""
+    explicit_config: Dict[str, Any] = dict(config or {})
+    explicit_config.update(dict(flat_config))
+    if similarity is not None:
+        explicit_config["similarity"] = similarity
+    return select_flat_public_config(explicit_config, scope="similarity")
+
+
+def _without_similarity_config(
+    effective_config: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return an effective config snapshot without unused similarity settings."""
+    similarity_config = select_flat_public_config(
+        effective_config,
+        scope="similarity",
+    )
+    return {
+        key: value
+        for key, value in effective_config.items()
+        if key not in similarity_config
+    }
+
 
 def _compute_dense_approximations(
     *,
@@ -312,7 +253,7 @@ def _compute_dense_approximations(
     similarity_matrix : Optional[np.ndarray]
         Optional precomputed dense pairwise matrix.
     effective_config : Mapping[str, Any]
-        Flat or nested config snapshot.
+        Flat config snapshot.
     return_similarity_matrix : bool
         Whether to include the dense matrix in the result.
 
@@ -321,14 +262,20 @@ def _compute_dense_approximations(
     FuzzyRoughApproximationResult
         Public approximation result object.
     """
+    similarity_config = select_flat_public_config(
+        effective_config,
+        scope="similarity",
+    )
+    model_config = select_flat_public_config(
+        effective_config,
+        scope="model",
+    )
+
     sim = similarity_matrix
     if sim is None:
         if X is None:
             raise ValueError("X must be provided when similarity_matrix is not supplied.")
-        if _is_nested_frs_config(effective_config):
-            sim = build_similarity_matrix(np.asarray(X), config=effective_config)
-        else:
-            sim = build_similarity_matrix(np.asarray(X), **effective_config)
+        sim = build_similarity_matrix(np.asarray(X), **similarity_config)
     else:
         sim = np.asarray(similarity_matrix)
 
@@ -336,13 +283,13 @@ def _compute_dense_approximations(
         model_alias,
         similarity_matrix=sim,
         labels=labels,
-        config=effective_config,
+        config=model_config,
     )
 
     lower = np.asarray(fr_model.lower_approximation())
     upper = np.asarray(fr_model.upper_approximation())
-    boundary = np.asarray(fr_model.boundary_region())
-    positive_region = np.asarray(fr_model.positive_region())
+    boundary = upper - lower
+    positive_region = lower.copy()
 
     return FuzzyRoughApproximationResult(
         lower=lower,
@@ -385,7 +332,7 @@ def _compute_blockwise_approximations(
     similarity_matrix : Optional[np.ndarray]
         Must be None for blockwise execution.
     effective_config : Mapping[str, Any]
-        Flat or nested config snapshot.
+        Flat config snapshot.
     return_similarity_matrix : bool
         Whether to materialize and return the matrix for inspection.
     block_size : int
@@ -407,22 +354,17 @@ def _compute_blockwise_approximations(
     if X is None:
         raise ValueError("X must be provided when engine='blockwise'.")
 
-    if _is_nested_frs_config(effective_config):
-        similarity_engine = build_similarity_engine(
-            np.asarray(X),
-            engine="blockwise",
-            block_size=block_size,
-            config=effective_config,
-            backend=backend,
-        )
-    else:
-        similarity_engine = build_similarity_engine(
-            np.asarray(X),
-            engine="blockwise",
-            block_size=block_size,
-            backend=backend,
-            **effective_config,
-        )
+    similarity_config = select_flat_public_config(
+        effective_config,
+        scope="similarity",
+    )
+    similarity_engine = build_similarity_engine(
+        np.asarray(X),
+        engine="blockwise",
+        block_size=block_size,
+        backend=backend,
+        **similarity_config,
+    )
 
     if model_alias == "itfrs":
         blockwise = compute_itfrs_blockwise(similarity_engine, labels, config=effective_config)
@@ -456,7 +398,7 @@ def compute_approximations(
     X: Optional[np.ndarray],
     y: np.ndarray,
     *,
-    model: str = "itfrs",
+    model: Optional[str] = None,
     similarity: Optional[str] = None,
     similarity_matrix: Optional[np.ndarray] = None,
     config: Optional[Mapping[str, Any]] = None,
@@ -479,53 +421,82 @@ def compute_approximations(
 
     Parameters
     ----------
-    X : Optional[np.ndarray]
-        Input feature matrix. Required unless similarity_matrix is provided.
-    y : np.ndarray
-        Label vector aligned with X and/or similarity_matrix.
-    model : str
-        Fuzzy-rough model alias, e.g. "itfrs", "owafrs", or "vqrs".
-    similarity : Optional[str]
+    X : ndarray of shape (n_samples, n_features) or None
+        Input feature matrix. Required unless ``similarity_matrix`` is provided.
+    y : array-like of shape (n_samples,)
+        Label vector aligned with ``X`` or ``similarity_matrix``.
+    model : str or None, default=None
+        Optional fuzzy-rough model alias. When omitted, the model is resolved
+        from config and otherwise defaults to "itfrs".
+    similarity : str or None, default=None
         Optional similarity alias for matrix construction.
-    similarity_matrix : Optional[np.ndarray]
+    similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
         Optional precomputed pairwise similarity matrix.
-    config : Optional[Mapping[str, Any]]
-        Optional flat or nested frsutils config mapping.
-    return_similarity_matrix : bool
+    config : Mapping[str, Any] or None, default=None
+        Optional flat public approximation configuration mapping.
+    return_similarity_matrix : bool, default=False
         If True, include the matrix in the result object.
-    engine : str
+    engine : {"dense", "blockwise"}, default="dense"
         Approximation execution engine, "dense" or "blockwise".
-    block_size : int
+    block_size : int, default=1024
         Positive block size used by engine="blockwise".
-    backend : str
+    backend : str, default="numpy"
         Array backend alias. Use "numpy"/"auto" or explicit optional "cupy".
     flat_config : Any
         Additional flat sklearn-style model/similarity parameters.
 
     Returns
     -------
-    FuzzyRoughApproximationResult
-        FuzzyRoughApproximationResult with named approximation arrays.
+    result : FuzzyRoughApproximationResult
+        Named approximation arrays and execution metadata.
 
     Raises
     ------
+    TypeError
+        If a public config mapping or selector has an invalid type.
     ValueError
-        If required matrix/X inputs are missing.
+        If inputs are misaligned, execution settings are incompatible, nested
+        config is supplied, or flat configuration is unknown or incompatible
+        with the selected model/component alias.
     """
-    if not isinstance(model, str) or not model.strip():
-        raise TypeError("model must be a non-empty string.")
-
-    model_alias = model.strip().lower()
+    model_alias = resolve_public_model_type(
+        model_type=model,
+        config=config,
+        flat_config=flat_config,
+    )
     labels = _as_public_labels(y)
     _validate_x_label_alignment(X, labels)
     validated_similarity_matrix = _as_validated_similarity_matrix(similarity_matrix, labels)
+    execution_engine = _normalize_execution_engine(engine)
+
+    if execution_engine == "blockwise" and validated_similarity_matrix is not None:
+        raise ValueError(
+            "engine='blockwise' requires X and does not accept precomputed "
+            "similarity_matrix."
+        )
+
+    if validated_similarity_matrix is not None:
+        explicit_similarity = _explicit_similarity_config(
+            similarity=similarity,
+            config=config,
+            flat_config=flat_config,
+        )
+        if explicit_similarity:
+            offending = sorted(explicit_similarity)[0]
+            raise ValueError(
+                f"Similarity parameter '{offending}' cannot be supplied with "
+                "a precomputed similarity_matrix because it would not be used."
+            )
+
     effective_config = _prepare_effective_config(
         model=model_alias,
         similarity=similarity,
         config=config,
         flat_config=flat_config,
     )
-    execution_engine = _normalize_execution_engine(engine)
+
+    if validated_similarity_matrix is not None:
+        effective_config = _without_similarity_config(effective_config)
 
     if execution_engine == "blockwise":
         return _compute_blockwise_approximations(

@@ -1,9 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Contract tests for the public positive-region scorer."""
 
+import logging
+
 import numpy as np
 import pytest
 from sklearn.base import clone
+
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from sklearn.exceptions import NotFittedError
 
 from frsutils import (
@@ -11,7 +15,6 @@ from frsutils import (
     FuzzyRoughPositiveRegionScorer,
     build_similarity_matrix,
     compute_positive_region,
-    normalize_flat_config_to_nested,
 )
 
 
@@ -178,8 +181,8 @@ def test_positive_region_scorer_forwards_blockwise_execution_options():
     assert scorer.result_.backend == "numpy"
 
 
-def test_positive_region_scorer_accepts_nested_config():
-    """Nested public configs can be used with the object-oriented scorer."""
+def test_positive_region_scorer_rejects_internal_nested_config():
+    """The object-oriented scorer follows the flat-only public config contract."""
     nested_config = normalize_flat_config_to_nested(
         {
             "type": "owafrs",
@@ -187,24 +190,24 @@ def test_positive_region_scorer_accepts_nested_config():
             **MODEL_SCORER_CONFIGS["owafrs"],
         }
     )
-    scorer = FuzzyRoughPositiveRegionScorer(model="owafrs", config=nested_config)
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model="owafrs",
+        config=nested_config,
+    )
 
-    scores = scorer.fit_score(X_SMALL, Y_SMALL)
-    expected = compute_positive_region(X_SMALL, Y_SMALL, model="owafrs", config=nested_config)
-
-    np.testing.assert_allclose(scores, expected)
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        scorer.fit_score(X_SMALL, Y_SMALL)
 
 
 def test_positive_region_scorer_accepts_extra_flat_params_mapping():
-    """Advanced flat params can be passed through extra_params."""
+    """Flat contract keys without constructor slots can use extra_params."""
     scorer = FuzzyRoughPositiveRegionScorer(
         model="owafrs",
         similarity="linear",
+        ub_owa_method_name="linear",
+        lb_owa_method_name="harmonic",
         extra_params={
-            "ub_tnorm_name": "minimum",
-            "lb_implicator_name": "lukasiewicz",
-            "ub_owa_method_name": "linear",
-            "lb_owa_method_name": "harmonic",
+            "logger": logging.getLogger("frsutils.scorer-contract-test"),
         },
     )
 

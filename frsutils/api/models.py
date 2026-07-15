@@ -19,26 +19,11 @@ from frsutils.core.models.owafrs import OWAFRS
 from frsutils.core.models.vqrs import VQRS
 from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
-def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
-    """Return True when config already looks like frsutils internal nested config.
-
-    Parameters
-    ----------
-    config : Mapping[str, Any]
-        Candidate configuration mapping.
-
-    Returns
-    -------
-    bool
-        True if the mapping contains nested fuzzy-rough config sections.
-    """
-    if isinstance(config.get("fr_model"), Mapping):
-        return True
-    if isinstance(config.get("similarity"), Mapping):
-        return True
-    if isinstance(config.get("similarity_tnorm"), Mapping):
-        return True
-    return False
+from .config import (
+    build_default_flat_config,
+    prepare_flat_public_config,
+    resolve_public_model_type,
+)
 
 def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
     """Convert and validate a public similarity-matrix input.
@@ -132,54 +117,6 @@ def list_fuzzy_rough_models() -> Dict[str, list[str]]:
     """
     return FuzzyRoughModel.list_available()
 
-def _resolve_model_type(
-    *,
-    model_type: Optional[str],
-    external_config: Mapping[str, Any],
-    nested_config: Mapping[str, Any],
-) -> str:
-    """Resolve the model alias from explicit, flat, or nested config sources.
-
-    Parameters
-    ----------
-    model_type : Optional[str]
-        Explicit model alias from the public positional/keyword arg.
-    external_config : Mapping[str, Any]
-        Flat-or-mixed public config snapshot.
-    nested_config : Mapping[str, Any]
-        Nested frsutils config snapshot.
-
-    Returns
-    -------
-    str
-        Normalized model alias.
-
-    Raises
-    ------
-    ValueError
-        If aliases conflict or no alias is available.
-    """
-    nested_type = None
-    fr_cfg = nested_config.get("fr_model", {}) if isinstance(nested_config, Mapping) else {}
-    if isinstance(fr_cfg, Mapping):
-        nested_type = fr_cfg.get("type")
-
-    flat_type = external_config.get("type")
-    candidates = [value for value in (model_type, nested_type, flat_type) if value is not None]
-    normalized = []
-    for value in candidates:
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError("A fuzzy-rough model type must be a non-empty string.")
-        normalized.append(value.strip().lower())
-
-    if not normalized:
-        raise ValueError("A fuzzy-rough model type must be provided via model_type or config['type'].")
-
-    if len(set(normalized)) > 1:
-        raise ValueError(f"Conflicting fuzzy-rough model types were provided: {sorted(set(normalized))}.")
-
-    return normalized[0]
-
 def build_fuzzy_rough_model(
     model_type: Optional[str] = None,
     *,
@@ -188,25 +125,26 @@ def build_fuzzy_rough_model(
     config: Optional[Mapping[str, Any]] = None,
     **flat_config: Any,
 ) -> FuzzyRoughModel:
-    """Build a registered fuzzy-rough model from flat or nested config.
+    """Build a registered fuzzy-rough model from flat public configuration.
 
-    This is the recommended public construction point for downstream packages.
-    It accepts:
-    - flat sklearn-style params, e.g. `type="itfrs"`, `ub_tnorm_name="minimum"`
-    - nested frsutils config, e.g. `{"fr_model": {"type": "itfrs", ...}}`
+    The model type is resolved from the explicit argument, then flat config, and
+    otherwise defaults to ITFRS. Conflicting explicit sources are rejected.
+    Normalized nested component configuration remains an internal frsutils
+    implementation detail.
 
     Parameters
     ----------
-    model_type : Optional[str]
-        Optional explicit model alias. Must agree with config when both are provided.
+    model_type : str or None, default=None
+        Optional explicit model alias. Must agree with ``type`` in flat config
+        when both are provided.
     similarity_matrix : Any
         Pairwise similarity matrix used by the model.
     labels : Any
         Label vector aligned with the similarity matrix.
-    config : Optional[Mapping[str, Any]]
-        Optional flat or nested configuration mapping.
+    config : Mapping[str, Any] or None, default=None
+        Optional flat public model configuration mapping.
     flat_config : Any
-        Additional flat configuration values.
+        Additional flat model configuration values.
 
     Returns
     -------
@@ -218,7 +156,8 @@ def build_fuzzy_rough_model(
     TypeError
         If config is not mapping-like.
     ValueError
-        If the model type or matrix/labels are invalid.
+        If nested config, an out-of-scope parameter, a conflicting model type,
+        or invalid matrix/labels are provided.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -226,31 +165,37 @@ def build_fuzzy_rough_model(
     sim = _as_similarity_matrix(similarity_matrix)
     labels_array = _as_labels(labels, expected_length=sim.shape[0])
 
+    resolved_type = resolve_public_model_type(
+        model_type=model_type,
+        config=config,
+        flat_config=flat_config,
+    )
+
     external_config: Dict[str, Any] = dict(config or {})
     external_config.update(flat_config)
-
-    if _is_nested_frs_config(external_config):
-        nested_config = dict(external_config)
-        fr_cfg = nested_config.get("fr_model", {})
-        if not isinstance(fr_cfg, Mapping):
-            raise TypeError("nested config section 'fr_model' must be a mapping.")
-    else:
-        if model_type is not None:
-            external_config["type"] = model_type
-        nested_config = normalize_flat_config_to_nested(external_config)
-
-    resolved_type = _resolve_model_type(
-        model_type=model_type,
-        external_config=external_config,
-        nested_config=nested_config,
+    explicit_config = prepare_flat_public_config(
+        external_config,
+        model=resolved_type,
+        scope="model",
     )
+
+    constructor_config = build_default_flat_config(resolved_type)
+    constructor_config = prepare_flat_public_config(
+        {
+            key: value
+            for key, value in constructor_config.items()
+            if key not in {"similarity", "similarity_tnorm"}
+        },
+        model=resolved_type,
+        scope="model",
+    )
+    constructor_config.update(explicit_config)
+    constructor_config["type"] = resolved_type
+    nested_config = normalize_flat_config_to_nested(constructor_config)
+
     model_cls = get_fuzzy_rough_model_class(resolved_type)
 
-    # Keep the original flat/mixed config for backwards-compatible `from_config`
-    # paths, and pass nested config through the private key already used
-    # internally by frsutils model constructors.
-    constructor_config = dict(external_config)
-    constructor_config["type"] = resolved_type
+    # Dense model constructors already consume this private normalized config.
     constructor_config["_nested_config"] = nested_config
 
     return model_cls.from_config(

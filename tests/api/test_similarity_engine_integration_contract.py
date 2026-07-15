@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-
 import numpy as np
 import pytest
 
@@ -15,8 +13,8 @@ from frsutils import (
     compute_lower_approximation,
     compute_positive_region,
     compute_upper_approximation,
-    normalize_flat_config_to_nested,
 )
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from tests._fake_cupy_backend import install_fake_cupy_module
 
 
@@ -91,21 +89,28 @@ def _without_model(flat_config):
     return model, config
 
 
-def _assert_mapping_subset(expected_subset, actual_mapping):
-    """Assert recursively that all expected mapping items appear in actual_mapping."""
-    for key, expected_value in expected_subset.items():
-        assert key in actual_mapping
-        actual_value = actual_mapping[key]
-        if isinstance(expected_value, dict):
-            assert isinstance(actual_value, dict)
-            _assert_mapping_subset(expected_value, actual_value)
-        else:
-            assert actual_value == expected_value
+def _similarity_only(flat_config):
+    """Return the similarity parameters consumed by similarity builders."""
+    return {
+        key: value
+        for key, value in flat_config.items()
+        if key == "similarity" or key.startswith("similarity_")
+    }
+
+
+def _without_similarity(flat_config):
+    """Return model parameters without unused similarity-construction settings."""
+    return {
+        key: value
+        for key, value in flat_config.items()
+        if key != "similarity" and not key.startswith("similarity_")
+    }
 
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 @pytest.mark.parametrize("block_size", [1, 2, 3, 20])
 def test_blockwise_public_approximations_match_dense_for_all_models_and_block_sizes(model_name, flat_config, block_size):
+    """Blockwise results should match dense results across supported models and block sizes."""
     model, kwargs = _without_model(flat_config)
 
     dense = compute_approximations(X_INTEGRATION, Y_INTEGRATION, model=model, engine="dense", **kwargs)
@@ -131,6 +136,7 @@ def test_blockwise_public_approximations_match_dense_for_all_models_and_block_si
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 @pytest.mark.parametrize("engine_alias", ["blockwise", "chunkwise", "blocked", " BLOCKWISE "])
 def test_blockwise_public_approximations_accept_engine_aliases_for_all_models(model_name, flat_config, engine_alias):
+    """Documented blockwise engine aliases should resolve consistently for every model."""
     model, kwargs = _without_model(flat_config)
 
     dense = compute_approximations(X_INTEGRATION, Y_INTEGRATION, model=model, engine="dense", **kwargs)
@@ -149,55 +155,54 @@ def test_blockwise_public_approximations_accept_engine_aliases_for_all_models(mo
 
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
-def test_blockwise_public_approximations_nested_config_matches_flat_config_for_all_models(model_name, flat_config):
+def test_blockwise_public_approximations_reject_nested_config_for_all_models(
+    model_name,
+    flat_config,
+):
+    """Blockwise approximation calls enforce the flat-only public contract."""
     model, kwargs = _without_model(flat_config)
     nested_config = normalize_flat_config_to_nested({"type": model, **kwargs})
 
-    flat = compute_approximations(
-        X_INTEGRATION,
-        Y_INTEGRATION,
-        model=model,
-        engine="blockwise",
-        block_size=2,
-        **kwargs,
-    )
-    nested = compute_approximations(
-        X_INTEGRATION,
-        Y_INTEGRATION,
-        model=model,
-        engine="blockwise",
-        block_size=2,
-        config=nested_config,
-    )
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
+        compute_approximations(
+            X_INTEGRATION,
+            Y_INTEGRATION,
+            model=model,
+            engine="blockwise",
+            block_size=2,
+            config=nested_config,
+        )
 
     assert model_name == model
-    _assert_approximation_results_match(nested, flat)
-    _assert_mapping_subset(nested_config, nested.config)
 
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
-def test_blockwise_public_approximations_do_not_mutate_nested_config_for_all_models(model_name, flat_config):
+def test_blockwise_public_approximations_do_not_mutate_flat_config_for_all_models(
+    model_name,
+    flat_config,
+):
+    """Blockwise orchestration does not rewrite caller-owned flat config."""
     model, kwargs = _without_model(flat_config)
-    nested_config = normalize_flat_config_to_nested({"type": model, **kwargs})
-    before = deepcopy(nested_config)
+    config = {"type": model, **kwargs}
+    before = dict(config)
 
     _ = compute_approximations(
         X_INTEGRATION,
         Y_INTEGRATION,
-        model=model,
         engine="blockwise",
         block_size=3,
-        config=nested_config,
+        config=config,
     )
 
     assert model_name == model
-    assert nested_config == before
+    assert config == before
 
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_blockwise_public_approximations_return_similarity_matrix_when_requested_for_all_models(model_name, flat_config):
+    """Blockwise execution should materialize the similarity matrix only when requested."""
     model, kwargs = _without_model(flat_config)
-    expected_matrix = build_similarity_matrix(X_INTEGRATION, **kwargs)
+    expected_matrix = build_similarity_matrix(X_INTEGRATION, **_similarity_only(kwargs))
 
     result = compute_approximations(
         X_INTEGRATION,
@@ -218,6 +223,7 @@ def test_blockwise_public_approximations_return_similarity_matrix_when_requested
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 @pytest.mark.parametrize("field,wrapper", WRAPPER_FUNCTIONS.items())
 def test_blockwise_public_wrapper_functions_match_compute_approximations_for_all_models(model_name, flat_config, field, wrapper):
+    """Public approximation wrappers should match fields from the full blockwise result."""
     model, kwargs = _without_model(flat_config)
     full_result = compute_approximations(
         X_INTEGRATION,
@@ -243,8 +249,9 @@ def test_blockwise_public_wrapper_functions_match_compute_approximations_for_all
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_dense_public_approximations_accept_precomputed_similarity_matrix_for_all_models(model_name, flat_config):
+    """Dense execution should reuse precomputed matrices without similarity-construction settings."""
     model, kwargs = _without_model(flat_config)
-    similarity_matrix = build_similarity_matrix(X_INTEGRATION, **kwargs)
+    similarity_matrix = build_similarity_matrix(X_INTEGRATION, **_similarity_only(kwargs))
 
     from_x = compute_approximations(X_INTEGRATION, Y_INTEGRATION, model=model, engine="dense", **kwargs)
     from_matrix = compute_approximations(
@@ -253,7 +260,7 @@ def test_dense_public_approximations_accept_precomputed_similarity_matrix_for_al
         model=model,
         engine="dense",
         similarity_matrix=similarity_matrix,
-        **kwargs,
+        **_without_similarity(kwargs),
     )
 
     assert model_name == model
@@ -262,8 +269,9 @@ def test_dense_public_approximations_accept_precomputed_similarity_matrix_for_al
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_blockwise_public_approximations_reject_precomputed_similarity_matrix_for_all_models(model_name, flat_config):
+    """Blockwise execution should reject precomputed similarity matrices for every model."""
     model, kwargs = _without_model(flat_config)
-    similarity_matrix = build_similarity_matrix(X_INTEGRATION, **kwargs)
+    similarity_matrix = build_similarity_matrix(X_INTEGRATION, **_similarity_only(kwargs))
 
     with pytest.raises(ValueError, match="does not accept precomputed similarity_matrix"):
         compute_approximations(
@@ -281,6 +289,7 @@ def test_blockwise_public_approximations_reject_precomputed_similarity_matrix_fo
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_blockwise_public_approximations_reject_label_length_mismatch_for_all_models(model_name, flat_config):
+    """Blockwise execution should reject label vectors misaligned with the sample count."""
     model, kwargs = _without_model(flat_config)
 
     with pytest.raises(ValueError, match="Length of labels must match"):
@@ -298,6 +307,7 @@ def test_blockwise_public_approximations_reject_label_length_mismatch_for_all_mo
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_blockwise_public_approximations_reject_multidimensional_labels_for_all_models(model_name, flat_config):
+    """Blockwise execution should reject multidimensional label arrays."""
     model, kwargs = _without_model(flat_config)
 
     with pytest.raises(ValueError, match="labels must be a 1D"):
@@ -315,6 +325,7 @@ def test_blockwise_public_approximations_reject_multidimensional_labels_for_all_
 
 @pytest.mark.parametrize("invalid_block_size", [0, -1, 1.5, "2", True])
 def test_blockwise_public_approximations_propagate_block_size_validation(invalid_block_size):
+    """Invalid block sizes should fail through the public blockwise approximation API."""
     with pytest.raises((TypeError, ValueError)):
         compute_approximations(
             X_INTEGRATION,
@@ -328,6 +339,7 @@ def test_blockwise_public_approximations_propagate_block_size_validation(invalid
 
 @pytest.mark.parametrize("invalid_engine", ["unknown", "", None, 123])
 def test_public_approximations_reject_invalid_engine_aliases(invalid_engine):
+    """Unknown execution-engine aliases should fail at the public API boundary."""
     with pytest.raises((TypeError, ValueError)):
         compute_approximations(
             X_INTEGRATION,
@@ -339,11 +351,12 @@ def test_public_approximations_reject_invalid_engine_aliases(invalid_engine):
 
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
-def test_blockwise_public_approximations_reject_nested_config_mixed_with_flat_kwargs_for_all_models(model_name, flat_config):
+def test_blockwise_public_approximations_reject_nested_config_with_flat_kwargs_for_all_models(model_name, flat_config):
+    """Nested configuration should remain rejected even when flat parameters are also supplied."""
     model, kwargs = _without_model(flat_config)
     nested_config = normalize_flat_config_to_nested({"type": model, **kwargs})
 
-    with pytest.raises(ValueError, match="Do not mix nested config"):
+    with pytest.raises(ValueError, match="Nested configuration is internal"):
         compute_approximations(
             X_INTEGRATION,
             Y_INTEGRATION,
@@ -363,6 +376,7 @@ def test_blockwise_public_fake_cupy_path_matches_dense_and_reports_backend_metad
     model_name,
     flat_config,
 ):
+    """Fake CuPy execution should match dense results and report backend metadata accurately."""
     install_fake_cupy_module(monkeypatch)
     model, kwargs = _without_model(flat_config)
 
@@ -393,9 +407,10 @@ def test_blockwise_public_fake_cupy_path_can_return_numpy_similarity_matrix_for_
     model_name,
     flat_config,
 ):
+    """CuPy blockwise execution should return a NumPy similarity matrix when requested."""
     install_fake_cupy_module(monkeypatch)
     model, kwargs = _without_model(flat_config)
-    expected_matrix = build_similarity_matrix(X_INTEGRATION, **kwargs)
+    expected_matrix = build_similarity_matrix(X_INTEGRATION, **_similarity_only(kwargs))
 
     result = compute_approximations(
         X_INTEGRATION,
@@ -415,6 +430,7 @@ def test_blockwise_public_fake_cupy_path_can_return_numpy_similarity_matrix_for_
 
 @pytest.mark.parametrize("model_name,flat_config", MODEL_CONFIGS.items())
 def test_blockwise_public_result_as_dict_preserves_similarity_engine_metadata_for_all_models(model_name, flat_config):
+    """Result dictionaries should preserve public similarity-engine execution metadata."""
     model, kwargs = _without_model(flat_config)
 
     result = compute_approximations(

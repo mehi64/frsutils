@@ -6,13 +6,12 @@ This module belongs to the stable public API layer.
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional
 
 import numpy as np
 
 from frsutils.core.similarities import (
     Similarity,
-    build_similarity_matrix as _core_build_similarity_matrix,
     calculate_similarity_matrix as _core_calculate_similarity_matrix,
 )
 from frsutils.core.similarity_engine import (
@@ -23,6 +22,8 @@ from frsutils.core.similarity_engine import (
     build_similarity_components as _core_build_similarity_components,
     build_similarity_engine as _core_build_similarity_engine,
 )
+
+from .config import prepare_flat_public_config
 
 def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     """Convert and validate a public feature-matrix input.
@@ -50,13 +51,48 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
         raise ValueError("X must be a 2D array-like feature matrix.")
     return X_array
 
-def list_similarities():
+def _prepare_public_similarity_config(
+    config: Optional[Mapping[str, Any]],
+    flat_config: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return validated flat similarity config with stable public defaults.
+
+    Parameters
+    ----------
+    config : Mapping[str, Any] or None
+        Optional flat public similarity configuration mapping.
+    flat_config : Mapping[str, Any]
+        Additional flat public similarity configuration values.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Canonical flat similarity configuration with stable defaults filled.
+
+    Raises
+    ------
+    ValueError
+        If nested, unknown, or out-of-scope configuration is supplied.
+    """
+    explicit: Dict[str, Any] = dict(config or {})
+    explicit.update(dict(flat_config))
+    explicit = prepare_flat_public_config(explicit, scope="similarity")
+
+    effective: Dict[str, Any] = {
+        "similarity": "linear",
+        "similarity_tnorm": "minimum",
+    }
+    effective.update(explicit)
+    return effective
+
+
+def list_similarities() -> Dict[str, list[str]]:
     """List registered public similarity aliases.
 
     Returns
     -------
-    object
-        Registry mapping from primary similarity names to aliases.
+    Dict[str, list[str]]
+        Mapping from primary similarity names to registered aliases.
     """
     return Similarity.list_available()
 
@@ -84,19 +120,17 @@ def build_similarity_matrix(
     config: Optional[Mapping[str, Any]] = None,
     **flat_config: Any,
 ) -> np.ndarray:
-    """Build a pairwise similarity matrix from flat or nested public config.
+    """Build a pairwise similarity matrix from flat public configuration.
 
     This is the stable public entry point for users and downstream packages.
-    It accepts:
-    - flat sklearn-style params, e.g. `similarity="gaussian"`
-    - nested frsutils config, e.g. `{"similarity": {"name": ...}}`
+    Component parameters follow the documented selector/prefix naming contract.
 
     Parameters
     ----------
     X : Any
         Normalized 2D feature matrix.
     config : Optional[Mapping[str, Any]]
-        Optional flat or nested frsutils config mapping.
+        Optional flat public similarity configuration mapping.
     flat_config : Any
         Additional flat configuration values.
 
@@ -110,16 +144,16 @@ def build_similarity_matrix(
     TypeError
         If config is provided but is not mapping-like.
     ValueError
-        If X is not a 2D matrix.
+        If X is not a 2D matrix or flat configuration is nested, unknown, or
+        incompatible with the selected similarity component alias.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
 
     X_array = _as_2d_feature_matrix(X)
-    config_dict = dict(config) if config is not None else None
+    effective_config = _prepare_public_similarity_config(config, flat_config)
     similarity_func, tnorm_func, _ = _core_build_similarity_components(
-        config=config_dict,
-        **flat_config,
+        **effective_config,
     )
     return _core_calculate_similarity_matrix(X_array, similarity_func, tnorm_func)
 
@@ -148,7 +182,7 @@ def build_similarity_engine(
     block_size : int
         Positive block size for blockwise engines.
     config : Optional[Mapping[str, Any]]
-        Optional flat or nested frsutils config mapping.
+        Optional flat public similarity configuration mapping.
     backend : str
         Backend alias. Use "numpy"/"auto" or explicit optional "cupy".
     flat_config : Any
@@ -164,20 +198,21 @@ def build_similarity_engine(
     TypeError
         If config is not mapping-like.
     ValueError
-        If X is not a 2D matrix or engine/backend is unsupported.
+        If X is not a 2D matrix, engine/backend is unsupported, or flat
+        configuration is nested, unknown, or incompatible with the selected
+        similarity component alias.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
 
     X_array = _as_2d_feature_matrix(X)
-    config_dict = dict(config) if config is not None else None
+    effective_config = _prepare_public_similarity_config(config, flat_config)
     return _core_build_similarity_engine(
         X_array,
         engine=engine,
         block_size=block_size,
-        config=config_dict,
         backend=backend,
-        **flat_config,
+        **effective_config,
     )
 
 __all__ = [

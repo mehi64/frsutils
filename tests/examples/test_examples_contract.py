@@ -27,7 +27,7 @@ def test_public_api_quickstart_runs_from_source_checkout():
 def test_benchmark_smoke_example_writes_outputs(tmp_path):
     """Benchmark smoke example should write JSON/CSV artifacts."""
     repo_root = Path(__file__).resolve().parents[2]
-    script = repo_root / "examples" / "benchmark_smoke.py"
+    script = repo_root / "benchmarks" / "benchmark_smoke.py"
     output_dir = tmp_path / "benchmark_smoke"
 
     completed = subprocess.run(

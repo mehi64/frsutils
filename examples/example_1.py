@@ -17,23 +17,28 @@ X = np.array(
 )
 y = np.array([0, 0, 0, 1, 1, 1], dtype=int)
 
-result = compute_approximations(
+result_owafrs = compute_approximations(
     X,
     y,
-    model="itfrs",
+    model="owafrs",
     similarity="linear",
+    ub_tnorm_name="minimum",
+    lb_implicator_name="lukasiewicz",
+    ub_owa_method_name="exponential",
+    ub_owa_method_base=2.5,
+    lb_owa_method_name="harmonic",
 )
 
-print("lower approximation:", result.lower)
-print("upper approximation:", result.upper)
-print("boundary region:", result.boundary)
-print("positive region:", result.positive_region)
+print("owafrs lower approximation:", result_owafrs.lower)
+print("owafrs upper approximation:", result_owafrs.upper)
+print("owafrs boundary region:", result_owafrs.boundary)
+print("owafrs positive region:", result_owafrs.positive_region)
 
 # Shortcut when only positive-region scores are needed.
-scores = compute_positive_region(
-    X,
-    y,
-    model="itfrs",
-    similarity="linear",
-)
-print("positive-region scores:", scores)
+# scores = compute_positive_region(
+#     X,
+#     y,
+#     model="itfrs",
+#     similarity="linear",
+# )
+# print("positive-region scores:", scores)

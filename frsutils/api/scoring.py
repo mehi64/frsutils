@@ -14,6 +14,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
 from .approximations import compute_approximations
+from .config import canonicalize_flat_public_config
 from .results import FuzzyRoughApproximationResult
 
 class FuzzyRoughPositiveRegionScorer(BaseEstimator):
@@ -31,10 +32,38 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         ``"owafrs"``.
     similarity : str or None, default=None
         Similarity alias used when constructing a similarity matrix from ``X``.
+    similarity_sigma : float or None, default=None
+        Gaussian similarity ``sigma`` routed by the flat configuration contract.
+    similarity_tnorm : str or None, default=None
+        T-norm alias used to aggregate feature-level similarities.
+    similarity_tnorm_p : float or None, default=None
+        Yager similarity T-norm ``p`` parameter.
+    ub_tnorm_name : str or None, default=None
+        Upper T-norm alias for ITFRS or OWAFRS.
+    ub_tnorm_p : float or None, default=None
+        Yager upper T-norm ``p`` parameter.
+    lb_implicator_name : str or None, default=None
+        Lower implicator alias for ITFRS or OWAFRS.
+    ub_owa_method_name, lb_owa_method_name : str or None, default=None
+        Upper and lower OWA weighting aliases for OWAFRS.
+    ub_owa_method_base, lb_owa_method_base : float or None, default=None
+        Exponential OWA ``base`` parameters for OWAFRS.
+    lb_fuzzy_quantifier_name, ub_fuzzy_quantifier_name : str or None, default=None
+        Lower and upper fuzzy quantifier aliases for VQRS.
+    lb_fuzzy_quantifier_alpha, lb_fuzzy_quantifier_beta : float or None, default=None
+        Lower VQRS fuzzy quantifier parameters.
+    ub_fuzzy_quantifier_alpha, ub_fuzzy_quantifier_beta : float or None, default=None
+        Upper VQRS fuzzy quantifier parameters.
+    lb_fuzzy_quantifier_validate_inputs : bool or None, default=None
+        Optional lower fuzzy quantifier input-validation flag.
+    ub_fuzzy_quantifier_validate_inputs : bool or None, default=None
+        Optional upper fuzzy quantifier input-validation flag.
     similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
         Optional precomputed similarity matrix.
     config : Mapping or None, default=None
-        Optional flat or nested frsutils configuration.
+        Optional flat public approximation configuration.
+    return_similarity_matrix : bool, default=False
+        Whether the fitted result should retain the pairwise similarity matrix.
     engine : {"dense", "blockwise"}, default="dense"
         Approximation execution engine.
     block_size : int, default=1024
@@ -42,8 +71,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     backend : str, default="numpy"
         Backend alias for blockwise similarity-block execution.
     extra_params : Mapping or None, default=None
-        Optional flat parameters not represented by explicit constructor
-        arguments.
+        Optional contract-defined flat parameters not represented by explicit
+        constructor arguments.
     """
 
     def __init__(
@@ -52,7 +81,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         similarity: Optional[str] = None,
         similarity_sigma: Optional[float] = None,
         similarity_tnorm: Optional[str] = None,
+        similarity_tnorm_p: Optional[float] = None,
         ub_tnorm_name: Optional[str] = None,
+        ub_tnorm_p: Optional[float] = None,
         lb_implicator_name: Optional[str] = None,
         ub_owa_method_name: Optional[str] = None,
         lb_owa_method_name: Optional[str] = None,
@@ -64,6 +95,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         lb_fuzzy_quantifier_beta: Optional[float] = None,
         ub_fuzzy_quantifier_alpha: Optional[float] = None,
         ub_fuzzy_quantifier_beta: Optional[float] = None,
+        lb_fuzzy_quantifier_validate_inputs: Optional[bool] = None,
+        ub_fuzzy_quantifier_validate_inputs: Optional[bool] = None,
         similarity_matrix: Optional[np.ndarray] = None,
         config: Optional[Mapping[str, Any]] = None,
         return_similarity_matrix: bool = False,
@@ -77,7 +110,9 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.similarity = similarity
         self.similarity_sigma = similarity_sigma
         self.similarity_tnorm = similarity_tnorm
+        self.similarity_tnorm_p = similarity_tnorm_p
         self.ub_tnorm_name = ub_tnorm_name
+        self.ub_tnorm_p = ub_tnorm_p
         self.lb_implicator_name = lb_implicator_name
         self.ub_owa_method_name = ub_owa_method_name
         self.lb_owa_method_name = lb_owa_method_name
@@ -89,6 +124,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.lb_fuzzy_quantifier_beta = lb_fuzzy_quantifier_beta
         self.ub_fuzzy_quantifier_alpha = ub_fuzzy_quantifier_alpha
         self.ub_fuzzy_quantifier_beta = ub_fuzzy_quantifier_beta
+        self.lb_fuzzy_quantifier_validate_inputs = lb_fuzzy_quantifier_validate_inputs
+        self.ub_fuzzy_quantifier_validate_inputs = ub_fuzzy_quantifier_validate_inputs
         self.similarity_matrix = similarity_matrix
         self.config = config
         self.return_similarity_matrix = return_similarity_matrix
@@ -98,11 +135,13 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.extra_params = extra_params
 
     def _flat_config(self) -> Dict[str, Any]:
-        """Return flat public config with ``None`` values removed."""
+        """Return non-conflicting flat public configuration for approximation."""
         params: Dict[str, Any] = {
             "similarity_sigma": self.similarity_sigma,
             "similarity_tnorm": self.similarity_tnorm,
+            "similarity_tnorm_p": self.similarity_tnorm_p,
             "ub_tnorm_name": self.ub_tnorm_name,
+            "ub_tnorm_p": self.ub_tnorm_p,
             "lb_implicator_name": self.lb_implicator_name,
             "ub_owa_method_name": self.ub_owa_method_name,
             "lb_owa_method_name": self.lb_owa_method_name,
@@ -114,11 +153,22 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
             "lb_fuzzy_quantifier_beta": self.lb_fuzzy_quantifier_beta,
             "ub_fuzzy_quantifier_alpha": self.ub_fuzzy_quantifier_alpha,
             "ub_fuzzy_quantifier_beta": self.ub_fuzzy_quantifier_beta,
+            "lb_fuzzy_quantifier_validate_inputs": self.lb_fuzzy_quantifier_validate_inputs,
+            "ub_fuzzy_quantifier_validate_inputs": self.ub_fuzzy_quantifier_validate_inputs,
         }
         if self.extra_params is not None:
             if not isinstance(self.extra_params, Mapping):
                 raise TypeError("extra_params must be a mapping when provided.")
-            params.update(dict(self.extra_params))
+            canonical_extra = canonicalize_flat_public_config(self.extra_params)
+            reserved_keys = set(params) | {"type", "similarity"}
+            overlap = reserved_keys.intersection(canonical_extra)
+            if overlap:
+                duplicated = sorted(overlap)[0]
+                raise ValueError(
+                    f"extra_params contains '{duplicated}', which already has an "
+                    "explicit scorer constructor parameter."
+                )
+            params.update(canonical_extra)
         return {key: value for key, value in params.items() if value is not None}
 
     def fit(self, X: Optional[np.ndarray], y: np.ndarray):
@@ -178,14 +228,11 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     def score_samples(self, X: Optional[np.ndarray] = None) -> np.ndarray:
         """Return cached positive-region scores for fitted samples.
 
-        The current public scorer computes scores for the fitted similarity
-        matrix. The optional ``X`` argument is accepted only for sklearn-like call
-        sites and is not used to score unseen samples.
-
         Parameters
         ----------
         X : ndarray or None, default=None
-            Ignored placeholder for sklearn-like call sites.
+            Must be ``None``. Scoring unseen samples is not supported because
+            fuzzy-rough scores are defined against the fitted sample relation.
 
         Returns
         -------
@@ -196,8 +243,15 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         ------
         NotFittedError
             If ``fit`` has not been called.
+        ValueError
+            If ``X`` is supplied instead of requesting cached fitted scores.
         """
         check_is_fitted(self, "positive_region_")
+        if X is not None:
+            raise ValueError(
+                "Scoring unseen samples is not supported. Call score_samples() "
+                "without X to return scores for the fitted samples."
+            )
         return self.positive_region_
 
     def as_result(self) -> FuzzyRoughApproximationResult:
