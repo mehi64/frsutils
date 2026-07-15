@@ -16,7 +16,7 @@
     },
     "itfrs.json": {
       "dataset_kind": "itfrs",
-      "sha256": "907ab38294055db160e1599e0a901de1878b999f356c2e703276b65cb7f2b5dd"
+      "sha256": "14596a4e87ffd3fd0a49ded38dbe3826e09db8e531c871d47648e2a7cc4d826a"
     },
     "owa_weights.json": {
       "dataset_kind": "owa_weights",
