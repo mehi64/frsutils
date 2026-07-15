@@ -67,6 +67,7 @@ For backend details, see [Backends](../user/backends.md).
 - [ ] User-facing examples avoid importing from internal `frsutils.core` modules.
 - [ ] `frsutils.__all__` exposes the intended public objects only.
 - [ ] Top-level `frsutils` does not accidentally expose internal implementation
+  
       modules.
 - [ ] `examples/public_api_quickstart.py` runs successfully.
 - [ ] Downstream-style code can use only `frsutils` without importing internals.
@@ -103,9 +104,11 @@ python -m pytest tests/models_tests -m slow -o addopts="" -q -rs
 - [ ] Fake-CuPy contract tests pass in normal CI.
 - [ ] Real CuPy/CUDA tests skip cleanly when CuPy is unavailable.
 - [ ] Any benchmark-based CuPy claim was generated on a machine with compatible
+  
       CuPy/CUDA installed.
 - [ ] No documentation claims full GPU-native execution.
 - [ ] OWAFRS documentation does not claim GPU-resident approximation
+  
       accumulators.
 
 Recommended commands:
@@ -185,7 +188,7 @@ JOSS paper:
 
 ```bash
 python examples/public_api_quickstart.py
-python examples/benchmark_smoke.py --output-dir benchmark_smoke_output
+python benchmarks/benchmark_smoke.py --output-dir benchmark_smoke_output
 python -m pytest tests/api/test_public_api_examples_smoke.py tests/examples/test_examples_contract.py -q -rs
 python -m pytest tests/api/test_public_api_downstream_contract.py -q -rs
 ```
@@ -287,6 +290,7 @@ kept out of commits.
 - [ ] GitHub Issues are enabled in repository settings.
 - [ ] The issue forms and pull request template render correctly.
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, and
+  
       `CHANGELOG.md` are linked from the README.
 - [ ] The CI workflow passes for Python 3.10, 3.11, and 3.12.
 - [ ] The package job builds and validates both wheel and source distribution.
@@ -297,12 +301,16 @@ kept out of commits.
 
 - [ ] Run `git status --short`.
 - [ ] Stage only intended source, tests, examples, docs, metadata, and paper
+  
       files.
 - [ ] Do not stage generated reports, benchmark outputs, cache directories, IDE
+  
       files, local environments, or local logs.
 - [ ] Confirm no temporary milestone file names remain in user-facing docs or
+  
       examples.
 - [ ] Confirm all changed Python files keep the short BSD-3-Clause SPDX header
+  
       style.
 
 Files that should not be committed:
@@ -327,13 +335,17 @@ placeholder identifier.
 
 - [ ] Confirm the repository is public or will be public for review.
 - [ ] Confirm `LICENSE`, `CITATION.cff`, `pyproject.toml`, `README.md`,
+  
       `paper.md`, and `paper.bib` are included.
 - [ ] Confirm the software archive DOI/version are available if requested during
+  
       JOSS review.
 - [ ] Submit the JOSS paper through the JOSS submission process.
 - [ ] After the JOSS review issue is opened, respond to reviewer/editor comments
+  
       in the issue.
 - [ ] At acceptance time, follow editor instructions for final release, archive
+  
       DOI, and version metadata.
 
 ## Submit-ready result record
@@ -367,6 +379,7 @@ The repository is submit-ready when all of the following are true:
 - [ ] `paper.md` and `paper.bib` exist and citation keys are complete.
 - [ ] README and docs links resolve.
 - [ ] License metadata is consistent across `LICENSE`, `pyproject.toml`,
+  
       `CITATION.cff`, README, and source SPDX headers.
 - [ ] User-facing files do not contain temporary milestone file names.
 - [ ] Optional CuPy/GPU support is described conservatively.
@@ -393,11 +406,13 @@ Review these conditions:
 - [ ] Every row in `dense_blockwise_equivalence.csv` has `passed=True`.
 - [ ] `benchmark_results.json` has no failed cases.
 - [ ] `environment.json` identifies the release commit and reports a clean
+  
       worktree.
 - [ ] `study_manifest.json` was regenerated after all study outputs.
 - [ ] The committed tables and figures match `study_config.json`.
 - [ ] Research-impact wording in `paper.md` claims only what the artifact shows.
 - [ ] No unpublished FRSMOTE implementation, result, or repository is required
+  
       to reproduce the study.
 
 The recorded runtime values are machine-specific evidence, not performance
