@@ -372,7 +372,7 @@ Repository sources:
 - [Public API](docs/user/public_api.md)
 - [Backends](docs/user/backends.md)
 - [Glossary](docs/user/glossary.md)
-- [Benchmarks](docs/user/benchmarks.md)
+- [performance_benchmarking](docs/user/performance_benchmarking.md)
 - [Reproducible reference study](docs/user/reference_study.md)
 - [Release and JOSS validation](docs/developer/release.md)
 - [Final JOSS submission checklist](docs/developer/joss_submission_checklist.md)
