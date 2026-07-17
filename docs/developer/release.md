@@ -352,16 +352,17 @@ placeholder identifier.
 
 Fill this section after the final local run.
 
-- Final validation date: 2026-07-13
-- Python version: 3.11.6 for the recorded real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
+- Final validation date: 2026-07-17
+- Python version: 3.13.5 for the final CPU validation and 3.11.6 for the recorded real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
 - Operating system: Ubuntu 24.04.4 LTS, Linux 6.8.0-111-generic, x86_64
 - GPU: NVIDIA GeForce GTX 1050 Mobile, 4 GiB, compute capability 6.1
 - NVIDIA/CUDA environment: driver 535.309.01, driver-reported CUDA 12.2, system CUDA Toolkit 12.0
 - Python GPU packages: NumPy 2.3.5, CuPy 14.1.1, `nvidia-cuda-runtime-cu12` 12.0.146, and `cuda-pathfinder` 1.5.6
 - Real-CUDA smoke result: device discovery, element-wise kernel execution, and 1000 x 1000 matrix multiplication completed successfully
-- Current default-suite result after the JSON reference-data migration: 2677 passed, 149 optional-backend skips, and 10518 slow cases deselected
+- Current default-suite result after final core hardening: 2926 passed, 149 optional-backend skips, and 6633 slow tests deselected
 - Former logger regression: `tests/core_tests/test_implicators.py::test_help[goedel]` now passes
-- Exhaustive slow result: the prior release-validation record reports all 10518 OWAFRS slow cases passing in equivalent test-function batches; a fresh complete run from the final release checkout remains pending
+- Exhaustive slow result: all 6633 slow tests passed in four deterministic shards; this includes exhaustive OWAFRS combinations and the public ITFRS/VQRS/OWAFRS execution matrix
+- Core coverage result: 96 percent branch-aware coverage, protected by a 95 percent CI floor
 - JOSS paper and metadata validation: `python scripts/validate_joss_submission.py` passed
 - Documentation validation: `mkdocs build --strict` passed with no unreferenced migration page remaining
 - Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments

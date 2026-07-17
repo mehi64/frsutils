@@ -4,6 +4,7 @@
 This module belongs to the core fuzzy-rough computation layer.
 """
 
+from numbers import Real
 from typing import Callable, Optional, Dict, Any
 import numpy as np
 from abc import abstractmethod
@@ -20,29 +21,35 @@ class Similarity(RegistryFactoryMixin):
     similarity engines a formula-level backend hook.
     """
 
-    def __call__(self, x: np.ndarray, y: np.ndarray) -> float:
-        """Compute similarity between two vectors or pairwise feature arrays.
+    def __call__(self, x: np.ndarray, y: np.ndarray) -> float | np.ndarray:
+        """Compute scalar or pairwise feature-level similarity values.
                 
                 Parameters
                 ----------
-                x : np.ndarray
-                    Feature vector or pairwise-compatible NumPy array.
-                y : np.ndarray
-                    Feature vector or pairwise-compatible NumPy array.
+                x : array-like
+                    Scalar or pairwise-compatible array.
+                y : array-like
+                    Scalar or pairwise-compatible array.
                 
                 Returns
                 -------
-                float
-                    Similarity score or matrix.
+                float or np.ndarray
+                    Scalar similarity or a two-dimensional pairwise array.
+
+                Raises
+                ------
+                ValueError
+                    If the broadcast difference is one- or three-dimensional.
                 
         """
-        diff = x - y
-        self._validate_diff(diff)
-
+        diff = np.asarray(x) - np.asarray(y)
         if diff.ndim == 0:
-            return self._compute(np.array([[diff]]))[0, 0]
-        if diff.ndim == 1:
-            diff = diff[:, None] - diff[None, :]
+            return float(self._compute(np.asarray(diff).reshape(1, 1))[0, 0])
+        if diff.ndim != 2:
+            raise ValueError(
+                "Similarity calls require scalar inputs or a 2D pairwise "
+                "difference matrix."
+            )
         return self._compute(diff)
 
     @classmethod
@@ -133,6 +140,7 @@ class LinearSimilarity(Similarity):
         self.validate_params()
 
     def _compute(self, diff: np.ndarray) -> np.ndarray:
+        """Compute similarity values for validated inputs."""
         self._validate_diff(diff)
         return self.compute_backend(diff, xp=np)
 
@@ -167,6 +175,7 @@ class GaussianSimilarity(Similarity):
         self.sigma = sigma
 
     def _compute(self, diff: np.ndarray) -> np.ndarray:
+        """Compute similarity values for validated inputs."""
         self._validate_diff(diff)
         return self.compute_backend(diff, xp=np)
 
@@ -176,14 +185,24 @@ class GaussianSimilarity(Similarity):
         return xp.exp(-((diff ** 2) / (2.0 * self.sigma ** 2)))
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {"sigma": self.sigma}
 
     @classmethod
     def validate_params(cls, **kwargs):
         """Validate constructor parameters for this component."""
         sigma = kwargs.get("sigma")
-        if sigma is None or not isinstance(sigma, (float, int)) or sigma <= 0:
-            raise ValueError("Parameter 'sigma' must be provided and be a positive number.")
+        if (
+            sigma is None
+            or isinstance(sigma, (bool, np.bool_))
+            or not isinstance(sigma, Real)
+            or not np.isfinite(sigma)
+            or sigma <= 0
+        ):
+            raise ValueError(
+                "Parameter 'sigma' must be provided as a finite positive number "
+                "and must not be boolean."
+            )
 
 
 def calculate_similarity_matrix(
@@ -210,6 +229,12 @@ def calculate_similarity_matrix(
     """
     if not isinstance(X, np.ndarray) or X.ndim != 2:
         raise ValueError("X must be a 2D NumPy array")
+    try:
+        finite_values = np.isfinite(X).all()
+    except TypeError as exc:
+        raise ValueError("X must contain only finite numeric values.") from exc
+    if not finite_values:
+        raise ValueError("X must contain only finite numeric values.")
 
     n_samples, n_features = X.shape
     if n_samples == 0:

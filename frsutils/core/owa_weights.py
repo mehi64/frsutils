@@ -70,29 +70,20 @@ class OWAWeights(RegistryFactoryMixin):
         raise NotImplementedError("Subclasses must implement _raw_weights(n)")
 
     def _validate_n(self, n: int):
-        """Validates the number of weights.
-                
-                Raises ValueError if:
-                - n is not a positive integer
-                - n > 20 for ExponentialOWAWeightStrategy due to potential weight overflow
-                
-                Parameters
-                ----------
-                n : int
-                    Number of weights
-                
-                Raises
-                ------
-                ValueError
-                    On invalid or unsafe values
-                
+        """Validate the requested number of OWA weights.
+
+        Parameters
+        ----------
+        n : int
+            Number of weights to generate.
+
+        Raises
+        ------
+        ValueError
+            If ``n`` is not a positive integer.
         """
         if isinstance(n, bool) or not isinstance(n, numbers.Integral) or n <= 0:
             raise ValueError("n must be a positive integer")
-
-        # Exponential strategy has numerical stability risks for large n
-        if self.__class__.__name__ == "ExponentialOWAWeights" and n > 20:
-            raise ValueError("In ExponentialOWAWeights, n cannot be greater than 20 due to risk of weight explosion.")
 
 
     def _normalize(self, weights: np.ndarray) -> np.ndarray:
@@ -132,9 +123,11 @@ class LinearOWAWeights(OWAWeights):
     Generates linearly increasing weights.
     """
     def _raw_weights(self, n: int) -> np.ndarray:
+        """Return linearly increasing raw weights."""
         return np.arange(1, n + 1, dtype=np.longdouble)
 
     def _get_params(self) -> dict:
+        """Return the parameterless strategy configuration."""
         return {}
 
     @classmethod
@@ -159,9 +152,17 @@ class ExponentialOWAWeights(OWAWeights):
         self.base = base
 
     def _raw_weights(self, n: int) -> np.ndarray:
-        return self.base ** np.arange(1, n + 1, dtype=np.longdouble)
+        """Return overflow-safe weights proportional to ``base**i``.
+
+        The exponent sequence is shifted so the largest raw weight is one. The
+        shared normalization step therefore produces the same mathematical OWA
+        vector as ``base**1, ..., base**n`` without overflowing for large ``n``.
+        """
+        exponents = np.arange(1 - n, 1, dtype=np.longdouble)
+        return np.power(np.longdouble(self.base), exponents)
 
     def _get_params(self) -> dict:
+        """Return the exponential base parameter."""
         return {"base": self.base}
 
     def to_dict(self) -> dict:
@@ -189,9 +190,11 @@ class HarmonicOWAWeights(OWAWeights):
     Generates weights inversely proportional to index (1/i).
     """
     def _raw_weights(self, n: int) -> np.ndarray:
+        """Return inverse-rank harmonic raw weights."""
         return 1.0 / np.arange(1, n + 1, dtype=np.longdouble)
 
     def _get_params(self) -> dict:
+        """Return the parameterless strategy configuration."""
         return {}
 
     @classmethod

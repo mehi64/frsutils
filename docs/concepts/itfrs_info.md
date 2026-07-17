@@ -5,7 +5,11 @@ labels using a lower implicator and an upper T-norm.
 
 ## Implementation contract
 
-`frsutils.core.models.ITFRS` is the dense NumPy reference implementation. It expects a fully materialized similarity matrix, a one-dimensional label vector, an upper T-norm, and a lower implicator.
+`frsutils.core.models.ITFRS` is the dense NumPy reference implementation. It
+expects at least two samples, a fully materialized finite fuzzy-relation matrix
+with values in `[0, 1]`, a one-dimensional label vector, an upper T-norm, and a
+lower implicator. The low-level relation matrix may be asymmetric and need not
+have a unit diagonal because self-comparisons are handled explicitly.
 
 The public approximation API also provides exact blockwise ITFRS execution:
 

@@ -19,6 +19,7 @@ from frsutils.core.approximation_engines import (
     _set_block_diagonal_values,
     build_itfrs_components_from_config,
     compute_itfrs_blockwise,
+    compute_owafrs_blockwise,
     compute_vqrs_blockwise,
     build_owafrs_components_from_config,
     build_vqrs_components_from_config,
@@ -53,6 +54,7 @@ class FakeArrayNamespace:
     """Minimal array namespace used to verify backend index conversion."""
 
     def __init__(self):
+        """Initialize the test helper."""
         self.asarray_calls = []
 
     def asarray(self, values, dtype=None):
@@ -65,6 +67,7 @@ class FixedBlockSimilarityEngine(BaseSimilarityEngine):
     """Similarity engine fixture yielding a fixed matrix in row/column blocks."""
 
     def __init__(self, similarity_matrix, *, block_size):
+        """Initialize the test helper."""
         self._similarity_matrix = np.asarray(similarity_matrix, dtype=float)
         self.block_size = block_size
         self.backend = None
@@ -138,9 +141,13 @@ def _manual_vqrs_expected(
         np.fill_diagonal(tnorm_values, 0.0)
 
     numerator = np.sum(tnorm_values, axis=1)
-    denominator = np.sum(similarity_matrix, axis=1) - 1.0
+    denominator_values = similarity_matrix.copy()
+    if similarity_matrix.shape[0]:
+        np.fill_diagonal(denominator_values, 0.0)
+    denominator = np.sum(denominator_values, axis=1)
     with np.errstate(divide="ignore", invalid="ignore"):
-        interim = numerator / denominator
+        interim = np.where(denominator > 0.0, numerator / denominator, 0.0)
+    interim = np.clip(interim, 0.0, 1.0)
 
     lower = lb_fuzzy_quantifier.compute_backend(
         interim,
@@ -156,6 +163,7 @@ def _manual_vqrs_expected(
 
 
 def test_itfrs_blockwise_approximation_dataclass_keeps_arrays_and_defaults():
+    """Verify that itfrs blockwise approximation dataclass keeps arrays and defaults."""
     lower = np.array([0.1, 0.2], dtype=float)
     upper = np.array([0.7, 0.9], dtype=float)
     boundary = upper - lower
@@ -177,6 +185,7 @@ def test_itfrs_blockwise_approximation_dataclass_keeps_arrays_and_defaults():
 
 
 def test_vqrs_blockwise_approximation_dataclass_keeps_interim_and_defaults():
+    """Verify that vqrs blockwise approximation dataclass keeps interim and defaults."""
     lower = np.array([0.0, 0.5], dtype=float)
     upper = np.array([0.5, 1.0], dtype=float)
     boundary = upper - lower
@@ -201,6 +210,7 @@ def test_vqrs_blockwise_approximation_dataclass_keeps_interim_and_defaults():
 
 
 def test_owafrs_blockwise_approximation_dataclass_keeps_arrays():
+    """Verify that owafrs blockwise approximation dataclass keeps arrays."""
     lower = np.array([0.3, 0.4], dtype=float)
     upper = np.array([0.8, 0.9], dtype=float)
     boundary = upper - lower
@@ -244,6 +254,7 @@ def test_owafrs_blockwise_approximation_dataclass_keeps_arrays():
     ],
 )
 def test_blockwise_approximation_dataclasses_are_frozen(approximation):
+    """Verify that blockwise approximation dataclasses are frozen."""
     with pytest.raises(FrozenInstanceError):
         approximation.lower = np.array([1.0])
 
@@ -257,6 +268,7 @@ def test_blockwise_approximation_dataclasses_are_frozen(approximation):
     ],
 )
 def test_as_labels_accepts_one_dimensional_label_vectors(labels, expected):
+    """Verify that as labels accepts one dimensional label vectors."""
     result = _as_labels(labels, expected_length=3)
 
     assert isinstance(result, np.ndarray)
@@ -273,6 +285,7 @@ def test_as_labels_accepts_one_dimensional_label_vectors(labels, expected):
     ],
 )
 def test_as_labels_rejects_non_1d_or_length_mismatched_inputs(labels, expected_length):
+    """Verify that as labels rejects non 1d or length mismatched inputs."""
     with pytest.raises(ValueError):
         _as_labels(labels, expected_length=expected_length)
 
@@ -290,6 +303,7 @@ def test_as_nested_config_builds_model_specific_defaults(
     expected_model_type,
     expected_keys,
 ):
+    """Verify that as nested config builds model specific defaults."""
     result = _as_nested_config(None, default_model_type=default_model_type)
 
     assert result["fr_model"]["type"] == expected_model_type
@@ -297,6 +311,7 @@ def test_as_nested_config_builds_model_specific_defaults(
 
 
 def test_as_nested_config_normalizes_flat_config_without_mutating_input():
+    """Verify that as nested config normalizes flat config without mutating input."""
     config = {
         "type": "itfrs",
         "similarity": "gaussian",
@@ -316,6 +331,7 @@ def test_as_nested_config_normalizes_flat_config_without_mutating_input():
 
 
 def test_as_nested_config_returns_existing_nested_config_unchanged():
+    """Verify that as nested config returns existing nested config unchanged."""
     nested_config = {
         "fr_model": {
             "type": "itfrs",
@@ -331,6 +347,7 @@ def test_as_nested_config_returns_existing_nested_config_unchanged():
 
 @pytest.mark.parametrize("config", ["itfrs", [("type", "itfrs")], 1])
 def test_as_nested_config_rejects_non_mapping_config(config):
+    """Verify that as nested config rejects non mapping config."""
     with pytest.raises(TypeError):
         _as_nested_config(config)
 
@@ -350,6 +367,7 @@ def test_diagonal_positions_for_block_returns_local_overlap_positions(
     expected_rows,
     expected_cols,
 ):
+    """Verify that diagonal positions for block returns local overlap positions."""
     row_positions, col_positions = _diagonal_positions_for_block(row_slice, col_slice)
 
     np.testing.assert_array_equal(row_positions, expected_rows)
@@ -359,6 +377,7 @@ def test_diagonal_positions_for_block_returns_local_overlap_positions(
 
 
 def test_backend_index_array_returns_numpy_indices_unchanged_for_numpy_namespace():
+    """Verify that backend index array returns numpy indices unchanged for numpy namespace."""
     indices = np.array([0, 2, 4], dtype=np.int64)
 
     result = _backend_index_array(indices, xp=np)
@@ -367,6 +386,7 @@ def test_backend_index_array_returns_numpy_indices_unchanged_for_numpy_namespace
 
 
 def test_backend_index_array_converts_indices_for_non_numpy_namespace():
+    """Verify that backend index array converts indices for non numpy namespace."""
     indices = np.array([0, 2, 4], dtype=np.int64)
     xp = FakeArrayNamespace()
 
@@ -377,6 +397,7 @@ def test_backend_index_array_converts_indices_for_non_numpy_namespace():
 
 
 def test_set_block_diagonal_values_mutates_requested_numpy_positions():
+    """Verify that set block diagonal values mutates requested numpy positions."""
     values = np.zeros((3, 4), dtype=float)
     row_indices = np.array([0, 2], dtype=int)
     col_indices = np.array([1, 3], dtype=int)
@@ -396,6 +417,7 @@ def test_set_block_diagonal_values_mutates_requested_numpy_positions():
 
 
 def test_set_block_diagonal_values_returns_without_mutation_for_empty_indices():
+    """Verify that set block diagonal values returns without mutation for empty indices."""
     values = np.ones((2, 2), dtype=float)
     before = values.copy()
 
@@ -411,6 +433,7 @@ def test_set_block_diagonal_values_returns_without_mutation_for_empty_indices():
 
 
 def test_set_block_diagonal_values_uses_backend_index_conversion_for_non_numpy_namespace():
+    """Verify that set block diagonal values uses backend index conversion for non numpy namespace."""
     values = np.zeros((2, 2), dtype=float)
     xp = FakeArrayNamespace()
 
@@ -436,6 +459,7 @@ def test_set_block_diagonal_values_uses_backend_index_conversion_for_non_numpy_n
 
 
 def test_build_itfrs_components_from_none_returns_default_components():
+    """Verify that build itfrs components from none returns default components."""
     ub_tnorm, lb_implicator = build_itfrs_components_from_config(None)
 
     assert isinstance(ub_tnorm, MinTNorm)
@@ -443,6 +467,7 @@ def test_build_itfrs_components_from_none_returns_default_components():
 
 
 def test_build_itfrs_components_from_flat_config_resolves_component_aliases():
+    """Verify that build itfrs components from flat config resolves component aliases."""
     config = {
         "type": "itfrs",
         "ub_tnorm_name": "product",
@@ -456,6 +481,7 @@ def test_build_itfrs_components_from_flat_config_resolves_component_aliases():
 
 
 def test_build_itfrs_components_from_nested_config_resolves_specs():
+    """Verify that build itfrs components from nested config resolves specs."""
     config = {
         "fr_model": {
             "type": "itfrs",
@@ -471,6 +497,7 @@ def test_build_itfrs_components_from_nested_config_resolves_specs():
 
 
 def test_build_itfrs_components_uses_defaults_for_missing_nested_specs():
+    """Verify that build itfrs components uses defaults for missing nested specs."""
     config = {"fr_model": {"type": "itfrs", "ub_tnorm": {"name": "product", "params": {}}}}
 
     ub_tnorm, lb_implicator = build_itfrs_components_from_config(config)
@@ -480,6 +507,7 @@ def test_build_itfrs_components_uses_defaults_for_missing_nested_specs():
 
 
 def test_build_itfrs_components_accepts_existing_component_instances():
+    """Verify that build itfrs components accepts existing component instances."""
     ub_tnorm = ProductTNorm()
     lb_implicator = KleeneDienesImplicator()
     config = {"fr_model": {"type": "itfrs", "ub_tnorm": ub_tnorm, "lb_implicator": lb_implicator}}
@@ -546,6 +574,7 @@ def test_build_itfrs_components_can_require_explicit_component_specs():
 
 
 def test_build_vqrs_components_from_none_returns_default_quantifiers_and_tnorm():
+    """Verify that build vqrs components from none returns default quantifiers and tnorm."""
     lb_quantifier, ub_quantifier, tnorm = build_vqrs_components_from_config(None)
 
     assert isinstance(lb_quantifier, LinearFuzzyQuantifier)
@@ -558,6 +587,7 @@ def test_build_vqrs_components_from_none_returns_default_quantifiers_and_tnorm()
 
 
 def test_build_vqrs_components_from_flat_config_resolves_quantifier_params():
+    """Verify that build vqrs components from flat config resolves quantifier params."""
     config = {
         "type": "vqrs",
         "lb_fuzzy_quantifier_name": "linear",
@@ -580,6 +610,7 @@ def test_build_vqrs_components_from_flat_config_resolves_quantifier_params():
 
 
 def test_build_vqrs_components_from_nested_config_resolves_specs():
+    """Verify that build vqrs components from nested config resolves specs."""
     config = {
         "fr_model": {
             "type": "vqrs",
@@ -600,6 +631,7 @@ def test_build_vqrs_components_from_nested_config_resolves_specs():
 
 
 def test_build_vqrs_components_uses_defaults_for_missing_nested_specs():
+    """Verify that build vqrs components uses defaults for missing nested specs."""
     config = {
         "fr_model": {
             "type": "vqrs",
@@ -619,6 +651,7 @@ def test_build_vqrs_components_uses_defaults_for_missing_nested_specs():
 
 
 def test_build_vqrs_components_accepts_existing_quantifier_instances():
+    """Verify that build vqrs components accepts existing quantifier instances."""
     lb_quantifier = LinearFuzzyQuantifier(alpha=0.1, beta=0.4)
     ub_quantifier = QuadraticFuzzyQuantifier(alpha=0.4, beta=0.9)
     config = {
@@ -637,6 +670,7 @@ def test_build_vqrs_components_accepts_existing_quantifier_instances():
 
 
 def test_build_owafrs_components_from_none_returns_default_components():
+    """Verify that build owafrs components from none returns default components."""
     ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method = build_owafrs_components_from_config(None)
 
     assert isinstance(ub_tnorm, MinTNorm)
@@ -646,6 +680,7 @@ def test_build_owafrs_components_from_none_returns_default_components():
 
 
 def test_build_owafrs_components_from_flat_config_resolves_all_component_params():
+    """Verify that build owafrs components from flat config resolves all component params."""
     config = {
         "type": "owafrs",
         "ub_tnorm_name": "product",
@@ -665,6 +700,7 @@ def test_build_owafrs_components_from_flat_config_resolves_all_component_params(
 
 
 def test_build_owafrs_components_from_nested_config_resolves_specs():
+    """Verify that build owafrs components from nested config resolves specs."""
     config = {
         "fr_model": {
             "type": "owafrs",
@@ -685,6 +721,7 @@ def test_build_owafrs_components_from_nested_config_resolves_specs():
 
 
 def test_build_owafrs_components_uses_defaults_for_missing_nested_specs():
+    """Verify that build owafrs components uses defaults for missing nested specs."""
     config = {
         "fr_model": {
             "type": "owafrs",
@@ -702,6 +739,7 @@ def test_build_owafrs_components_uses_defaults_for_missing_nested_specs():
 
 
 def test_build_owafrs_components_accepts_existing_component_instances():
+    """Verify that build owafrs components accepts existing component instances."""
     ub_tnorm = ProductTNorm()
     lb_implicator = GoedelImplicator()
     ub_owa_method = ExponentialOWAWeights(base=2.2)
@@ -733,6 +771,7 @@ def test_build_owafrs_components_accepts_existing_component_instances():
     ],
 )
 def test_component_builders_reject_non_mapping_config(builder):
+    """Verify that component builders reject non mapping config."""
     with pytest.raises(TypeError):
         builder("not-a-config")
 
@@ -746,6 +785,7 @@ def test_component_builders_reject_non_mapping_config(builder):
     ],
 )
 def test_component_builders_reject_non_mapping_nested_fr_model_section(builder):
+    """Verify that component builders reject non mapping nested fr model section."""
     config = {"similarity": {"name": "l1", "params": {}}, "fr_model": "not-a-mapping"}
 
     with pytest.raises(TypeError, match="fr_model"):
@@ -775,6 +815,7 @@ def test_component_builders_reject_non_mapping_nested_fr_model_section(builder):
     ],
 )
 def test_component_builders_reject_unknown_component_aliases(builder, config):
+    """Verify that component builders reject unknown component aliases."""
     with pytest.raises(ValueError):
         builder(config)
 
@@ -802,6 +843,7 @@ def test_component_builders_reject_unknown_component_aliases(builder, config):
     ],
 )
 def test_component_builders_reject_component_specs_with_non_mapping_params(builder, config):
+    """Verify that component builders reject component specs with non mapping params."""
     with pytest.raises(TypeError, match="params"):
         builder(config)
 
@@ -822,6 +864,7 @@ ITFRS_EXPECTED = ITFRS_REFERENCE_CASE["expected"]
 
 @pytest.mark.parametrize("block_size", [1, 2, 10])
 def test_compute_itfrs_blockwise_matches_reference_default_components_for_block_sizes(block_size):
+    """Verify that compute itfrs blockwise matches reference default components for block sizes."""
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=block_size)
 
     result = compute_itfrs_blockwise(engine, ITFRS_LABELS)
@@ -842,6 +885,7 @@ def test_compute_itfrs_blockwise_matches_reference_default_components_for_block_
 
 
 def test_compute_itfrs_blockwise_uses_flat_config_components():
+    """Verify that compute itfrs blockwise uses flat config components."""
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=2)
     config = {
         "type": "itfrs",
@@ -864,6 +908,7 @@ def test_compute_itfrs_blockwise_uses_flat_config_components():
 
 
 def test_compute_itfrs_blockwise_uses_nested_config_components():
+    """Verify that compute itfrs blockwise uses nested config components."""
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=3)
     config = {
         "fr_model": {
@@ -896,6 +941,7 @@ def test_compute_itfrs_blockwise_uses_nested_config_components():
     ],
 )
 def test_compute_itfrs_blockwise_supports_non_canonical_label_values(labels):
+    """Verify that compute itfrs blockwise supports non canonical label values."""
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=1)
     expected_lower, expected_upper, expected_boundary, expected_positive_region = _manual_itfrs_expected(
         ITFRS_SIMILARITY_MATRIX,
@@ -911,6 +957,7 @@ def test_compute_itfrs_blockwise_supports_non_canonical_label_values(labels):
 
 
 def test_compute_itfrs_blockwise_handles_all_same_class_labels():
+    """Verify that compute itfrs blockwise handles all same class labels."""
     labels = np.array(["same", "same", "same", "same"], dtype=object)
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=2)
 
@@ -924,6 +971,7 @@ def test_compute_itfrs_blockwise_handles_all_same_class_labels():
 
 
 def test_compute_itfrs_blockwise_handles_all_singleton_classes():
+    """Verify that compute itfrs blockwise handles all singleton classes."""
     labels = np.array(["a", "b", "c", "d"], dtype=object)
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=2)
     expected_lower = 1.0 - np.max(ITFRS_SIMILARITY_MATRIX - np.eye(4), axis=1)
@@ -936,34 +984,33 @@ def test_compute_itfrs_blockwise_handles_all_singleton_classes():
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
 
 
-def test_compute_itfrs_blockwise_documents_single_sample_contract():
-    engine = FixedBlockSimilarityEngine(np.array([[1.0]], dtype=float), block_size=1)
+@pytest.mark.parametrize(
+    "matrix, labels, block_size",
+    [
+        (np.array([[1.0]], dtype=float), np.array(["only"], dtype=object), 1),
+        (np.empty((0, 0), dtype=float), np.array([], dtype=int), 2),
+    ],
+)
+def test_compute_itfrs_blockwise_requires_at_least_two_samples(
+    matrix,
+    labels,
+    block_size,
+):
+    """ITFRS blockwise execution follows the shared minimum-size contract."""
+    engine = FixedBlockSimilarityEngine(matrix, block_size=block_size)
 
-    result = compute_itfrs_blockwise(engine, np.array(["only"], dtype=object))
-
-    np.testing.assert_allclose(result.lower, np.array([1.0]), atol=1e-12)
-    np.testing.assert_allclose(result.upper, np.array([0.0]), atol=1e-12)
-    np.testing.assert_allclose(result.boundary, np.array([-1.0]), atol=1e-12)
-    np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
-
-
-def test_compute_itfrs_blockwise_documents_empty_dataset_contract():
-    engine = FixedBlockSimilarityEngine(np.empty((0, 0), dtype=float), block_size=2)
-
-    result = compute_itfrs_blockwise(engine, np.array([], dtype=int))
-
-    assert result.lower.shape == (0,)
-    assert result.upper.shape == (0,)
-    assert result.boundary.shape == (0,)
-    assert result.positive_region.shape == (0,)
+    with pytest.raises(ValueError, match="at least two samples"):
+        compute_itfrs_blockwise(engine, labels)
 
 
 def test_compute_itfrs_blockwise_rejects_invalid_similarity_engine():
+    """Verify that compute itfrs blockwise rejects invalid similarity engine."""
     with pytest.raises(TypeError, match="BaseSimilarityEngine"):
         compute_itfrs_blockwise(object(), ITFRS_LABELS)
 
 
 def test_compute_itfrs_blockwise_rejects_length_mismatched_labels():
+    """Verify that compute itfrs blockwise rejects length mismatched labels."""
     engine = FixedBlockSimilarityEngine(ITFRS_SIMILARITY_MATRIX, block_size=2)
 
     with pytest.raises(ValueError, match="Length of labels"):
@@ -986,6 +1033,7 @@ VQRS_EXPECTED = VQRS_REFERENCE_CASE["expected"]
 
 @pytest.mark.parametrize("block_size", [1, 2, 10])
 def test_compute_vqrs_blockwise_matches_reference_default_quantifiers_for_block_sizes(block_size):
+    """Verify that compute vqrs blockwise matches reference default quantifiers for block sizes."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=block_size)
 
     result = compute_vqrs_blockwise(engine, VQRS_LABELS)
@@ -1007,6 +1055,7 @@ def test_compute_vqrs_blockwise_matches_reference_default_quantifiers_for_block_
 
 
 def test_compute_vqrs_blockwise_uses_flat_config_quantifiers():
+    """Verify that compute vqrs blockwise uses flat config quantifiers."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=2)
     config = {
         "type": "vqrs",
@@ -1034,6 +1083,7 @@ def test_compute_vqrs_blockwise_uses_flat_config_quantifiers():
 
 
 def test_compute_vqrs_blockwise_uses_nested_config_quantifiers():
+    """Verify that compute vqrs blockwise uses nested config quantifiers."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=3)
     config = {
         "fr_model": {
@@ -1059,8 +1109,11 @@ def test_compute_vqrs_blockwise_uses_nested_config_quantifiers():
 
 
 def test_compute_vqrs_blockwise_interim_uses_denominator_without_self_similarity():
+    """Verify that compute vqrs blockwise interim uses denominator without self similarity."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=2)
-    expected_denominator = np.sum(VQRS_SIMILARITY_MATRIX, axis=1) - 1.0
+    denominator_values = VQRS_SIMILARITY_MATRIX.copy()
+    np.fill_diagonal(denominator_values, 0.0)
+    expected_denominator = np.sum(denominator_values, axis=1)
     expected_numerator = np.array([0.40, 0.40, 0.20, 0.20], dtype=float)
     expected_interim = expected_numerator / expected_denominator
 
@@ -1070,6 +1123,7 @@ def test_compute_vqrs_blockwise_interim_uses_denominator_without_self_similarity
 
 
 def test_compute_vqrs_blockwise_excludes_self_comparison_from_numerator():
+    """Verify that compute vqrs blockwise excludes self comparison from numerator."""
     matrix = np.array(
         [
             [1.0, 0.25, 0.50],
@@ -1103,6 +1157,7 @@ def test_compute_vqrs_blockwise_excludes_self_comparison_from_numerator():
     ],
 )
 def test_compute_vqrs_blockwise_supports_non_canonical_label_values(labels):
+    """Verify that compute vqrs blockwise supports non canonical label values."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=1)
     expected_lower, expected_upper, expected_boundary, expected_positive_region, expected_interim = _manual_vqrs_expected(
         VQRS_SIMILARITY_MATRIX,
@@ -1119,6 +1174,7 @@ def test_compute_vqrs_blockwise_supports_non_canonical_label_values(labels):
 
 
 def test_compute_vqrs_blockwise_handles_all_same_class_labels():
+    """Verify that compute vqrs blockwise handles all same class labels."""
     matrix = np.array(
         [
             [1.0, 0.5, 0.25, 0.25],
@@ -1141,6 +1197,7 @@ def test_compute_vqrs_blockwise_handles_all_same_class_labels():
 
 
 def test_compute_vqrs_blockwise_handles_all_singleton_classes():
+    """Verify that compute vqrs blockwise handles all singleton classes."""
     labels = np.array(["a", "b", "c", "d"], dtype=object)
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=2)
 
@@ -1153,32 +1210,89 @@ def test_compute_vqrs_blockwise_handles_all_singleton_classes():
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
 
 
-def test_compute_vqrs_blockwise_documents_single_sample_default_quantifier_contract():
+def test_compute_vqrs_blockwise_rejects_single_sample_input():
+    """VQRS blockwise execution requires at least two samples."""
     engine = FixedBlockSimilarityEngine(np.array([[1.0]], dtype=float), block_size=1)
 
-    with pytest.raises(ValueError, match="finite values"):
+    with pytest.raises(ValueError, match="at least two samples"):
         compute_vqrs_blockwise(engine, np.array(["only"], dtype=object))
 
 
-def test_compute_vqrs_blockwise_documents_empty_dataset_contract():
+def test_compute_vqrs_blockwise_zero_denominator_uses_zero_evidence_ratio():
+    """Blockwise rows without non-self similarity mass remain finite."""
+    engine = FixedBlockSimilarityEngine(np.eye(2, dtype=float), block_size=1)
+
+    result = compute_vqrs_blockwise(engine, np.array(["a", "b"], dtype=object))
+
+    np.testing.assert_allclose(result.interim, np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(result.lower, np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(result.upper, np.zeros(2), atol=0.0)
+
+
+def test_compute_vqrs_blockwise_clips_roundoff_above_one():
+    """Blockwise VQRS clips a mathematically unit ratio to the valid interval."""
+    similarity = 0.5680366636995929
+    matrix = np.array([[1.0, similarity], [similarity, 1.0]], dtype=float)
+
+    for block_size in (1, 2):
+        engine = FixedBlockSimilarityEngine(matrix, block_size=block_size)
+        result = compute_vqrs_blockwise(
+            engine,
+            np.array(["same", "same"], dtype=object),
+        )
+        np.testing.assert_allclose(result.interim, np.ones(2), atol=0.0)
+        np.testing.assert_allclose(result.lower, np.ones(2), atol=0.0)
+
+
+def test_compute_vqrs_blockwise_excludes_actual_diagonal_values():
+    """Blockwise VQRS excludes self-similarity without a unit-diagonal assumption."""
+    matrix = np.array([[0.8, 0.4], [0.4, 0.9]], dtype=float)
+    engine = FixedBlockSimilarityEngine(matrix, block_size=1)
+
+    result = compute_vqrs_blockwise(
+        engine,
+        np.array(["same", "same"], dtype=object),
+    )
+
+    np.testing.assert_allclose(result.interim, np.ones(2), atol=0.0)
+
+
+def test_compute_vqrs_blockwise_rejects_empty_dataset():
+    """VQRS blockwise execution rejects an empty sample axis."""
     engine = FixedBlockSimilarityEngine(np.empty((0, 0), dtype=float), block_size=2)
 
-    result = compute_vqrs_blockwise(engine, np.array([], dtype=int))
-
-    assert result.lower.shape == (0,)
-    assert result.upper.shape == (0,)
-    assert result.boundary.shape == (0,)
-    assert result.positive_region.shape == (0,)
-    assert result.interim.shape == (0,)
+    with pytest.raises(ValueError, match="at least two samples"):
+        compute_vqrs_blockwise(engine, np.array([], dtype=int))
 
 
 def test_compute_vqrs_blockwise_rejects_invalid_similarity_engine():
+    """Verify that compute vqrs blockwise rejects invalid similarity engine."""
     with pytest.raises(TypeError, match="BaseSimilarityEngine"):
         compute_vqrs_blockwise(object(), VQRS_LABELS)
 
 
 def test_compute_vqrs_blockwise_rejects_length_mismatched_labels():
+    """Verify that compute vqrs blockwise rejects length mismatched labels."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=2)
 
     with pytest.raises(ValueError, match="Length of labels"):
         compute_vqrs_blockwise(engine, VQRS_LABELS[:-1])
+
+
+@pytest.mark.parametrize(
+    "matrix, labels, block_size",
+    [
+        (np.array([[1.0]], dtype=float), np.array(["only"], dtype=object), 1),
+        (np.empty((0, 0), dtype=float), np.array([], dtype=int), 2),
+    ],
+)
+def test_compute_owafrs_blockwise_requires_at_least_two_samples(
+    matrix,
+    labels,
+    block_size,
+):
+    """OWAFRS blockwise execution follows the shared minimum-size contract."""
+    engine = FixedBlockSimilarityEngine(matrix, block_size=block_size)
+
+    with pytest.raises(ValueError, match="at least two samples"):
+        compute_owafrs_blockwise(engine, labels)

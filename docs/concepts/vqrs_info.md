@@ -14,8 +14,11 @@ lower and upper approximation interpretations are.
 ## Implementation contract
 
 `frsutils.core.models.VQRS` is the dense NumPy reference implementation. It
-expects a fully materialized similarity matrix, a one-dimensional label vector,
-and lower and upper fuzzy quantifiers.
+expects at least two samples, a fully materialized finite fuzzy-relation matrix
+with values in `[0, 1]`, a one-dimensional label vector, and lower and upper
+fuzzy quantifiers. The low-level relation matrix may be asymmetric and need not
+have a unit diagonal; VQRS removes the actual diagonal values from its
+non-self evidence sums.
 
 The public approximation API also provides exact blockwise VQRS execution:
 

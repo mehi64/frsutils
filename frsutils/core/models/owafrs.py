@@ -49,14 +49,7 @@ class OWAFRS(FuzzyRoughModel):
                  logger=None):
         
         """Initialize the dense OWAFRS reference model."""
-        if labels is None:
-            raise ValueError("labels must be provided.")
-
-        labels_array = np.asarray(labels)
-        if labels_array.ndim != 1:
-            raise ValueError("labels must be a one-dimensional array-like object.")
-        if labels_array.shape[0] < 2:
-            raise ValueError("OWAFRS requires at least two samples for OWA aggregation.")
+        labels_array = np.asarray(labels) if labels is not None else None
 
         super().__init__(similarity_matrix,
                           labels_array,

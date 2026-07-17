@@ -123,6 +123,23 @@ np.allclose(result.positive_region, result.lower)
 Public result arrays are NumPy arrays, including results produced by optional
 CuPy-backed blockwise internals.
 
+### Input validation and minimum dataset size
+
+All public approximation entry points use the same minimum-size contract:
+`X` and `y`, or a precomputed similarity matrix and `y`, must describe at least
+two aligned samples. Empty and single-sample inputs raise `ValueError` for all
+three models and for both dense and blockwise execution. The approximation
+wrapper functions and `FuzzyRoughPositiveRegionScorer` follow the same rule.
+
+Feature data supplied to the public similarity and approximation builders must
+be a finite two-dimensional numeric array. Values such as `NaN`, positive
+infinity, and negative infinity are rejected. A precomputed similarity matrix
+must be finite, square, aligned with the one-dimensional label array, and at
+least `2 x 2`.
+
+This validation is performed at the public boundary so mathematically undefined
+or model-dependent edge behavior does not leak into research workflows.
+
 ### Dense execution
 
 Dense execution materializes or consumes a full pairwise similarity matrix and
@@ -137,6 +154,11 @@ result = compute_approximations(
     engine="dense",
 )
 ```
+
+Dense approximation execution is NumPy-only. `backend="numpy"` and
+`backend="auto"` are accepted; `backend="cupy"` raises a clear error rather
+than being silently ignored. Use blockwise execution for optional CuPy-backed
+computation.
 
 A precomputed similarity matrix can be supplied in dense mode:
 

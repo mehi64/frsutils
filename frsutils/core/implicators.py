@@ -38,13 +38,22 @@ class Implicator(RegistryFactoryMixin):
         if not validate_inputs:
             return
 
-        out_of_range = xp.any((a < 0.0) | (a > 1.0) | (b < 0.0) | (b > 1.0))
+        invalid_values = xp.any(
+            (~xp.isfinite(a))
+            | (~xp.isfinite(b))
+            | (a < 0.0)
+            | (a > 1.0)
+            | (b < 0.0)
+            | (b > 1.0)
+        )
         if xp is np:
-            has_out_of_range = bool(out_of_range)
+            has_invalid_values = bool(invalid_values)
         else:
-            has_out_of_range = bool(xp.asnumpy(out_of_range))
-        if has_out_of_range:
-            raise ValueError("Implicator inputs must be in range [0.0, 1.0].")
+            has_invalid_values = bool(xp.asnumpy(invalid_values))
+        if has_invalid_values:
+            raise ValueError(
+                "Implicator inputs must be finite values in range [0.0, 1.0]."
+            )
 
     @abstractmethod
     def compute_backend(self, a: Any, b: Any, *, xp: Any = np, validate_inputs: bool = True):
@@ -82,6 +91,7 @@ class LukasiewiczImplicator(Implicator):
         return xp.minimum(1.0, 1.0 - a + b)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -90,6 +100,7 @@ class LukasiewiczImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -107,6 +118,7 @@ class GoedelImplicator(Implicator):
         return xp.where(a <= b, 1.0, b)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -115,6 +127,7 @@ class GoedelImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -132,6 +145,7 @@ class KleeneDienesImplicator(Implicator):
         return xp.maximum(1.0 - a, b)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -140,6 +154,7 @@ class KleeneDienesImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -157,6 +172,7 @@ class ReichenbachImplicator(Implicator):
         return 1.0 - a + a * b
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -165,6 +181,7 @@ class ReichenbachImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -184,6 +201,7 @@ class GoguenImplicator(Implicator):
         return xp.where(a <= b, 1.0, xp.where(a > 0.0, ratio, 1.0))
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -192,6 +210,7 @@ class GoguenImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -209,6 +228,7 @@ class RescherImplicator(Implicator):
         return xp.where(a <= b, 1.0, 0.0)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -217,6 +237,7 @@ class RescherImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -234,6 +255,7 @@ class YagerImplicator(Implicator):
         return xp.where((a == 0.0) & (b == 0.0), 1.0, b ** a)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -242,6 +264,7 @@ class YagerImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -259,6 +282,7 @@ class WeberImplicator(Implicator):
         return xp.where(a == 1.0, b, 1.0)
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -267,6 +291,7 @@ class WeberImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -284,6 +309,7 @@ class FodorImplicator(Implicator):
         return xp.where(a <= b, 1.0, xp.maximum(1.0 - a, b))
 
     def _compute_scalar(self, a: float, b: float) -> float:
+        """Compute the operator for scalar inputs."""
         return float(self.compute_backend(np.asarray(a), np.asarray(b), xp=np))
 
     @classmethod
@@ -292,4 +318,5 @@ class FodorImplicator(Implicator):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}

@@ -16,6 +16,11 @@ FRsutils exposes execution modes through the canonical public API,
 The public output type is stable across all modes: approximation arrays are
 returned as NumPy arrays.
 
+Dense approximation execution accepts `backend="numpy"` or `backend="auto"`
+and resolves both to NumPy. A direct `backend="cupy"` request with
+`engine="dense"` is rejected; CuPy is available only through blockwise
+approximation execution. Unknown backend aliases are rejected in both modes.
+
 ## CuPy usage
 
 CuPy is optional and currently limited to selected backend-aware computation
@@ -38,6 +43,20 @@ result = compute_approximations(
 
 If CuPy or CUDA is not installed, CuPy-specific tests and benchmark cases should
 skip cleanly instead of failing ordinary CPU-only validation.
+
+### Host/device transfer boundary
+
+For a CuPy-backed blockwise similarity engine, the validated feature matrix is
+copied to the device lazily on the first block iteration and then reused for all
+row and column slices. Similarity blocks therefore do not repeatedly transfer
+the same feature rows from host memory. ITFRS and VQRS keep their supported
+reductions and accumulators on the device until the final public arrays are
+converted to NumPy. OWAFRS converts each completed similarity block to NumPy
+because its exact sorting and OWA aggregation remain CPU-resident.
+
+Low-level empty similarity blocks follow the same boundary: a backend-resident
+empty block is returned when backend residency is requested, and conversion to
+NumPy occurs only when the caller requests a public NumPy block.
 
 ## Installation
 
@@ -129,6 +148,25 @@ python -c "import cupy as cp; x = cp.arange(10, dtype=cp.float32); print(cp.asnu
 | VQRS   | Yes         | Yes                   | Yes                           | Yes, experimental                       |
 | OWAFRS | Yes         | Yes                   | Yes                           | No                                      |
 
+## Dense/blockwise parity validation
+
+The release test suite separates formula coverage from cross-layer execution
+coverage:
+
+- direct component and model tests verify every registered formula;
+- the direct OWAFRS blockwise matrix checks all 648 canonical combinations of
+  upper T-norm, lower implicator, upper OWA method, and lower OWA method at four
+  block sizes;
+- the public core execution matrix performs 1,360 deterministic NumPy
+  dense/blockwise comparisons across ITFRS, VQRS, and OWAFRS while exercising
+  every canonical similarity and similarity T-norm.
+
+These tests compare `lower`, `upper`, `boundary`, and `positive_region` with
+strict numerical tolerances. They establish exact NumPy dense/blockwise parity
+for the tested canonical configuration space. CuPy correctness is validated by
+separate fake-backend contract tests and real-CUDA tests because a CPU-only run
+cannot prove CUDA execution.
+
 ## Public result contract
 
 Regardless of backend, public approximation results expose NumPy arrays:
@@ -208,14 +246,13 @@ OWAFRS supports dense NumPy and exact blockwise execution. With
 `backend="cupy"`, similarity blocks can be computed using CuPy, but exact OWA
 sorting and aggregation remain on a NumPy-compatible row-buffer path.
 
-This is intentional for the current release cycle. 
+This is intentional for the current release cycle.
 
 > OWAFRS supports dense NumPy and exact blockwise execution. With
 > `backend="cupy"`, similarity blocks can be computed using the CuPy backend,
-> but OWAFRS aggregation are not currently GPU-resident approximation
-> accumulators. Public outputs remain NumPy arrays. So OWAFRS is partially GPU-native and does not guarantee speedup with CuPy.
-
-
+> but OWAFRS aggregation is not currently GPU-resident. Public outputs remain
+> NumPy arrays. OWAFRS therefore uses CuPy only for similarity-block generation
+> and does not guarantee a speedup.
 
 ## Backend-aware components
 
@@ -275,7 +312,5 @@ Fuzzy quantifiers:
 
 - `linear`
 - `quadratic`
-
-
 
 # 

@@ -41,7 +41,8 @@ def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
     Raises
     ------
     ValueError
-        If the matrix is missing, non-square, or not 2D.
+        If the matrix is missing, non-square, not 2D, contains non-finite
+        values, or represents fewer than two samples.
     """
     if similarity_matrix is None:
         raise ValueError("similarity_matrix must be provided.")
@@ -51,6 +52,12 @@ def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
         raise ValueError("similarity_matrix must be a 2D array.")
     if sim.shape[0] != sim.shape[1]:
         raise ValueError("similarity_matrix must be square.")
+    if sim.shape[0] < 2:
+        raise ValueError(
+            "Fuzzy-rough approximation models require at least two samples."
+        )
+    if not np.isfinite(sim).all():
+        raise ValueError("similarity_matrix must contain only finite values.")
     return sim
 
 def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
@@ -157,7 +164,8 @@ def build_fuzzy_rough_model(
         If config is not mapping-like.
     ValueError
         If nested config, an out-of-scope parameter, a conflicting model type,
-        or invalid matrix/labels are provided.
+        or invalid matrix/labels are provided. Fuzzy-rough model construction
+        requires at least two aligned samples.
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")

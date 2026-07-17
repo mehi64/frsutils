@@ -202,6 +202,70 @@ def test_calculate_similarity_block_handles_empty_sides(X_rows, X_cols, expected
     assert block.dtype == np.float64
 
 
+@pytest.mark.parametrize(
+    "X_rows, X_cols, expected_shape",
+    [
+        (np.empty((0, 3), dtype=float), X_ENGINE, (0, 5)),
+        (X_ENGINE, np.empty((0, 3), dtype=float), (5, 0)),
+    ],
+)
+def test_calculate_similarity_block_empty_cupy_preserves_requested_residency(
+    monkeypatch,
+    X_rows,
+    X_cols,
+    expected_shape,
+):
+    """Empty CuPy blocks stay backend-resident until NumPy is requested."""
+    fake_cupy = install_fake_cupy_module(monkeypatch)
+    backend = build_array_backend("cupy")
+    similarity_func = Similarity.create("linear")
+    tnorm_func = TNorm.create("minimum")
+
+    backend_block = calculate_similarity_block(
+        X_rows,
+        X_cols,
+        similarity_func,
+        tnorm_func,
+        backend=backend,
+        return_backend_array=True,
+    )
+
+    assert isinstance(backend_block, FakeCupyArray)
+    assert backend_block.shape == expected_shape
+    assert backend_block.dtype == np.float64
+    assert fake_cupy.asnumpy_calls == []
+
+    numpy_block = calculate_similarity_block(
+        X_rows,
+        X_cols,
+        similarity_func,
+        tnorm_func,
+        backend=backend,
+        return_backend_array=False,
+    )
+
+    assert isinstance(numpy_block, np.ndarray)
+    assert not isinstance(numpy_block, FakeCupyArray)
+    assert numpy_block.shape == expected_shape
+    assert numpy_block.dtype == np.float64
+    assert len(fake_cupy.asnumpy_calls) == 1
+
+
+def test_calculate_similarity_block_rejects_raw_backend_alias():
+    """Low-level block computation requires a resolved backend descriptor."""
+    similarity_func = Similarity.create("linear")
+    tnorm_func = TNorm.create("minimum")
+
+    with pytest.raises(TypeError, match="ArrayBackend"):
+        calculate_similarity_block(
+            X_ENGINE[0:2],
+            X_ENGINE[0:2],
+            similarity_func,
+            tnorm_func,
+            backend="cupy",
+        )
+
+
 def test_calculate_similarity_block_rejects_feature_dimension_mismatch():
     similarity_func = Similarity.create("linear")
     tnorm_func = TNorm.create("minimum")
@@ -881,6 +945,31 @@ def test_blockwise_iter_backend_blocks_with_cupy_backend_returns_backend_residen
                 np.ones(block.values.shape[0]),
                 atol=0.0,
             )
+
+
+def test_blockwise_cupy_engine_reuses_one_device_feature_matrix(monkeypatch):
+    """CuPy block iteration transfers the feature matrix once and reuses slices."""
+    fake_cupy = install_fake_cupy_module(monkeypatch)
+    engine = BlockwiseSimilarityEngine(
+        X_ENGINE,
+        block_size=2,
+        backend="cupy",
+        similarity="linear",
+        similarity_tnorm="minimum",
+    )
+
+    assert fake_cupy.host_to_device_calls == []
+
+    first_blocks = list(engine.iter_backend_blocks())
+    second_blocks = list(engine.iter_backend_blocks())
+
+    assert len(fake_cupy.host_to_device_calls) == 1
+    np.testing.assert_allclose(fake_cupy.host_to_device_calls[0], X_ENGINE)
+    assert len(first_blocks) == len(second_blocks) == 9
+    assert all(isinstance(block.values, FakeCupyArray) for block in first_blocks)
+    assert all(block.values.dtype == np.float64 for block in first_blocks)
+    assert all(block.values_backend == "cupy" for block in first_blocks)
+    assert all(block.values_are_backend_resident is True for block in first_blocks)
 
 
 def test_blockwise_to_dense_with_cupy_backend_matches_numpy_dense(monkeypatch):

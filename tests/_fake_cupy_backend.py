@@ -36,10 +36,16 @@ class FakeCupyModule:
 
     def __init__(self) -> None:
         """Initialize call counters used by backend contract assertions."""
+        self.asarray_calls = []
+        self.host_to_device_calls = []
+        self.asnumpy_calls = []
         self.fill_diagonal_calls = []
 
     def asarray(self, value: Any, dtype: Any = None) -> FakeCupyArray:
-        """Return a fake CuPy array."""
+        """Return a fake CuPy array and record host-to-device boundaries."""
+        self.asarray_calls.append(value)
+        if not isinstance(value, FakeCupyArray):
+            self.host_to_device_calls.append(value)
         return as_fake_cupy_array(value, dtype=dtype)
 
     def zeros(self, shape: Any, dtype: Any = np.float64) -> FakeCupyArray:
@@ -51,9 +57,10 @@ class FakeCupyModule:
         return as_fake_cupy_array(np.ones(shape, dtype=dtype))
 
     def asnumpy(self, value: Any) -> np.ndarray:
-        """Convert a fake CuPy array back to a plain NumPy array."""
+        """Convert a fake CuPy array back to NumPy and record the boundary."""
         if not isinstance(value, FakeCupyArray):
             raise AssertionError("asnumpy must receive a fake CuPy-resident array.")
+        self.asnumpy_calls.append(value)
         return np.asarray(value).copy()
 
     def fill_diagonal(self, value: Any, scalar: float) -> None:

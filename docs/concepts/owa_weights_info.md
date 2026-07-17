@@ -28,7 +28,10 @@ Since *suprimum* operator is basically a *maximum*, we need to assign *lower* OW
 | **Exponential (Geometric Progression)** | $w_i ∝ base^i$          | base > 1   | exponential, exp, gp    | ref [2]   |
 | **Harmonic (Inverse Additive)**         | $w_i ∝ 1 / i$           | None       | harmonic, harm, inv_add | ref [1]   |
 
-All weights are normalized so that $\sum(w_i)$ = 1.
+All weights are normalized so that $\sum(w_i)$ = 1. Exponential weights are
+computed from an exponent-shifted geometric progression whose largest raw value
+is one. This produces the same normalized mathematical weights as
+$base^1, \ldots, base^n$ while avoiding overflow for large `n`.
 
 ---
 

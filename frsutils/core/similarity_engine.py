@@ -315,35 +315,58 @@ def calculate_similarity_block(
     return_backend_array: bool = False,
 ) -> Any:
     """Compute an exact pairwise similarity block between two feature matrices.
-        
-        Parameters
-        ----------
-        X_rows : Any
-            Row-side feature matrix with shape `(n_rows, n_features)`.
-        X_cols : Any
-            Column-side feature matrix with shape `(n_cols, n_features)`.
-        similarity_func : Similarity
-            Built similarity component.
-        tnorm : object
-            Built binary T-norm component/callable.
-        backend : Optional[ArrayBackend]
-            Optional ArrayBackend. NumPy is used when omitted.
-        return_backend_array : bool
-            If True, keep CuPy values on GPU instead of converting to NumPy.
-        
-        Returns
-        -------
-        Any
-            Similarity block with shape `(n_rows, n_cols)` as NumPy or backend array.
-        
-        Raises
-        ------
-        ValueError
-            If feature dimensions do not match.
-        
+
+    Parameters
+    ----------
+    X_rows : Any
+        Row-side feature matrix with shape ``(n_rows, n_features)``.
+    X_cols : Any
+        Column-side feature matrix with shape ``(n_cols, n_features)``.
+    similarity_func : Similarity
+        Built similarity component.
+    tnorm : object
+        Built binary T-norm component/callable.
+    backend : ArrayBackend or None, default=None
+        Optional array backend. NumPy is used when omitted.
+    return_backend_array : bool, default=False
+        If True, preserve the resolved backend for the returned block. If False,
+        materialize a NumPy array at the public boundary.
+
+    Returns
+    -------
+    block : Any
+        Similarity block with shape ``(n_rows, n_cols)`` as a NumPy or backend
+        array according to ``return_backend_array``.
+
+    Raises
+    ------
+    TypeError
+        If ``backend`` is not an ``ArrayBackend`` descriptor.
+    ValueError
+        If either feature input is missing, is not two-dimensional, or has an
+        incompatible feature count.
+
+    Notes
+    -----
+    CuPy inputs that are already backend-resident are reused without an
+    intermediate NumPy conversion. Empty blocks preserve the requested backend
+    residency contract.
     """
-    X_rows_array = _as_2d_feature_matrix(X_rows)
-    X_cols_array = _as_2d_feature_matrix(X_cols)
+    if backend is not None and not isinstance(backend, ArrayBackend):
+        raise TypeError("backend must be an ArrayBackend instance when provided.")
+
+    effective_backend = backend or build_array_backend("numpy")
+
+    if is_cupy_backend(effective_backend):
+        if X_rows is None or X_cols is None:
+            raise ValueError("X_rows and X_cols must be 2D array-like feature matrices.")
+        X_rows_array = effective_backend.asarray(X_rows, dtype=np.float64)
+        X_cols_array = effective_backend.asarray(X_cols, dtype=np.float64)
+        if X_rows_array.ndim != 2 or X_cols_array.ndim != 2:
+            raise ValueError("X_rows and X_cols must be 2D array-like feature matrices.")
+    else:
+        X_rows_array = _as_2d_feature_matrix(X_rows)
+        X_cols_array = _as_2d_feature_matrix(X_cols)
 
     if X_rows_array.shape[1] != X_cols_array.shape[1]:
         raise ValueError("X_rows and X_cols must have the same number of features.")
@@ -351,9 +374,10 @@ def calculate_similarity_block(
     n_rows, n_features = X_rows_array.shape
     n_cols = X_cols_array.shape[0]
     if n_rows == 0 or n_cols == 0:
-        return np.zeros((n_rows, n_cols), dtype=np.float64)
-
-    effective_backend = backend or build_array_backend("numpy")
+        empty_block = effective_backend.zeros((n_rows, n_cols), dtype=np.float64)
+        if return_backend_array:
+            return empty_block
+        return effective_backend.to_numpy(empty_block)
 
     if not is_cupy_backend(effective_backend):
         sim_block = np.ones((n_rows, n_cols), dtype=np.float64)
@@ -364,15 +388,22 @@ def calculate_similarity_block(
             sim_block = tnorm(sim_block, feature_sim)
         return sim_block
 
-    X_rows_backend = effective_backend.asarray(X_rows_array, dtype=np.float64)
-    X_cols_backend = effective_backend.asarray(X_cols_array, dtype=np.float64)
     sim_block_backend = effective_backend.ones((n_rows, n_cols), dtype=np.float64)
 
     for feature_idx in range(n_features):
-        row_col = X_rows_backend[:, feature_idx].reshape(-1, 1)
-        col_row = X_cols_backend[:, feature_idx].reshape(1, -1)
-        feature_sim = _compute_similarity_from_diff(row_col - col_row, similarity_func, effective_backend)
-        sim_block_backend = _apply_tnorm_backend(sim_block_backend, feature_sim, tnorm, effective_backend)
+        row_col = X_rows_array[:, feature_idx].reshape(-1, 1)
+        col_row = X_cols_array[:, feature_idx].reshape(1, -1)
+        feature_sim = _compute_similarity_from_diff(
+            row_col - col_row,
+            similarity_func,
+            effective_backend,
+        )
+        sim_block_backend = _apply_tnorm_backend(
+            sim_block_backend,
+            feature_sim,
+            tnorm,
+            effective_backend,
+        )
 
     if return_backend_array:
         return sim_block_backend
@@ -552,6 +583,24 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
         """Initialize the BlockwiseSimilarityEngine instance."""
         super().__init__(X, config=config, backend=backend, **flat_config)
         self.block_size = _validate_block_size(block_size)
+        self._backend_feature_matrix = None
+
+    def _feature_matrix_for_blocks(self) -> Any:
+        """Return the feature matrix in the execution backend.
+
+        The NumPy matrix remains authoritative. For CuPy execution, the matrix
+        is copied to the device lazily once and reused across all block
+        iterations, avoiding repeated host-to-device transfers for row and
+        column slices.
+        """
+        if not is_cupy_backend(self.backend):
+            return self.X
+        if self._backend_feature_matrix is None:
+            self._backend_feature_matrix = self.backend.asarray(
+                self.X,
+                dtype=np.float64,
+            )
+        return self._backend_feature_matrix
 
     def _iter_blocks_impl(self, *, return_backend_array: bool) -> Iterator[SimilarityBlock]:
         """Shared row-major block iterator for NumPy and backend-resident values.
@@ -568,15 +617,16 @@ class BlockwiseSimilarityEngine(BaseSimilarityEngine):
                 
         """
         n = self.n_samples
+        feature_matrix = self._feature_matrix_for_blocks()
         for row_start in range(0, n, self.block_size):
             row_stop = min(row_start + self.block_size, n)
             row_slice = slice(row_start, row_stop)
-            X_rows = self.X[row_slice]
+            X_rows = feature_matrix[row_slice]
 
             for col_start in range(0, n, self.block_size):
                 col_stop = min(col_start + self.block_size, n)
                 col_slice = slice(col_start, col_stop)
-                X_cols = self.X[col_slice]
+                X_cols = feature_matrix[col_slice]
 
                 values = calculate_similarity_block(
                     X_rows,

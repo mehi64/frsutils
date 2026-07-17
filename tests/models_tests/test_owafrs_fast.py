@@ -171,7 +171,7 @@ def test_owafrs_requires_at_least_two_samples(similarity_matrix, labels):
 
 def test_owafrs_rejects_non_1d_labels():
     """Dense OWAFRS rejects labels with an ambiguous two-dimensional shape."""
-    with pytest.raises(ValueError, match="one-dimensional"):
+    with pytest.raises(ValueError, match="1D"):
         _build_model(labels=np.array([["a"], ["a"], ["b"], ["b"]], dtype=object))
 
 
@@ -465,8 +465,8 @@ def test_owafrs_from_dict_rejects_invalid_serialized_component_specs(component_k
         (np.array([1.0, 0.5]), [0, 1], "2D NumPy array"),
         (np.ones((2, 3)), [0, 1], "square"),
         (np.array([[1.0, 1.2], [1.2, 1.0]]), [0, 1], "range"),
-        (np.array([[1.0, np.nan], [np.nan, 1.0]]), [0, 1], "range"),
-        (np.array([[1.0, np.inf], [np.inf, 1.0]]), [0, 1], "range"),
+        (np.array([[1.0, np.nan], [np.nan, 1.0]]), [0, 1], "finite"),
+        (np.array([[1.0, np.inf], [np.inf, 1.0]]), [0, 1], "finite"),
         (_small_similarity_matrix(), [0, 1, 1], "Length of labels"),
     ],
 )

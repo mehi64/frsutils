@@ -43,9 +43,13 @@ def _manual_vqrs_values(
         np.fill_diagonal(tnorm_values, 0.0)
 
     numerator = np.sum(tnorm_values, axis=1)
-    denominator = np.sum(similarity_matrix, axis=1) - 1.0
+    denominator_values = similarity_matrix.copy()
+    if similarity_matrix.shape[0]:
+        np.fill_diagonal(denominator_values, 0.0)
+    denominator = np.sum(denominator_values, axis=1)
     with np.errstate(divide="ignore", invalid="ignore"):
-        interim = numerator / denominator
+        interim = np.where(denominator > 0.0, numerator / denominator, 0.0)
+    interim = np.clip(interim, 0.0, 1.0)
 
     lower = lb_fuzzy_quantifier(interim)
     upper = ub_fuzzy_quantifier(interim)
@@ -176,36 +180,26 @@ def test_dense_vqrs_handles_all_singleton_classes():
     np.testing.assert_allclose(model.boundary_region(), np.zeros(4), atol=1e-12)
 
 
-def test_dense_vqrs_empty_dataset_returns_empty_outputs():
-    """Dense VQRS keeps the empty-dataset contract aligned with blockwise VQRS."""
-    model = VQRS(
-        np.empty((0, 0), dtype=float),
-        np.array([], dtype=int),
-        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
-        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
-    )
-
-    assert model.lower_approximation().shape == (0,)
-    assert model.upper_approximation().shape == (0,)
-    assert model.boundary_region().shape == (0,)
-    assert model.positive_region().shape == (0,)
-
-
-def test_dense_vqrs_single_sample_contract_rejects_nan_interim():
-    """A single sample produces 0/0 interim and is rejected by quantifier validation."""
-    model = VQRS(
-        np.array([[1.0]], dtype=float),
-        np.array(["only"], dtype=object),
-        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
-        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
-    )
-
-    with pytest.raises(ValueError, match="finite values"):
-        model.lower_approximation()
+@pytest.mark.parametrize(
+    "similarity_matrix, labels",
+    [
+        (np.empty((0, 0), dtype=float), np.array([], dtype=int)),
+        (np.array([[1.0]], dtype=float), np.array(["only"], dtype=object)),
+    ],
+)
+def test_dense_vqrs_requires_at_least_two_samples(similarity_matrix, labels):
+    """Dense VQRS follows the shared core minimum-size contract."""
+    with pytest.raises(ValueError, match="at least two samples"):
+        VQRS(
+            similarity_matrix,
+            labels,
+            LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+            LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+        )
 
 
-def test_dense_vqrs_zero_denominator_contract_rejects_nan_interim():
-    """Rows with no non-self similarity produce invalid VQRS ratios by contract."""
+def test_dense_vqrs_zero_denominator_uses_zero_evidence_ratio():
+    """Rows without non-self similarity mass receive a finite conservative ratio."""
     model = VQRS(
         np.eye(2, dtype=float),
         np.array(["a", "b"], dtype=object),
@@ -213,8 +207,37 @@ def test_dense_vqrs_zero_denominator_contract_rejects_nan_interim():
         LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
     )
 
-    with pytest.raises(ValueError, match="finite values"):
-        model.lower_approximation()
+    np.testing.assert_allclose(model._interim_calculations(), np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(model.lower_approximation(), np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(model.upper_approximation(), np.zeros(2), atol=0.0)
+
+
+def test_dense_vqrs_clips_roundoff_above_one_before_quantification():
+    """A mathematically unit ratio must remain valid after floating-point summation."""
+    similarity = 0.5680366636995929
+    matrix = np.array([[1.0, similarity], [similarity, 1.0]], dtype=float)
+    model = VQRS(
+        matrix,
+        np.array(["same", "same"], dtype=object),
+        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+    )
+
+    np.testing.assert_allclose(model._interim_calculations(), np.ones(2), atol=0.0)
+    np.testing.assert_allclose(model.lower_approximation(), np.ones(2), atol=0.0)
+
+
+def test_dense_vqrs_excludes_actual_diagonal_values_from_denominator():
+    """Direct VQRS excludes self-similarity without assuming a unit diagonal."""
+    matrix = np.array([[0.8, 0.4], [0.4, 0.9]], dtype=float)
+    model = VQRS(
+        matrix,
+        np.array(["same", "same"], dtype=object),
+        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+        LinearFuzzyQuantifier(alpha=0.1, beta=0.6),
+    )
+
+    np.testing.assert_allclose(model._interim_calculations(), np.ones(2), atol=0.0)
 
 
 def test_dense_vqrs_rejects_non_1d_labels():

@@ -8,13 +8,20 @@ aggregations and useful for noisy or uncertain data.
 ## Implementation contract
 
 `frsutils.core.models.OWAFRS` is the dense NumPy reference implementation. It
-expects a fully materialized similarity matrix, a one-dimensional label vector,
-an upper T-norm, a lower implicator, and lower and upper OWA weighting
-strategies.
+expects a fully materialized finite fuzzy-relation matrix with values in
+`[0, 1]`, a one-dimensional label vector, an upper T-norm, a lower implicator,
+and lower and upper OWA weighting strategies. The low-level relation matrix may
+be asymmetric and need not have a unit diagonal because OWAFRS excludes
+self-comparisons explicitly before sorting.
 
 The direct dense model requires at least two samples because OWAFRS excludes the
 self-comparison on the diagonal and then applies OWA aggregation to the remaining
 comparisons.
+
+All registered OWA strategies, including exponential weights, support sample
+counts above 21. The exponential implementation rescales its raw geometric
+progression before normalization, so large OWAFRS datasets do not fail from raw
+weight overflow.
 
 The public approximation API also provides exact blockwise OWAFRS execution:
 

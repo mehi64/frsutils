@@ -38,11 +38,12 @@ The real-CUDA smoke checks completed successfully for device discovery,
 element-wise kernel execution, and matrix multiplication. The previously
 reported non-CUDA logger-encoding regression has been corrected and its
 targeted test now passes. After completion of the JSON reference-data
-migration, the default suite reported 2677 passed and 149 optional-backend
-skips, with 10518 slow cases deselected. The reference-data contract suite also
-passed. The prior release-validation record reports all 10518 slow OWAFRS cases
-passing in equivalent test-function batches; rerun the complete slow suite from
-the final release checkout before publication.
+migration and final core hardening, the default suite reported 2926 passed
+and 149 optional-backend skips, with 6633 slow tests deselected. The
+reference-data contract suite also passed. All 6633 slow tests completed in four
+deterministic shards, including exhaustive OWAFRS combinations and a public
+three-model dense/blockwise execution matrix. Branch-aware core coverage is 96
+percent and is protected by a 95 percent CI floor.
 
 Before publishing the release, run:
 

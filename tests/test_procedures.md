@@ -30,6 +30,42 @@ python -m pytest -ra
 This is the suite used for routine development and the Python-version matrix in
 continuous integration.
 
+## Public API branch-coverage gate
+
+The stable public API has a branch-aware coverage floor. Run the same command as
+continuous integration with:
+
+```bash
+python -m pytest tests/api \
+  --cov=frsutils.api \
+  --cov-branch \
+  --cov-report=term-missing \
+  --cov-fail-under=95 \
+  -ra
+```
+
+The gate is intentionally below 100 percent: it prevents material regressions
+without encouraging tests that merely execute defensive lines and do not verify
+scientific or public behavior.
+
+## Core branch-coverage gate
+
+The mathematical core has a separate branch-aware coverage floor. Run the same
+command as continuous integration with:
+
+```bash
+python -m pytest tests/core_tests tests/models_tests tests/api \
+  --cov=frsutils.core \
+  --cov-branch \
+  --cov-report=term-missing \
+  --cov-fail-under=95 \
+  -ra
+```
+
+The core gate combines direct component/model tests with public integration
+tests. This prevents coverage from depending only on one test layer while still
+requiring user-visible numerical behavior to be checked.
+
 ## Scientific reference-data contract
 
 Run the integrity and schema checks whenever a JSON reference value, manifest
@@ -60,6 +96,53 @@ python -m pytest -o addopts="" -ra
 
 The `-o addopts=""` override is required because `pytest.ini` excludes slow
 tests by default.
+
+For exhaustive suites that become slower in one long process, run the same
+slow-test collection as deterministic contiguous shards. Shard indexes are
+zero-based:
+
+```bash
+python scripts/run_slow_test_shard.py --shard-index 0 --shard-count 4
+python scripts/run_slow_test_shard.py --shard-index 1 --shard-count 4
+python scripts/run_slow_test_shard.py --shard-index 2 --shard-count 4
+python scripts/run_slow_test_shard.py --shard-index 3 --shard-count 4
+```
+
+Every collected slow-test node ID belongs to exactly one shard. All shards must
+pass before a release.
+
+The slow suite includes three complementary validation layers:
+
+- exhaustive dense OWAFRS reference combinations;
+- all canonical OWAFRS component combinations against the direct blockwise
+  engine at multiple block sizes;
+- a public cross-layer execution matrix covering every canonical similarity and
+  similarity T-norm with all ITFRS component pairs, all VQRS quantifier pairs,
+  and a balanced OWAFRS component matrix.
+
+The public execution matrix performs 1,360 dense/blockwise result comparisons:
+1,152 for ITFRS, 64 for VQRS, and 144 for OWAFRS. CuPy residency and transfer
+contracts remain separate because real CUDA tests are environment-dependent.
+
+## CuPy backend contracts
+
+CPU-only development runs exercise strict fake-CuPy residency and transfer
+contracts as part of the default suite. On a machine with a working CUDA device,
+install the GPU extra and run the real-CUDA model contracts explicitly:
+
+```bash
+python -m pytest \
+  tests/api/test_cupy_backend_contract.py \
+  tests/api/test_itfrs_blockwise_cupy_contract.py \
+  tests/api/test_vqrs_blockwise_cupy_contract.py \
+  tests/api/test_owafrs_blockwise_cupy_contract.py \
+  -o addopts="" -vv -rs
+```
+
+These tests verify real device allocation, backend-resident similarity blocks,
+dense/blockwise numerical parity, public NumPy outputs, output dtypes, and the
+model-specific accumulator claims. A skipped real-CUDA test is not evidence of
+GPU correctness; record at least one complete run on the release environment.
 
 ## Targeted test modules
 
@@ -125,10 +208,20 @@ On Windows, replace `bin/python` with `Scripts/python.exe`.
 1. installs the editable package and development dependencies on supported
    Python versions;
 2. runs the reference-data contract and default test suites;
-3. builds the wheel and source distribution;
-4. checks package metadata and required distribution contents;
-5. installs both built artifacts in isolated environments and performs import
+3. enforces at least 95 percent branch-aware coverage separately for
+   `frsutils.api` and `frsutils.core` on Python 3.12;
+4. builds the wheel and source distribution;
+5. checks package metadata and required distribution contents;
+6. installs both built artifacts in isolated environments and performs import
    and dependency smoke tests.
+
+`.github/workflows/extended-tests.yml` executes the exhaustive slow tests as
+four deterministic contiguous shards in separate jobs. It can be started
+manually before a release and also runs monthly so exhaustive model and
+execution-matrix combinations do not silently regress. CPU-only CI is expected
+to skip real-CuPy
+tests cleanly; real CUDA validation is recorded separately according to
+`docs/developer/release.md`.
 
 A pull request should not be merged until all required checks pass. Changes to
 `tests/reference_data/`, its loader, accessors, or contract tests additionally

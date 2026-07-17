@@ -123,6 +123,12 @@ def test_vqrs_fake_cupy_final_conversion_uses_only_required_backend_arrays(monke
 
     assert len(converted_values) == 3
     assert [value.shape for value in converted_values] == [(len(Y_VQRS_CUPY),)] * 3
+    assert all(value.dtype == np.float64 for value in converted_values)
+    assert len(fake_cupy.asnumpy_calls) == 3
+    assert all(
+        value.dtype == np.float64
+        for value in (result.lower, result.upper, result.boundary, result.positive_region)
+    )
     assert result.used_gpu_approximation_accumulators is True
     assert result.as_dict()["used_gpu_approximation_accumulators"] is True
 

@@ -43,7 +43,8 @@ def _as_public_labels(y: Any) -> np.ndarray:
     Raises
     ------
     ValueError
-        If labels are missing or not one-dimensional.
+        If labels are missing, not one-dimensional, or contain fewer than two
+        samples.
     """
     if y is None:
         raise ValueError("y/labels must be provided as a 1D label vector.")
@@ -51,6 +52,10 @@ def _as_public_labels(y: Any) -> np.ndarray:
     labels = np.asarray(y)
     if labels.ndim != 1:
         raise ValueError("labels must be a 1D label vector.")
+    if len(labels) < 2:
+        raise ValueError(
+            "Fuzzy-rough approximations require at least two samples."
+        )
     return labels
 
 def _validate_x_label_alignment(X: Optional[Any], labels: np.ndarray) -> None:
@@ -96,7 +101,8 @@ def _as_validated_similarity_matrix(
     Raises
     ------
     ValueError
-        If the matrix is not square or is not aligned with labels.
+        If the matrix is not square, contains non-finite values, or is not
+        aligned with labels.
     """
     if similarity_matrix is None:
         return None
@@ -108,6 +114,8 @@ def _as_validated_similarity_matrix(
         raise ValueError("similarity_matrix must be square.")
     if sim.shape[0] != len(labels):
         raise ValueError("similarity_matrix size must match the length of y.")
+    if not np.isfinite(sim).all():
+        raise ValueError("similarity_matrix must contain only finite values.")
     return sim
 
 def _prepare_effective_config(
@@ -193,6 +201,45 @@ def _normalize_execution_engine(engine: str) -> str:
     if normalized in {"blockwise", "chunkwise", "blocked"}:
         return "blockwise"
     raise ValueError("Unknown approximation engine. Use engine='dense' or engine='blockwise'.")
+
+
+def _normalize_approximation_backend(backend: str, *, engine: str) -> str:
+    """Validate and normalize a public approximation backend alias.
+
+    Parameters
+    ----------
+    backend : str
+        Requested backend alias.
+    engine : {"dense", "blockwise"}
+        Canonical execution-engine alias.
+
+    Returns
+    -------
+    str
+        Canonical backend alias.
+
+    Raises
+    ------
+    TypeError
+        If ``backend`` is not a non-empty string.
+    ValueError
+        If the alias is unknown or CuPy is requested for dense execution.
+    """
+    if not isinstance(backend, str) or not backend.strip():
+        raise TypeError("backend must be a non-empty string.")
+
+    normalized = backend.strip().lower()
+    if normalized not in {"numpy", "auto", "cupy"}:
+        raise ValueError(
+            "Unsupported backend. Use backend='numpy', "
+            "backend='auto', or backend='cupy'."
+        )
+    if engine == "dense" and normalized == "cupy":
+        raise ValueError(
+            "engine='dense' is NumPy-only. Use engine='blockwise' with "
+            "backend='cupy' for optional GPU-backed execution."
+        )
+    return "numpy" if engine == "dense" and normalized == "auto" else normalized
 
 def _similarity_name_from_config(
     effective_config: Mapping[str, Any],
@@ -457,7 +504,8 @@ def compute_approximations(
     ValueError
         If inputs are misaligned, execution settings are incompatible, nested
         config is supplied, or flat configuration is unknown or incompatible
-        with the selected model/component alias.
+        with the selected model/component alias. At least two aligned samples
+        are required.
     """
     model_alias = resolve_public_model_type(
         model_type=model,
@@ -468,6 +516,10 @@ def compute_approximations(
     _validate_x_label_alignment(X, labels)
     validated_similarity_matrix = _as_validated_similarity_matrix(similarity_matrix, labels)
     execution_engine = _normalize_execution_engine(engine)
+    execution_backend = _normalize_approximation_backend(
+        backend,
+        engine=execution_engine,
+    )
 
     if execution_engine == "blockwise" and validated_similarity_matrix is not None:
         raise ValueError(
@@ -507,7 +559,7 @@ def compute_approximations(
             effective_config=effective_config,
             return_similarity_matrix=return_similarity_matrix,
             block_size=block_size,
-            backend=backend,
+            backend=execution_backend,
         )
 
     return _compute_dense_approximations(

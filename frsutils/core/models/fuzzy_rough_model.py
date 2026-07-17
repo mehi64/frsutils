@@ -12,13 +12,21 @@ from frsutils.utils.base_component_with_logger import BaseComponentWithLogger
 
 class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
     """Abstract base class for fuzzy-rough approximation models.
-    
+
     Parameters
     ----------
-    similarity_matrix : object
-        Symmetric (n x n) similarity matrix in [0, 1]
-    labels : object
-        Label vector of length n
+    similarity_matrix : ndarray of shape (n_samples, n_samples)
+        Finite fuzzy-relation matrix with values in the interval [0, 1].
+    labels : ndarray of shape (n_samples,)
+        One-dimensional label vector aligned with the matrix.
+
+    Notes
+    -----
+    Core model construction requires at least two samples. The low-level model
+    contract does not require symmetry or a unit diagonal, which allows direct
+    use of finite fuzzy relations as well as conventional similarity matrices.
+    Each model excludes self-comparisons explicitly where its definition
+    requires it.
     """
 
     def __init__(self, 
@@ -121,19 +129,44 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
 
     @classmethod
     def validate_params_base(cls, **kwargs):
-        """Validates similarity matrix and labels"""
+        """Validate the shared dense-model matrix and label contract.
+
+        Parameters
+        ----------
+        **kwargs : object
+            Must contain ``similarity_matrix`` and ``labels``.
+
+        Raises
+        ------
+        ValueError
+            If the matrix or labels violate the dense core-model contract.
+        """
         similarity_matrix = kwargs.get("similarity_matrix")
         labels = kwargs.get("labels")
 
-        if ((similarity_matrix is None) or (labels is None)):
+        if similarity_matrix is None or labels is None:
             raise ValueError("similarity_matrix and labels must be provided.")
-        
+
         if not isinstance(similarity_matrix, np.ndarray) or similarity_matrix.ndim != 2:
             raise ValueError("similarity_matrix must be a 2D NumPy array.")
         if similarity_matrix.shape[0] != similarity_matrix.shape[1]:
             raise ValueError("similarity_matrix must be square.")
+        if similarity_matrix.shape[0] < 2:
+            raise ValueError(
+                "Fuzzy-rough approximation models require at least two samples."
+            )
+        try:
+            finite_values = np.isfinite(similarity_matrix).all()
+        except TypeError as exc:
+            raise ValueError(
+                "similarity_matrix must contain numeric finite values."
+            ) from exc
+        if not finite_values:
+            raise ValueError("similarity_matrix must contain only finite values.")
         if not ((0.0 <= similarity_matrix).all() and (similarity_matrix <= 1.0).all()):
             raise ValueError("All similarity values must be in the range [0.0, 1.0].")
+        if not isinstance(labels, np.ndarray) or labels.ndim != 1:
+            raise ValueError("labels must be a 1D array-like vector.")
         if len(labels) != similarity_matrix.shape[0]:
             raise ValueError("Length of labels must match similarity_matrix size.")
 

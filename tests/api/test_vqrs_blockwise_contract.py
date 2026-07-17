@@ -193,3 +193,54 @@ def test_blockwise_vqrs_fake_cupy_path_supports_custom_quantifier_parameters(mon
     np.testing.assert_allclose(gpu_like.lower, dense.lower, atol=1e-12)
     np.testing.assert_allclose(gpu_like.upper, dense.upper, atol=1e-12)
     np.testing.assert_allclose(gpu_like.positive_region, dense.positive_region, atol=1e-12)
+
+
+def test_vqrs_drastic_similarity_tnorm_handles_zero_nonself_mass():
+    """Dense and blockwise VQRS return finite zeros for isolated similarity rows."""
+    X = np.array([[0.0, 0.0], [0.4, 0.6]], dtype=float)
+    y = np.array(["a", "b"], dtype=object)
+    kwargs = dict(
+        model="vqrs",
+        similarity="linear",
+        similarity_tnorm="drastic",
+    )
+
+    dense = compute_approximations(X, y, engine="dense", **kwargs)
+    blockwise = compute_approximations(
+        X,
+        y,
+        engine="blockwise",
+        block_size=1,
+        **kwargs,
+    )
+
+    np.testing.assert_allclose(dense.lower, np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(dense.upper, np.zeros(2), atol=0.0)
+    np.testing.assert_allclose(blockwise.lower, dense.lower, atol=0.0)
+    np.testing.assert_allclose(blockwise.upper, dense.upper, atol=0.0)
+
+
+def test_vqrs_nilpotent_similarity_tnorm_clips_unit_ratio_consistently():
+    """Dense and blockwise VQRS agree when round-off would exceed one slightly."""
+    X = np.array([[0.0], [0.4319633363004071]], dtype=float)
+    y = np.array(["same", "same"], dtype=object)
+    kwargs = dict(
+        model="vqrs",
+        similarity="linear",
+        similarity_tnorm="nilpotent",
+    )
+
+    dense = compute_approximations(X, y, engine="dense", **kwargs)
+    blockwise = compute_approximations(
+        X,
+        y,
+        engine="blockwise",
+        block_size=1,
+        **kwargs,
+    )
+
+    np.testing.assert_allclose(dense.lower, np.ones(2), atol=0.0)
+    np.testing.assert_allclose(dense.upper, np.ones(2), atol=0.0)
+    np.testing.assert_allclose(blockwise.lower, dense.lower, atol=0.0)
+    np.testing.assert_allclose(blockwise.upper, dense.upper, atol=0.0)
+

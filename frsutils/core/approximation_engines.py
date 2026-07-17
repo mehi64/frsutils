@@ -20,6 +20,7 @@ from frsutils.core.backends import is_cupy_backend
 from frsutils.core.similarity_engine import BaseSimilarityEngine
 from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
 from frsutils.core.models.vqrs_components import build_vqrs_components_from_config
+from frsutils.core.models.vqrs_math import compute_vqrs_interim_ratio
 from frsutils.core.models.owafrs_components import build_owafrs_components_from_config
 from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
@@ -145,9 +146,17 @@ def _as_labels(labels: Any, *, expected_length: int) -> np.ndarray:
         Raises
         ------
         ValueError
-            If labels are not one-dimensional or length-matched.
+            If fewer than two samples are available or labels are missing,
+            non-one-dimensional, or length-mismatched.
         
     """
+    if expected_length < 2:
+        raise ValueError(
+            "Fuzzy-rough approximation engines require at least two samples."
+        )
+    if labels is None:
+        raise ValueError("labels must be provided as a 1D array-like vector.")
+
     labels_array = np.asarray(labels)
     if labels_array.ndim != 1:
         raise ValueError("labels must be a 1D array-like vector.")
@@ -425,7 +434,7 @@ def compute_vqrs_blockwise(
         
         This function is the public scalable counterpart to the dense VQRS
         reference model: it accumulates the same numerator
-        `sum(min(S_ij, same_label_ij))` and denominator `sum(S_ij) - 1` row by
+        `sum(min(S_ij, same_label_ij))` and total non-self similarity mass row by
         row, then applies the configured lower and upper fuzzy quantifiers. When
         the similarity engine resolves
         backend='cupy' and exposes iter_backend_blocks(), the implementation keeps
@@ -486,22 +495,34 @@ def compute_vqrs_blockwise(
         tnorm_vals = tnorm.compute_backend(values, label_mask, xp=xp)
 
         diagonal_rows, diagonal_cols = _diagonal_positions_for_block(block.row_slice, block.col_slice)
+        denominator_values = values.copy()
         if diagonal_rows.size:
-            # Dense VQRS excludes self-comparisons from the numerator by forcing
-            # the T-norm diagonal to zero, while denominator exclusion is handled
-            # once at the end through `sum(S_i*) - 1`.
+            # Exclude self-comparisons from both numerator and denominator while
+            # preserving the original similarity block. This avoids assuming a
+            # unit diagonal for precomputed similarity engines.
             row_idx = _backend_index_array(diagonal_rows, xp=xp)
             col_idx = _backend_index_array(diagonal_cols, xp=xp)
             tnorm_vals[row_idx, col_idx] = 0.0
+            denominator_values[row_idx, col_idx] = 0.0
 
+        block_denominator = (
+            xp.sum(denominator_values, axis=1)
+            if values.shape[1] > 0
+            else xp.zeros(values.shape[0], dtype=np.float64)
+        )
         if values.shape[1] > 0:
-            numerator_acc[block.row_slice] = numerator_acc[block.row_slice] + xp.sum(tnorm_vals, axis=1)
-            denominator_acc[block.row_slice] = denominator_acc[block.row_slice] + xp.sum(values, axis=1)
+            numerator_acc[block.row_slice] = (
+                numerator_acc[block.row_slice] + xp.sum(tnorm_vals, axis=1)
+            )
+            denominator_acc[block.row_slice] = (
+                denominator_acc[block.row_slice] + block_denominator
+            )
 
-    denominator = denominator_acc - 1.0
-    errstate = getattr(xp, "errstate", np.errstate)
-    with errstate(divide="ignore", invalid="ignore"):
-        interim_acc = numerator_acc / denominator
+    interim_acc = compute_vqrs_interim_ratio(
+        numerator_acc,
+        denominator_acc,
+        xp=xp,
+    )
 
     lower_acc = lb_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=lb_fuzzy_quantifier.validate_inputs)
     upper_acc = ub_fuzzy_quantifier.compute_backend(interim_acc, xp=xp, validate_inputs=ub_fuzzy_quantifier.validate_inputs)

@@ -96,16 +96,9 @@ def test_owafrs_fake_cupy_blockwise_matches_dense_with_similarity_gpu_only(monke
 
 
 def test_owafrs_fake_cupy_does_not_claim_gpu_aggregation_accumulators(monkeypatch):
-    """OWAFRS should keep the conservative accumulator metadata under CuPy."""
+    """OWAFRS converts each GPU similarity block once for CPU aggregation."""
     fake_cupy = install_fake_cupy_module(monkeypatch)
-    asnumpy_calls = []
-    original_asnumpy = fake_cupy.asnumpy
-
-    def counted_asnumpy(value):
-        asnumpy_calls.append(value)
-        return original_asnumpy(value)
-
-    fake_cupy.asnumpy = counted_asnumpy
+    block_size = 2
 
     result = compute_approximations(
         X_OWAFRS_PHASE4,
@@ -114,13 +107,24 @@ def test_owafrs_fake_cupy_does_not_claim_gpu_aggregation_accumulators(monkeypatc
         similarity="linear",
         engine="blockwise",
         backend="cupy",
-        block_size=2,
+        block_size=block_size,
     )
 
-    assert len(asnumpy_calls) > 0
-    assert all(isinstance(value, FakeCupyArray) for value in asnumpy_calls)
+    blocks_per_axis = int(np.ceil(len(X_OWAFRS_PHASE4) / block_size))
+    expected_similarity_transfers = blocks_per_axis**2
+    assert len(fake_cupy.asnumpy_calls) == expected_similarity_transfers
+    assert all(isinstance(value, FakeCupyArray) for value in fake_cupy.asnumpy_calls)
+    assert all(value.dtype == np.float64 for value in fake_cupy.asnumpy_calls)
+    assert len(fake_cupy.host_to_device_calls) == 1
+    np.testing.assert_allclose(fake_cupy.host_to_device_calls[0], X_OWAFRS_PHASE4)
     assert result.used_gpu_similarity_blocks is True
     assert result.used_gpu_approximation_accumulators is False
+    public_dtypes = {
+        value.dtype
+        for value in (result.lower, result.upper, result.boundary, result.positive_region)
+    }
+    assert len(public_dtypes) == 1
+    assert np.issubdtype(next(iter(public_dtypes)), np.floating)
     np.testing.assert_allclose(result.boundary, result.upper - result.lower, atol=1e-12)
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
 

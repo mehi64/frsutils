@@ -44,6 +44,26 @@ jobs:
       - name: Run default test suite
         run: python -m pytest tests -ra
 
+      - name: Enforce public API branch coverage
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m pytest tests/api \
+            --cov=frsutils.api \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-fail-under=95 \
+            -ra
+
+      - name: Enforce core branch coverage
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m pytest tests/core_tests tests/models_tests tests/api \
+            --cov=frsutils.core \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-fail-under=95 \
+            -ra
+
       - name: Run reference-study smoke test
         if: matrix.python-version == '3.12'
         run: |

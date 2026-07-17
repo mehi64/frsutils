@@ -17,6 +17,10 @@ and releases use semantic versioning.
 - A study-specific optional dependency group and documentation page.
 - A documented CUDA 12 installation path, validated real-GPU environment, and
   maintainer protocol for real-CUDA release checks.
+- A deterministic public core execution matrix covering 1,360
+  dense/blockwise comparisons across all canonical similarity configurations
+  and representative or exhaustive model component combinations.
+- A separate 95 percent branch-aware CI coverage gate for `frsutils.core`.
 
 ## [0.1.0] - 2026-07-11
 
@@ -48,13 +52,14 @@ package and stable public API.
 
 - Confirmed CuPy device discovery, element-wise CUDA kernel execution, and
   matrix multiplication on an NVIDIA GeForce GTX 1050 Mobile.
-- Completed the post-migration default test suite with 2677 passed, 149
-  optional-backend skips, and 10518 slow cases deselected.
+- Completed the final default test suite with 2926 passed, 149
+  optional-backend skips, and 6633 slow tests deselected.
 - Confirmed that the scientific reference-data contract suite passes and that
   the former CSV logger UTF-8 regression now passes.
-- Retained the prior release-validation record in which all 10518 exhaustive
-  OWAFRS cases passed in equivalent test-function batches; a fresh complete
-  slow-suite run remains a final release gate.
+- Completed all 6633 slow tests in four deterministic shards, including the
+  exhaustive OWAFRS combinations and the public three-model execution matrix.
+- Confirmed 96 percent branch-aware coverage for `frsutils.core` and retained
+  the 95 percent CI floor for both the core and public API.
 
 ### Changed
 

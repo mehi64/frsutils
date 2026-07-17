@@ -400,16 +400,33 @@ def test_exponential_strategy_rejects_non_finite_and_boolean_base(base):
         ExponentialOWAWeights(base=base)
 
 
-def test_exponential_strategy_accepts_boundary_safe_n_and_rejects_unsafe_n():
-    """Ensure the exponential strategy enforces its documented upper n limit."""
+@pytest.mark.parametrize("n", [20, 21, 100, 1_000])
+def test_exponential_strategy_supports_large_weight_vectors(n):
+    """Ensure overflow-safe exponential weights work beyond the former limit."""
     strategy = ExponentialOWAWeights(base=2.0)
 
-    weights = strategy.weights(20)
-    assert weights.shape == (20,)
-    assert np.isclose(weights.sum(), 1.0)
+    weights = strategy.weights(n, order="asc")
 
-    with pytest.raises(ValueError):
-        strategy.weights(21)
+    assert weights.shape == (n,)
+    assert np.all(np.isfinite(weights))
+    assert np.all(weights >= 0.0)
+    assert np.isclose(weights.sum(), 1.0)
+    np.testing.assert_array_less(weights[:-1], weights[1:] + np.finfo(float).eps)
+
+
+def test_exponential_strategy_preserves_geometric_ratios_for_large_n():
+    """Ensure exponent shifting preserves the geometric progression near its mass."""
+    base = 2.5
+    weights = ExponentialOWAWeights(base=base).weights(10_000, order="asc")
+    positive_tail = weights[weights > 0.0][-20:]
+
+    assert positive_tail.size == 20
+    np.testing.assert_allclose(
+        positive_tail[1:] / positive_tail[:-1],
+        np.full(19, base, dtype=np.longdouble),
+        rtol=1e-12,
+        atol=1e-12,
+    )
 
 
 def test_invalid_order_string_and_None():
@@ -508,23 +525,16 @@ def test_edge_case_single_element():
 
 @pytest.mark.parametrize("name", ["linear", "harmonic", "exponential"])
 def test_owa_weight_generation_large_n(name):
-    """
-    Benchmark large-n OWA weight generation possibility.
-    """
-    strategy = OWAWeights.create(name, base=2.0) if name == "exponential" else OWAWeights.create(name)
+    """Ensure every OWA strategy supports a realistic large weight vector."""
+    strategy = OWAWeights.create(name, base=2.0)
     n = 100_000
 
-    if(name == "exponential"):
-        with pytest.raises(ValueError):
-            weights = strategy.weights(n, order='asc')
+    weights = strategy.weights(n, order="asc")
 
-    else:
-        weights = strategy.weights(n, order='asc')
-
-        sum_w = weights.sum()
-
-        assert np.isclose(sum_w, 1.0, atol=1e-6)
-        assert len(weights) == n
+    assert len(weights) == n
+    assert np.all(np.isfinite(weights))
+    assert np.all(weights >= 0.0)
+    assert np.isclose(weights.sum(), 1.0, atol=1e-6)
 
 
 

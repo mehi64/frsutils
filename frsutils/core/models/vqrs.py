@@ -11,6 +11,7 @@ import frsutils.core.tnorms as tn
 from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
 from frsutils.core.models.vqrs_components import build_vqrs_components_from_config
+from frsutils.core.models.vqrs_math import compute_vqrs_interim_ratio
 
 
 
@@ -49,9 +50,6 @@ class VQRS(FuzzyRoughModel):
                  logger=None):
         """Initialize a dense VQRS reference model."""
         label_array = np.asarray(labels) if labels is not None else None
-        if label_array is not None and label_array.ndim != 1:
-            raise ValueError("labels must be a 1D array-like vector.")
-
         super().__init__(similarity_matrix,
                          label_array,
                          logger=logger)
@@ -73,16 +71,18 @@ class VQRS(FuzzyRoughModel):
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.tnorm(self.similarity_matrix, label_mask)
 
-        # Exclude each sample from its own same-label numerator contribution.
+        # Exclude self-comparisons from both the supporting and total mass.
         np.fill_diagonal(tnorm_vals, 0.0)
         numerator = np.sum(tnorm_vals, axis=1)
+        nonself_mask = ~np.eye(self.similarity_matrix.shape[0], dtype=bool)
+        denominator = np.sum(
+            self.similarity_matrix,
+            axis=1,
+            where=nonself_mask,
+            initial=0.0,
+        )
 
-        # Dense VQRS assumes a unit similarity diagonal and excludes self-similarity.
-        denominator = np.sum(self.similarity_matrix, axis=1) - 1.0
-
-        with np.errstate(divide="ignore", invalid="ignore"):
-            interim = numerator / denominator
-        return interim
+        return compute_vqrs_interim_ratio(numerator, denominator, xp=np)
 
     def lower_approximation(self) -> np.ndarray:
         """Compute the lower approximation using the fuzzy quantifier.

@@ -119,6 +119,11 @@ def test_itfrs_fake_cupy_finalizes_only_lower_and_upper(monkeypatch):
 
     assert len(asnumpy_calls) == 2
     assert all(isinstance(value, FakeCupyArray) for value in asnumpy_calls)
+    assert all(value.dtype == np.float64 for value in asnumpy_calls)
+    assert all(
+        value.dtype == np.float64
+        for value in (result.lower, result.upper, result.boundary, result.positive_region)
+    )
     np.testing.assert_allclose(result.boundary, result.upper - result.lower, atol=1e-12)
     np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
 

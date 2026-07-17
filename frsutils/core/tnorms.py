@@ -4,6 +4,7 @@
 This module belongs to the core fuzzy-rough computation layer.
 """
 
+from numbers import Real
 from typing import Any
 import numpy as np
 from abc import abstractmethod
@@ -45,6 +46,7 @@ class TNorm(RegistryFactoryMixin):
 
     @abstractmethod
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         raise NotImplementedError("all derived classes need to implement _get_params")
 
 
@@ -70,6 +72,7 @@ class MinTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -95,6 +98,7 @@ class ProductTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -123,6 +127,7 @@ class LukasiewiczTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -152,6 +157,7 @@ class DrasticProductTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -178,6 +184,7 @@ class EinsteinProductTNorm(TNorm):
         return result
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
     @classmethod
@@ -214,6 +221,7 @@ class HamacherProductTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -243,6 +251,7 @@ class NilpotentMinimumTNorm(TNorm):
         pass
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {}
 
 
@@ -273,10 +282,11 @@ class YagerTNorm(TNorm):
         p = kwargs.get('p')
         if p is None:
             raise ValueError("Missing required parameter: p")
-        if not isinstance(p, (int, float)):
-            raise ValueError("Parameter 'p' must be a float or int")
-        if p <= 0:
-            raise ValueError("Parameter 'p' must be greater than 0")
+        if isinstance(p, (bool, np.bool_)) or not isinstance(p, Real):
+            raise ValueError("Parameter 'p' must be a finite positive real number")
+        if not np.isfinite(p) or p <= 0:
+            raise ValueError("Parameter 'p' must be a finite positive real number")
 
     def _get_params(self) -> dict:
+        """Return constructor parameters for serialization."""
         return {"p": self.p}
