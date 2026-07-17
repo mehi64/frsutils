@@ -48,7 +48,7 @@ jobs:
         if: matrix.python-version == '3.12'
         run: |
           python -m pytest tests/api \
-            --cov=frsutils.api \
+            --cov=frsutils/api \
             --cov-branch \
             --cov-report=term-missing \
             --cov-fail-under=95 \
@@ -58,7 +58,7 @@ jobs:
         if: matrix.python-version == '3.12'
         run: |
           python -m pytest tests/core_tests tests/models_tests tests/api \
-            --cov=frsutils.core \
+            --cov=frsutils/core \
             --cov-branch \
             --cov-report=term-missing \
             --cov-fail-under=95 \

@@ -123,6 +123,7 @@ np.allclose(result.positive_region, result.lower)
 Public result arrays are NumPy arrays, including results produced by optional
 CuPy-backed blockwise internals.
 
+<<<<<<< HEAD
 ### Input validation and minimum dataset size
 
 All public approximation entry points use the same minimum-size contract:
@@ -140,6 +141,8 @@ least `2 x 2`.
 This validation is performed at the public boundary so mathematically undefined
 or model-dependent edge behavior does not leak into research workflows.
 
+=======
+>>>>>>> origin/main
 ### Dense execution
 
 Dense execution materializes or consumes a full pairwise similarity matrix and
@@ -155,11 +158,14 @@ result = compute_approximations(
 )
 ```
 
+<<<<<<< HEAD
 Dense approximation execution is NumPy-only. `backend="numpy"` and
 `backend="auto"` are accepted; `backend="cupy"` raises a clear error rather
 than being silently ignored. Use blockwise execution for optional CuPy-backed
 computation.
 
+=======
+>>>>>>> origin/main
 A precomputed similarity matrix can be supplied in dense mode:
 
 ```python

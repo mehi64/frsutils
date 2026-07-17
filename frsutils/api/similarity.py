@@ -41,7 +41,11 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     Raises
     ------
     ValueError
+<<<<<<< HEAD
         If X is missing, not two-dimensional, or contains non-finite values.
+=======
+        If X is missing or not two-dimensional.
+>>>>>>> origin/main
     """
     if X is None:
         raise ValueError("X must be provided when building a similarity matrix.")
@@ -49,8 +53,11 @@ def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     X_array = np.asarray(X, dtype=float)
     if X_array.ndim != 2:
         raise ValueError("X must be a 2D array-like feature matrix.")
+<<<<<<< HEAD
     if not np.isfinite(X_array).all():
         raise ValueError("X must contain only finite numeric values.")
+=======
+>>>>>>> origin/main
     return X_array
 
 def _prepare_public_similarity_config(
@@ -146,8 +153,13 @@ def build_similarity_matrix(
     TypeError
         If config is provided but is not mapping-like.
     ValueError
+<<<<<<< HEAD
         If X is not a finite 2D matrix or flat configuration is nested,
         unknown, or incompatible with the selected similarity component alias.
+=======
+        If X is not a 2D matrix or flat configuration is nested, unknown, or
+        incompatible with the selected similarity component alias.
+>>>>>>> origin/main
     """
     if config is not None and not isinstance(config, Mapping):
         raise TypeError("config must be a mapping when provided.")
@@ -200,7 +212,11 @@ def build_similarity_engine(
     TypeError
         If config is not mapping-like.
     ValueError
+<<<<<<< HEAD
         If X is not a finite 2D matrix, engine/backend is unsupported, or flat
+=======
+        If X is not a 2D matrix, engine/backend is unsupported, or flat
+>>>>>>> origin/main
         configuration is nested, unknown, or incompatible with the selected
         similarity component alias.
     """
