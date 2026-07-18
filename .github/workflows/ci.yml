@@ -144,7 +144,7 @@ jobs:
               "docs/developer/joss_submission_checklist.md",
               "scripts/validate_installed_public_api.py",
               "scripts/validate_joss_submission.py",
-              "RELEASE_NOTES_v0.1.0.md",
+              "RELEASE_NOTES_v0.1.1.md",
               "tests/reference_data_loader.py",
               "tests/reference_data_store.py",
               "tests/reference_data/README.md",

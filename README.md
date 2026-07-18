@@ -115,7 +115,7 @@ nvidia-smi
 python -c "import cupy as cp; cp.show_config()"
 ```
 
-Prefer reinstalling or upgrading the FRsutils CUDA extra before manually adding
+Prefer reinstalling or upgrading the `frsutils` CUDA extra before manually adding
 CUDA component packages:
 
 ```bash
@@ -243,14 +243,7 @@ artifact checks. Detailed test and release procedures remain in
 [`tests/test_procedures.md`](tests/test_procedures.md) and
 [`docs/developer/release.md`](docs/developer/release.md).
 
-## Installing pytest to run tests
 
-The `dev` dependency group includes `pytest` and the test-related dependencies
-used by FRsutils:
-
-```bash
-python -m pip install pytest
-```
 
 ## Quick start
 
@@ -363,7 +356,7 @@ result = compute_approximations(
 )
 ```
 
-When CuPy is available, `frsutils` can use GPU acceleration for supported computations to improve execution performance on compatible hardware. CuPy is optional and currently limited to selected backend-aware computation paths. The stable default backend is NumPy. Public result arrays are always NumPy arrays, even when a CuPy-backed blockwise path is used internally. See [backends and execution behavior](docs/user/backends.md) for the precise backend claim boundaries.
+When CuPy is available, selected blockwise computations can execute through CuPy on compatible hardware. Performance is workload-dependent, and acceleration is not guaranteed. CuPy is optional and limited to the documented backend-aware paths. The stable default backend is NumPy, and public result arrays remain NumPy arrays. See [backends and execution behavior](docs/user/backends.md) for the precise model-specific claim boundaries.
 
 ## Benchmarking
 
@@ -400,7 +393,7 @@ Repository sources:
 - [Public API](docs/user/public_api.md)
 - [Backends](docs/user/backends.md)
 - [Glossary](docs/user/glossary.md)
-- [performance_benchmarking](docs/user/performance_benchmarking.md)
+- [Performance benchmarking](docs/user/performance_benchmarking.md)
 - [Reproducible reference study](docs/user/reference_study.md)
 - [Release and JOSS validation](docs/developer/release.md)
 - [Final JOSS submission checklist](docs/developer/joss_submission_checklist.md)
@@ -437,8 +430,8 @@ Run slow model-combination tests only when needed:
 python -m pytest tests/models_tests -m slow -o addopts="" -q
 ```
 
-<mark>Before tagging or submitting to JOSS, run the automated validator and follow
-the maintainer guides:</mark>
+**Before tagging or submitting to JOSS, run the automated validator and follow
+the maintainer guides:**
 
 ```bash
 python scripts/validate_joss_submission.py

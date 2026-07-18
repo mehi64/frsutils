@@ -10,10 +10,11 @@ tags:
 authors:
   - name: Mehran Amiri
     affiliation: 1
+    corresponding: true
 affiliations:
-  - name: Independent researcher
+  - name: Independent Researcher, Germany
     index: 1
-date: 11 July 2026
+date: 18 July 2026
 bibliography: paper.bib
 ---
 
@@ -141,11 +142,17 @@ recorded discrepancy of approximately $6.7\times10^{-16}$. A separate fixed
 benchmark sweep records 27 successful model, engine, and problem-size cases in
 machine-readable CSV and JSON files. These results are software-validation
 artifacts, not a claim that one fuzzy-rough model or backend is universally
-superior. They demonstrate credible near-term scholarly significance by making
-model semantics, execution choices, and numerical-equivalence evidence directly
-reproducible. The same workflow provides a concrete integration pattern for
-future feature-selection, sample-selection, scoring, and oversampling research
-that depends on `frsutils` without importing its internal modules.
+superior. They make model semantics, execution choices, and
+numerical-equivalence evidence directly reproducible.
+
+Beyond the bundled study, `frsutils` is used as the fuzzy-rough computation
+layer in the author's ongoing FRSMOTE research workflow, where positive-region
+scores guide minority-sample selection for synthetic oversampling. This use
+motivated the package-root approximation contract, component configuration,
+and exact dense/blockwise equivalence requirements. The downstream method is
+not required to reproduce the public reference study, but it provides a concrete
+research use case in which the library replaces experiment-specific
+reimplementation of fuzzy-rough approximations.
 
 # AI usage disclosure
 
@@ -167,3 +174,4 @@ software and paper.
 The author thanks the developers and maintainers of NumPy, scikit-learn, CuPy,
 `RoughSets`, and `fuzzy-rough-learn`, and the broader fuzzy-rough research
 community whose theoretical and software contributions made this work possible.
+This work received no external funding.

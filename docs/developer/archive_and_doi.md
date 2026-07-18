@@ -1,101 +1,86 @@
 # Archive the software release and record its DOI
 
-This guide covers the account-level steps that cannot be completed by repository
-code. Use a version-specific software DOI for the exact release reviewed by
-JOSS. The JOSS article receives a separate DOI only after acceptance.
+Use a version-specific software DOI for the exact `frsutils` release reviewed by
+JOSS. The JOSS article receives a separate DOI after acceptance.
 
 ## Metadata source
 
-`CITATION.cff` is the single source of software citation metadata for the first
-archive. The repository intentionally does not include `.zenodo.json`: Zenodo
-ignores `CITATION.cff` when both files exist, and FRsutils currently does not
-need Zenodo-only funding or community fields.
+`CITATION.cff` is the source of software citation metadata. Before archiving,
+confirm the author, version `0.1.1`, release date, license, repository, abstract,
+and keywords. Add an ORCID only after the exact identifier has been verified.
 
-Before archiving, confirm that `CITATION.cff` contains the correct author,
-version, release date, license, repository, abstract, and keywords. Add an ORCID
-only after the author has verified the identifier.
-
-## Recommended GitHub–Zenodo workflow
+## GitHub–Zenodo workflow
 
 1. Sign in to Zenodo and link the GitHub account that owns
    `mehi64/frsutils`.
-2. In Zenodo, open **GitHub**, synchronize repositories, and enable
+2. In Zenodo's GitHub integration, synchronize repositories and enable
    `mehi64/frsutils`.
-3. Push the release commit and wait for all CI, documentation, and JOSS-paper
-   workflows to pass.
-4. Create the annotated Git tag:
+3. Push the clean release commit and wait for CI, documentation, extended-test,
+   and paper workflows to pass.
+4. Create and push the annotated tag:
 
    ```bash
    git switch main
    git pull --ff-only
    git status --short
-   git tag -a v0.1.0 -m "frsutils 0.1.0"
-   git push origin v0.1.0
+   git tag -a v0.1.1 -m "frsutils 0.1.1"
+   git push origin main
+   git push origin v0.1.1
    ```
 
-5. On GitHub, create release `v0.1.0`. Paste the contents of
-   `RELEASE_NOTES_v0.1.0.md` into the release description.
-6. Wait for Zenodo to ingest the release. Open the resulting software record
-   and confirm:
+5. Create GitHub release `v0.1.1` and use
+   `RELEASE_NOTES_v0.1.1.md` as its description.
+6. Wait for Zenodo to ingest the release and confirm:
 
-   - title and author;
    - software resource type;
-   - version `0.1.0`;
+   - version `0.1.1`;
    - BSD-3-Clause license;
-   - repository URL;
-   - uploaded source archive;
-   - version-specific DOI;
-   - successful Software Heritage archival status when it becomes available.
+   - author and repository URL;
+   - source archive;
+   - version-specific DOI.
 
-7. Record the **version DOI** in `CITATION.cff`:
+7. Add the version DOI to `CITATION.cff`:
 
    ```yaml
    identifiers:
      - type: doi
        value: 10.5281/zenodo.XXXXXXX
-       description: Archived frsutils 0.1.0 software release
+       description: Archived frsutils 0.1.1 software release
    ```
 
-8. Add the DOI badge and citation text to the README, then validate:
+8. Add the DOI badge and citation text to README, then validate:
 
    ```bash
    cffconvert --validate
    python scripts/validate_joss_submission.py --require-archive-doi
    ```
 
-9. Commit the DOI metadata update. Do not move or recreate the `v0.1.0` tag.
-   The DOI identifies the already archived immutable release; the metadata
-   update belongs to the next repository state.
+9. Commit the DOI metadata update. Do not move or recreate the immutable
+   `v0.1.1` tag.
 
-## Manual Zenodo upload alternative
+## Manual-upload alternative
 
-Use a manual deposit only when GitHub integration cannot be enabled. Create a
-clean source archive from the immutable release tag:
+Use a manual deposit only if GitHub integration cannot be enabled:
 
 ```bash
 git archive \
   --format=zip \
-  --prefix=frsutils-0.1.0/ \
-  --output=frsutils-0.1.0-source.zip \
-  v0.1.0
-sha256sum frsutils-0.1.0-source.zip
+  --prefix=frsutils-0.1.1/ \
+  --output=frsutils-0.1.1-source.zip \
+  v0.1.1
+sha256sum frsutils-0.1.1-source.zip
 ```
 
-Upload the archive as **Software**, copy the metadata from `CITATION.cff`,
-select BSD-3-Clause, and publish the record. Zenodo also allows a DOI to be
-reserved before publication when the identifier must be embedded in files
-inside the uploaded archive.
+Upload the archive as **Software**, copy metadata from `CITATION.cff`, select
+BSD-3-Clause, and publish the record. Zenodo can reserve a DOI before publication
+when the identifier must be embedded in the uploaded files.
 
 ## JOSS timing
 
-A software archive may be created before submission. JOSS also explicitly asks
-for an archive DOI at acceptance, after review changes are complete. If the
-review changes software behavior or public APIs, create a new release and give
-JOSS the DOI of that final reviewed version instead of the earlier candidate.
-
-## Article DOI after acceptance
+A software archive may be created before submission. If review changes software
+behavior or public APIs, create a new final release and provide JOSS with the DOI
+of that reviewed version.
 
 After JOSS publishes the article, add a `preferred-citation` block to
-`CITATION.cff` using the JOSS article DOI. Keep the software archive DOI as an
-identifier for the executable research artifact; the two DOIs serve different
-purposes.
+`CITATION.cff` with the article DOI. Keep the software archive DOI as the
+identifier of the executable artifact.

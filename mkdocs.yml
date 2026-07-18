@@ -33,7 +33,6 @@ nav:
       - Release and JOSS validation: developer/release.md
       - Final JOSS submission checklist: developer/joss_submission_checklist.md
       - Software archive and DOI: developer/archive_and_doi.md
-      - Reference-data migration inventory: developer/reference_data_migration_inventory.md
 
 theme:
   name: material

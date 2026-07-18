@@ -6,7 +6,7 @@ For the model-independent interpretation of relation rows, self-comparisons, bou
 
 ## Execution modes
 
-FRsutils exposes execution modes through the canonical public API,
+`frsutils` exposes execution modes through the canonical public API,
 `frsutils.compute_approximations`.
 
 | Execution mode          | User-facing option                    | Intended use                                                                    |
@@ -93,7 +93,7 @@ a kernel, synchronize, and return a value to NumPy. It then compares dense
 NumPy against blockwise CuPy for two configurations of each public model and
 multiple block sizes. The JSON records:
 
-- operating system, Python, NumPy, FRsutils, and CuPy versions;
+- operating system, Python, NumPy, `frsutils`, and CuPy versions;
 - CUDA runtime and driver versions;
 - GPU name, compute capability, memory, and device count;
 - captured `nvidia-smi` and `nvcc --version` outputs;
@@ -109,8 +109,8 @@ validated. Archive only a `status="success"` report as release evidence.
 
 ## Validated CUDA environment
 
-The real-CUDA numerical tests for the 0.1.0 release candidate were executed in
-the following environment:
+The most recent recorded real-CUDA numerical validation used the following
+environment:
 
 | Component                       | Validated value                       |
 | ------------------------------- | ------------------------------------- |
@@ -133,7 +133,7 @@ all installations.
 
 The stable CPU backend remains NumPy. GPU performance depends on the model,
 dataset size, block size, available GPU memory, driver, and CUDA environment.
-FRsutils does not guarantee that CuPy execution is faster for every workload.
+`frsutils` does not guarantee that CuPy execution is faster for every workload.
 
 ## CUDA installation troubleshooting
 
@@ -150,7 +150,7 @@ If CuPy detects the GPU but the first numerical operation fails with:
 RuntimeError: Failed to find CUDA headers
 ```
 
-prefer reinstalling the FRsutils CUDA extra, which includes CuPy's CUDA
+prefer reinstalling the `frsutils` CUDA extra, which includes CuPy's CUDA
 component dependencies:
 
 ```bash
@@ -234,7 +234,7 @@ For this path:
 - `engine="blockwise"`
 - `backend="cupy"`
 
-FRsutils can keep the following on CuPy until final public output conversion:
+`frsutils` can keep the following on CuPy until final public output conversion:
 
 ```text
 similarity block
@@ -256,7 +256,7 @@ For this path:
 - `engine="blockwise"`
 - `backend="cupy"`
 
-FRsutils can keep the following on CuPy until final public output conversion:
+`frsutils` can keep the following on CuPy until final public output conversion:
 
 ```text
 similarity block
@@ -344,5 +344,3 @@ Fuzzy quantifiers:
 
 - `linear`
 - `quadratic`
-
-#

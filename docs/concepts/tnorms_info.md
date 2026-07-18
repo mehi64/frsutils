@@ -1,40 +1,35 @@
-# T-Norms in Fuzzy Logic
+# T-norms
 
-This document provides a comprehensive overview of common **T-norms** used in fuzzy logic, including their formulas, alias names, theoretical properties, and scholarly references.
+A triangular norm (T-norm) is a binary operation
+\(T:[0,1]^2\rightarrow[0,1]\) used to model fuzzy conjunction. A T-norm is
+commutative, associative, monotone in both arguments, and satisfies
+\(T(a,1)=a\).
 
-## 1. T-Norms Overview and Properties [Wikipedia_ref_1]
+`frsutils` uses T-norms both to aggregate feature-level similarities and in
+fuzzy-rough upper approximations. All implementations accept scalar or
+array-valued inputs through NumPy-compatible backends.
 
-T-norms (Triangular norms) are binary operations used in fuzzy logic to model the intersection of fuzzy sets. They must satisfy the following properties:
+## Implemented T-norms
 
-* **Commutativity**: `T(a, b) = T(b, a)`
-* **Associativity**: `T(a, T(b, c)) = T(T(a, b), c)`
-* **Monotonicity**: If `a <= a'` and `b <= b'`, then `T(a, b) <= T(a', b')`
-* **Boundary Condition**: `T(a, 1) = a`
+| Name | Formula | Parameters | Registered aliases |
+| --- | --- | --- | --- |
+| Minimum | \(\min(a,b)\) | None | `minimum`, `min`, `goedel`, `standardintersection` |
+| Product | \(ab\) | None | `product`, `prod`, `algebraic` |
+| Łukasiewicz | \(\max(0,a+b-1)\) | None | `lukasiewicz`, `luk`, `bounded`, `boundeddifference` |
+| Drastic product | \(a\) if \(b=1\); \(b\) if \(a=1\); otherwise \(0\) | None | `drastic`, `drasticproduct` |
+| Einstein product | \(ab/(2-a-b+ab)\) | None | `einstein`, `einsteinproduct` |
+| Hamacher product | \(0\) when \(a=b=0\); otherwise \(ab/(a+b-ab)\) | None | `hamacher`, `hamacherproduct` |
+| Nilpotent minimum | \(\min(a,b)\) if \(a+b>1\); otherwise \(0\) | None | `nilpotent`, `nilpotentminimum` |
+| Yager | \(1-\min\{1,[(1-a)^p+(1-b)^p]^{1/p}\}\) | \(p>0\) | `yager`, `yg` |
 
-Some T-norms also satisfy additional properties such as **nilpotency**, **strictness**, or **Archimedean** behavior.
+The formulas above are the exact conventions implemented by the library. For
+array reduction, associative T-norms are applied along the aggregation axis;
+the Yager implementation uses the equivalent multi-argument expression.
 
----
+## References
 
-## 2. T-Norms Table
-
-| Name                  | Formula                                           | Reference Page             |
-| --------------------- | ------------------------------------------------- | -------------------------- |
-| **Minimum**           | `T(a,b) = min(a,b)`                               | IMEKO 2018, Eq. (4)        |
-| **Product**           | `T(a,b) = a * b`                                  | IMEKO 2018, Eq. (5)        |
-| **Lukasiewicz**       | `T(a,b) = max(0, a + b - 1)`                      | IMEKO 2018, Eq. (6)        |
-| **Yager**             | `1 - min(1, ((1-a)^p + (1-b)^p)^(1/p))` (p>0)     | IMEKO 2018 (Yager T-Norm)  |
-| **Drastic Product**   | `T(a,b) = a if b == 1; b if a == 1; 0 otherwise`  | Wikipedia_ref_1            |
-| **Einstein Product**  | `T(a,b) = ab / (2 - (a + b - ab))`                | I. Silambarasan, S. Sriram |
-| **Nilpotent Minimum** | `T(a,b) = min(a,b) if (a + b > 1) else 0`         | Wikipedia_ref_1            |
-| **Hamacher Product**  | `T(a,b) = 0 if a = b = 0, else ab / (a + b - ab)` | Wikipedia_ref_1            |
-
----
-
-## 3. References
-
-1. **I. Silambarasan , S. Sriram** - HAMACHER OPERATIONS ON PYTHAGOREAN FUZZY MATRICES
-2. **IMEKO TC18 2018** - Claudio De Capua and Emilia Romeo, A Comparative Analysis of Fuzzy t-Norm Approaches to the Measurement Uncertainty Evaluation. See formulas (4), (5), (6), Yager.
-3. **Adam Grabowski** - Basic Formal Properties of Triangular Norms and Conorms.
-4. **Wikipedia_ref_1** - [link to page](https://en.wikipedia.org/wiki/T-norm#:~:text=of%20t%2Dnorms-,The%20drastic%20t%2Dnorm%20is%20the%20pointwise%20smallest%20t%2Dnorm,in%20%5B0%2C%201%5D)
-
----
+1. Klement, E. P., Mesiar, R., & Pap, E. (2000). *Triangular Norms*. Springer.
+   <https://doi.org/10.1007/978-94-015-9540-7>
+2. Radzikowska, A. M., & Kerre, E. E. (2002). A comparative study of fuzzy rough
+   sets. *Fuzzy Sets and Systems*, 126(2), 137–155.
+   <https://doi.org/10.1016/S0165-0114(01)00032-X>

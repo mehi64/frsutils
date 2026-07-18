@@ -1,170 +1,172 @@
 # Release and JOSS validation
 
-This page merges the previous release checklist, release validation commands,
-documentation smoke checks, JOSS metadata notes, submit-readiness report, paper
-claim boundaries, and release-hardening notes into one active maintainer file.
+This page defines the reproducible release procedure for `frsutils` 0.1.1. Run
+all commands from the repository root and archive command outputs outside the
+source tree when they are useful as release evidence.
 
-Use it before tagging a release candidate or submitting FRsutils for JOSS
-review. The concise final gate is maintained in the
-[JOSS submission checklist](joss_submission_checklist.md), and the account-level
-archive procedure is documented in the
-[software archive and DOI guide](archive_and_doi.md).
+## Release identity
 
-## Release candidate identity
+- Package: `frsutils`
+- Target version: `0.1.1`
+- License: BSD-3-Clause
+- Supported Python versions: 3.10, 3.11, and 3.12
+- Public API boundary: package-root imports from `frsutils`
+- JOSS sources: `paper.md` and `paper.bib`
 
-- Package name: `frsutils`
-- Current package version in the inspected metadata: `0.1.1`
-- License: `BSD-3-Clause`
-- Public API boundary: `frsutils`
-- JOSS paper files: `paper.md`, `paper.bib`
+## Safe software claims
 
-Update this section if package metadata changes.
-
-## Safe project and paper claims
-
-FRsutils is a scientific Python library for reusable fuzzy-rough set
-computations. It provides backend-aware public APIs for similarity construction,
-fuzzy-rough lower and upper approximations, boundary regions, and positive-region
-scores. The documented model aliases are `itfrs`, `vqrs`, and `owafrs`.
-
-Safe short claim:
-
-> FRsutils provides dense and exact blockwise fuzzy-rough approximation APIs for
-> ITFRS, VQRS, and OWAFRS, with a stable NumPy output contract and optional CuPy
-> support in explicit blockwise execution paths.
-
-Safe backend claim:
-
-> FRsutils provides dense NumPy and exact blockwise fuzzy-rough approximation
-> APIs with optional CuPy-accelerated similarity blocks and experimental
-> CuPy-resident ITFRS/VQRS blockwise approximation accumulators. Public outputs
-> remain NumPy arrays, and OWAFRS remains on the conservative exact blockwise
-> NumPy row-buffer path in the current release.
-
-Compact JOSS-facing paragraph:
-
-> FRsutils is a Python library for fuzzy-rough set computations, including
-> similarity construction, lower and upper approximations, boundary regions, and
-> positive-region scores. It provides a compact public API through `frsutils`,
-> supports ITFRS, VQRS, and OWAFRS model aliases, and offers dense as well as
-> exact blockwise execution. Optional CuPy-backed blockwise execution is
-> available for selected internal steps while preserving NumPy arrays as the
-> public output contract.
+`frsutils` provides dense NumPy and exact blockwise fuzzy-rough approximation
+APIs for ITFRS, VQRS, and OWAFRS. Public outputs are NumPy arrays. Optional CuPy
+execution is model-specific and is available only through documented blockwise
+paths.
 
 Do not claim:
 
-- full GPU-native execution,
-- GPU-resident OWAFRS aggregation,
-- guaranteed CuPy speedup,
-- FRSMOTE as part of the stable FRsutils core API unless the project boundary is
-  intentionally changed.
+- fully GPU-native execution;
+- GPU-resident OWAFRS aggregation;
+- guaranteed CuPy speedup;
+- universal runtime or memory improvements;
+- FRSMOTE as part of the stable `frsutils` public API.
 
-For backend details, see [Backends](../user/backends.md).
+See [Backends and execution](../user/backends.md) for the precise boundaries.
 
-## Public API release checks
-
-- [ ] The canonical import path is documented as `frsutils`.
-
-- [ ] User-facing examples avoid importing from internal `frsutils.core` modules.
-
-- [ ] `frsutils.__all__` exposes the intended public objects only.
-
-- [ ] Top-level `frsutils` does not accidentally expose internal implementation
-  
-      modules.
-
-- [ ] `examples/public_api_quickstart.py` runs successfully.
-
-- [ ] Downstream-style code can use only `frsutils` without importing internals.
-
-Recommended commands:
+## 1. Start from a clean repository
 
 ```bash
-python -m pytest tests/api -q -rs
+git switch main
+git pull --ff-only
+git status --short
+```
+
+The final command must produce no output. Generated files, caches, local logs,
+IDE settings, and virtual environments must not be committed.
+
+## 2. Install the release environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,docs,study]"
+python -m pip install build twine cffconvert
+python -m pip check
+```
+
+On Windows, activate `.venv\Scripts\Activate.ps1` and use the same Python
+commands.
+
+## 3. Validate metadata and documentation
+
+```bash
+cffconvert --validate
+python scripts/validate_joss_submission.py
+mkdocs build --strict
+```
+
+Inspect the generated site locally with `mkdocs serve`. Do not commit `site/`.
+
+Verify that version `0.1.1` is consistent in:
+
+- `pyproject.toml`;
+- `CITATION.cff`;
+- `README.md`;
+- `CHANGELOG.md`;
+- `RELEASE_NOTES_v0.1.1.md`;
+- the release and archive documentation.
+
+## 4. Run the fast and default tests
+
+```bash
+python -m pytest tests/reference_data_tests -ra
+python -m pytest tests -ra
+python examples/public_api_quickstart.py
+python benchmarks/benchmark_smoke.py --output-dir benchmark_smoke_output
+```
+
+Remove `benchmark_smoke_output/` after inspection.
+
+## 5. Run the exhaustive slow tests
+
+The recommended four-shard execution is:
+
+```bash
+for i in 0 1 2 3; do
+    python scripts/run_slow_test_shard.py \
+        --shard-index "$i" \
+        --shard-count 4 || break
+done
+```
+
+Alternatively, run the complete suite in one process:
+
+```bash
+python -m pytest -o addopts="" -m slow -ra --durations=50
+```
+
+Retain any JUnit or terminal reports outside the repository.
+
+## 6. Validate the public API and coverage
+
+```bash
+mkdir -p test_reports
 python scripts/validate_installed_public_api.py \
   --output-json test_reports/source_public_api_validation.json
+
+python -m pytest tests/api \
+  --cov=frsutils/api \
+  --cov-branch \
+  --cov-report=term-missing \
+  --cov-fail-under=95 \
+  -ra
+
+python -m pytest tests/core_tests tests/models_tests tests/api \
+  --cov=frsutils/core \
+  --cov-branch \
+  --cov-report=term-missing \
+  --cov-fail-under=95 \
+  -ra
 ```
 
-The second command exercises every public model through dense and blockwise
-execution, validates scorer fitted attributes and cloning, verifies the
-`signed_boundary` aliases, and fails if default public calls write to standard
-output, standard error, or the current working directory.
+Do not commit `test_reports/`, `.coverage`, or `htmlcov/`.
 
-## Core model release checks
+## 7. Regenerate the reference study from the release commit
 
-Run the focused fast and public-contract tests for all fuzzy-rough models:
+The provenance record must identify the actual commit that will be released.
+Therefore, first commit all source, documentation, and metadata changes:
 
 ```bash
-python -m pytest \
-  tests/models_tests/test_itfrs_fast.py \
-  tests/models_tests/test_vqrs_fast.py \
-  tests/models_tests/test_owafrs_fast.py \
-  tests/api \
-  tests/core_tests/test_approximation_engines.py \
-  -q -rs
+git add --all
+git commit -m "Prepare frsutils 0.1.1 for JOSS submission"
+git status --short
 ```
 
-Run slow exhaustive model-combination tests before a release tag:
+The worktree must be clean before regeneration:
 
 ```bash
-python -m pytest tests/models_tests -m slow -o addopts="" -q -rs
+python studies/fuzzy_rough_reference_study/run_study.py
+python -m pytest tests/studies -ra
 ```
 
-## Backend and CuPy checks
+Confirm in `studies/fuzzy_rough_reference_study/results/environment.json`:
 
-- [ ] NumPy backend tests pass.
+- `frsutils_version` is `0.1.1`;
+- `git_commit` is the release-preparation commit;
+- `git_worktree_dirty` is `false`.
 
-- [ ] Fake-CuPy contract tests pass in normal CI.
+Also confirm that every row in `dense_blockwise_equivalence.csv` passes and that
+`benchmark_results.json` contains no failed cases. Commit the regenerated result
+snapshot, then rerun `git status --short`.
 
-- [ ] Real CuPy/CUDA tests skip cleanly when CuPy is unavailable.
+## 8. Optional real-CUDA validation
 
-- [ ] `cuda_validation_report.json` was generated with `--require-cuda`, has
-  
-      `status="success"`, and is archived with the release evidence.
-
-- [ ] Any benchmark-based CuPy claim was generated on a machine with compatible
-  
-      CuPy/CUDA installed.
-
-- [ ] No documentation claims full GPU-native execution.
-
-- [ ] OWAFRS documentation does not claim GPU-resident approximation
-  
-      accumulators.
-
-Recommended commands:
-
-```bash
-python -m pytest tests/api/test_backend_aware_components_contract.py -q -rs
-python -m pytest tests/api/test_cupy_backend_contract.py -q -rs
-python -m pytest tests/api/test_itfrs_blockwise_cupy_contract.py -q -rs
-python -m pytest tests/api/test_vqrs_blockwise_cupy_contract.py -q -rs
-python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
-```
-
-## Real CUDA validation
-
-Real CUDA validation is optional for ordinary CPU-only CI, but it is required
-before a release makes claims about real CuPy/CUDA numerical execution.
-
-Capture the environment and numerical evidence in one JSON artifact:
+Real-CUDA validation is required only when the release makes real-GPU numerical
+claims:
 
 ```bash
 python scripts/capture_cuda_validation.py \
   --require-cuda \
   --output-json cuda_validation_report.json
-```
 
-The command exits non-zero unless device discovery, allocation, kernel execution,
-and every dense NumPy versus blockwise CuPy parity case succeeds. Keep the JSON
-next to the release validation record. It includes package versions, CUDA
-runtime/driver values, GPU metadata, command outputs, numerical differences,
-and the model-specific residency claims.
-
-Run the real-CUDA contract tests, including the multi-configuration parity
-matrix:
-
-```bash
 python -m pytest \
   tests/api/test_cupy_backend_contract.py \
   tests/api/test_itfrs_blockwise_cupy_contract.py \
@@ -174,322 +176,55 @@ python -m pytest \
   -o addopts="" -vv -rs
 ```
 
-Then run the complete ordinary suite:
+Keep the generated CUDA report as external release evidence unless it is
+intentionally archived with the release.
+
+## 9. Build and validate distributions
 
 ```bash
-python -m pytest -rs
+rm -rf build dist frsutils.egg-info
+python -m build
+python -m twine check dist/*
 ```
 
-The release record must distinguish among:
-
-- CPU-only fake-CuPy contract validation,
-- real GPU numerical validation,
-- model-specific GPU-residency claims,
-- benchmark observations.
-
-Record exact package and platform versions as a validated environment, not as
-an exhaustive compatibility guarantee. Do not convert machine-specific runtime
-observations into general performance claims.
-
-## Documentation smoke checks
-
-Install the documentation dependencies and validate the published MkDocs site:
+Install and exercise both artifacts in clean environments:
 
 ```bash
-python -m pip install -e ".[docs]"
-mkdocs build --strict
+python -m venv /tmp/frsutils-wheel-smoke
+/tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
+/tmp/frsutils-wheel-smoke/bin/python -m pip install dist/frsutils-0.1.1-*.whl
+/tmp/frsutils-wheel-smoke/bin/python -m pip check
+
+python -m venv /tmp/frsutils-sdist-smoke
+/tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
+/tmp/frsutils-sdist-smoke/bin/python -m pip install dist/frsutils-0.1.1.tar.gz
+/tmp/frsutils-sdist-smoke/bin/python -m pip check
 ```
 
-Use `mkdocs serve` for a local browser preview. The GitHub Pages workflow builds
-all documentation pull requests and deploys `main` after Pages is configured to
-use **GitHub Actions** as its publishing source.
+GitHub Actions performs stronger read-only installed-package validation for both
+artifacts.
 
-Run these after changing README, public API docs, backend docs, examples, or the
-JOSS paper:
+## 10. Final repository and paper checks
+
+Before tagging, confirm:
+
+- the repository is public and Issues are enabled;
+- CI, documentation, extended-test, and paper workflows are green;
+- README links and MkDocs navigation resolve;
+- `paper.md` contains the required JOSS sections and accurate claims;
+- the paper date and author metadata are final;
+- funding and AI-use disclosures are accurate;
+- no cache, generated site, local log, editor setting, or temporary report is
+  tracked;
+- `git status --short` is empty.
+
+## 11. Tag, release, and archive
 
 ```bash
-python examples/public_api_quickstart.py
-python benchmarks/benchmark_smoke.py --output-dir benchmark_smoke_output
-python -m pytest tests/api/test_public_api_examples_smoke.py tests/examples/test_examples_contract.py -q -rs
-python -m pytest tests/api/test_public_api_downstream_contract.py -q -rs
+git tag -a v0.1.1 -m "frsutils 0.1.1"
+git push origin main
+git push origin v0.1.1
 ```
 
-Manual documentation checks:
-
-- [ ] `README.md` contains a working quickstart using `frsutils`.
-- [ ] `docs/user/public_api.md` matches the current public API.
-- [ ] `docs/user/backends.md` uses conservative backend wording.
-- [ ] `paper.md` uses the same model/backend claims as the docs.
-- [ ] User-facing documentation has no temporary milestone-based file names.
-- [ ] README and docs relative links resolve to existing files.
-
-Documentation link sanity check:
-
-```bash
-python - <<'CHECK_LINKS'
-from pathlib import Path
-import re
-files = [Path("README.md"), Path("paper.md"), *Path("docs").rglob("*.md")]
-missing = []
-for file_path in files:
-    text = file_path.read_text(encoding="utf-8", errors="ignore")
-    for match in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", text):
-        target = match.group(1).split("#", 1)[0]
-        if not target or target.startswith("#") or re.match(r"https?://|mailto:", target):
-            continue
-        if not (file_path.parent / target).resolve().exists():
-            missing.append((str(file_path), target))
-for item in missing:
-    print(item)
-raise SystemExit(1 if missing else 0)
-CHECK_LINKS
-```
-
-## Metadata checks
-
-Minimum checks before release/JOSS submission:
-
-- [ ] `LICENSE` exists and matches SPDX headers.
-- [ ] `pyproject.toml` package metadata is current.
-- [ ] `CITATION.cff` exists or README citation instructions are current.
-- [ ] `paper.md` exists and uses the same model/backend claims as the docs.
-- [ ] `paper.bib` contains every citation key used in `paper.md`.
-- [ ] Package version is consistent across metadata and citation examples.
-- [ ] Documentation links from README and paper point to existing files.
-- [ ] Test evidence is recorded for the release candidate.
-
-Automated metadata, section, citation, and local-link validation:
-
-```bash
-python scripts/validate_joss_submission.py
-```
-
-Citation-key sanity check:
-
-```bash
-python - <<'CHECK_CITATIONS'
-from pathlib import Path
-import re
-paper = Path("paper.md").read_text(encoding="utf-8")
-bib = Path("paper.bib").read_text(encoding="utf-8")
-used = set(re.findall(r"@([A-Za-z0-9:_-]+)", paper))
-defined = set(re.findall(r"@\w+\{([^,]+),", bib))
-missing = sorted(used - defined)
-print("used:", sorted(used))
-print("missing:", missing)
-raise SystemExit(1 if missing else 0)
-CHECK_CITATIONS
-```
-
-## Installed-distribution public API validation
-
-The package CI job validates both the wheel and source distribution from
-isolated virtual environments. For each artifact, it removes write permission
-from the installed `frsutils` package tree, runs from a read-only working
-directory, and executes:
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 /path/to/venv/bin/python \
-  /path/to/repository/scripts/validate_installed_public_api.py \
-  --require-installed \
-  --require-package-read-only \
-  --require-cwd-read-only \
-  --output-json /writable/report/path/public_api_validation.json
-```
-
-This check is stronger than an import-only smoke test. It performs real dense
-and blockwise computations for ITFRS, VQRS, and OWAFRS; validates NumPy output
-and execution metadata; checks scorer fitted-state and `sklearn.clone`
-contracts; and proves that default logging does not require a writable package
-or current directory. The generated wheel and sdist JSON reports are uploaded
-with the distribution artifacts.
-
-On Windows, run the same validator without the two read-only flags because
-POSIX permission-bit checks are not portable to Windows ACLs.
-
-## Final validation commands
-
-Focused release smoke:
-
-```bash
-python -m pytest tests/api tests/core_tests/test_approximation_engines.py -q -rs
-```
-
-Full repository validation, including slow tests:
-
-```bash
-python -m pytest -o addopts="" -ra --tb=short --durations=50
-```
-
-For a machine-readable full-suite report:
-
-```bash
-mkdir -p test_reports
-python -m pytest -o addopts="" -ra --tb=short --durations=50 \
-  --junitxml=test_reports/pytest_full_slow_final.xml
-```
-
-Generated outputs under `test_reports/` and `benchmark_smoke_output/` should be
-kept out of commits.
-
-## Open-source repository checks
-
-- [ ] GitHub Issues are enabled in repository settings.
-
-- [ ] The issue forms and pull request template render correctly.
-
-- [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, and
-  
-      `CHANGELOG.md` are linked from the README.
-
-- [ ] The CI workflow passes for Python 3.10, 3.11, and 3.12.
-
-- [ ] The package job builds and validates both wheel and source distribution.
-
-- [ ] GitHub Pages uses **GitHub Actions** as its publishing source.
-
-- [ ] The documentation workflow deploys the current `main` branch successfully.
-
-## Repository hygiene before release
-
-- [ ] Run `git status --short`.
-
-- [ ] Stage only intended source, tests, examples, docs, metadata, and paper
-  
-      files.
-
-- [ ] Do not stage generated reports, benchmark outputs, cache directories, IDE
-  
-      files, local environments, or local logs.
-
-- [ ] Confirm no temporary milestone file names remain in user-facing docs or
-  
-      examples.
-
-- [ ] Confirm all changed Python files keep the short BSD-3-Clause SPDX header
-  
-      style.
-
-Files that should not be committed:
-
-- `test_reports/`
-- `benchmark_smoke_output/`
-- `.pytest_cache/`
-- `__pycache__/`
-- `htmlcov/`
-- `.coverage`
-- local virtual environments or IDE caches
-
-## Software DOI and citation strategy
-
-The JOSS article DOI is assigned after acceptance and is distinct from the DOI
-of an archived software release. Follow the
-[software archive and DOI guide](archive_and_doi.md) to create the GitHub
-release, archive it with Zenodo, and update `CITATION.cff` without inventing a
-placeholder identifier.
-
-## JOSS submission steps
-
-- [ ] Confirm the repository is public or will be public for review.
-
-- [ ] Confirm `LICENSE`, `CITATION.cff`, `pyproject.toml`, `README.md`,
-  
-      `paper.md`, and `paper.bib` are included.
-
-- [ ] Confirm the software archive DOI/version are available if requested during
-  
-      JOSS review.
-
-- [ ] Submit the JOSS paper through the JOSS submission process.
-
-- [ ] After the JOSS review issue is opened, respond to reviewer/editor comments
-  
-      in the issue.
-
-- [ ] At acceptance time, follow editor instructions for final release, archive
-  
-      DOI, and version metadata.
-
-## Submit-ready result record
-
-Fill this section after the final local run.
-
-- Final validation date: 2026-07-18
-- Python version: 3.13.5 for the final CPU validation and 3.11.6 for the recorded real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
-- Operating system: Ubuntu 24.04.4 LTS, Linux 6.8.0-111-generic, x86_64
-- GPU: NVIDIA GeForce GTX 1050 Mobile, 4 GiB, compute capability 6.1
-- NVIDIA/CUDA environment: driver 535.309.01, driver-reported CUDA 12.2, system CUDA Toolkit 12.0
-- Python GPU packages: NumPy 2.3.5, CuPy 14.1.1, `nvidia-cuda-runtime-cu12` 12.0.146, and `cuda-pathfinder` 1.5.6
-- Real-CUDA smoke result: device discovery, element-wise kernel execution, and 1000 x 1000 matrix multiplication completed successfully
-- Current default-suite result after API release hardening: 3006 passed, 167 optional-backend skips, and 6633 slow tests deselected
-- Former logger regression: `tests/core_tests/test_implicators.py::test_help[goedel]` now passes
-- Exhaustive slow result: all 6633 collected slow-test node IDs passed through deterministic shard execution; this includes exhaustive OWAFRS combinations and the public ITFRS/VQRS/OWAFRS execution matrix
-- Coverage result: 97 percent branch-aware coverage for `frsutils.api` and at least 95 percent for `frsutils.core`, both protected by 95 percent CI floors
-- JOSS paper and metadata validation: `python scripts/validate_joss_submission.py` passed
-- Documentation validation: `mkdocs build --strict` passed with no unreferenced migration page remaining
-- Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed dense/blockwise public-API validation from read-only package trees and read-only working directories
-- Release tag: pending `v0.1.1` after the release commit is pushed and CI is green
-- Software archive DOI: pending release publication and archival
-- JOSS submission/review URL: pending
-- Final JOSS DOI after acceptance: pending
-
-## Submit-ready criteria
-
-The repository is submit-ready when all of the following are true:
-
-- [ ] Full test suite passes, including slow tests.
-
-- [ ] Example smoke commands pass.
-
-- [ ] `paper.md` and `paper.bib` exist and citation keys are complete.
-
-- [ ] README and docs links resolve.
-
-- [ ] License metadata is consistent across `LICENSE`, `pyproject.toml`,
-  
-      `CITATION.cff`, README, and source SPDX headers.
-
-- [ ] User-facing files do not contain temporary milestone file names.
-
-- [ ] Optional CuPy/GPU support is described conservatively.
-
-- [ ] Repository has no generated reports or local caches staged for commit.
-
-## Research-impact artifact checks
-
-The phase-three research-use evidence is stored under:
-
-```text
-studies/fuzzy_rough_reference_study/
-```
-
-Before a release candidate or JOSS submission:
-
-```bash
-python -m pip install -e ".[study]"
-python studies/fuzzy_rough_reference_study/run_study.py
-python -m pytest tests/studies -q -rs
-```
-
-Review these conditions:
-
-- [ ] Every row in `dense_blockwise_equivalence.csv` has `passed=True`.
-
-- [ ] `benchmark_results.json` has no failed cases.
-
-- [ ] `environment.json` identifies the release commit and reports a clean
-  
-      worktree.
-
-- [ ] `study_manifest.json` was regenerated after all study outputs.
-
-- [ ] The committed tables and figures match `study_config.json`.
-
-- [ ] Research-impact wording in `paper.md` claims only what the artifact shows.
-
-- [ ] No unpublished FRSMOTE implementation, result, or repository is required
-  
-      to reproduce the study.
-
-The recorded runtime values are machine-specific evidence, not performance
-promises. Do not infer native NumPy/CuPy memory usage from `tracemalloc` alone.
+Create the GitHub release from `RELEASE_NOTES_v0.1.1.md`, archive it through
+Zenodo, and follow the [software archive and DOI guide](archive_and_doi.md).

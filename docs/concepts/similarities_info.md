@@ -1,54 +1,52 @@
-# Fuzzy Similarities in Fuzzy Logic
+# Similarity functions
 
-This document provides a structured overview of fuzzy similarity functions as implemented in the frsutils framework. These functions help quantify the degree of resemblance between instances in normalized feature spaces.
+`frsutils` constructs fuzzy relations by comparing samples feature by feature
+and aggregating the resulting similarities with a T-norm. A feature-level
+similarity maps two values to the unit interval, where larger values represent
+greater similarity.
 
-## 1. Similarity Functions Overview and Properties
+## Implemented functions
 
-Fuzzy similarity functions are used to evaluate how similar two fuzzy values or vectors are. In the frsutils framework, a similarity function `sim(x, y)` is used together with a T-norm `T(a, b)` to aggregate similarities feature-wise.
+For feature values \(x\) and \(y\), let \(d = x-y\).
 
-**Expected properties of similarity functions**:
+| Name | Formula | Parameters | Registered aliases |
+| --- | --- | --- | --- |
+| Linear | \(\max(0, 1-|d|)\) | None | `linear` |
+| Gaussian | \(\exp[-d^2/(2\sigma^2)]\) | \(\sigma>0\) | `gaussian`, `gauss` |
 
-* **Symmetry**: `sim(x, y) = sim(y, x)`
-* **Boundedness**: `sim(x, y) ∈ [0, 1]`
-* **Maximum at equality**: `sim(x, x) = 1`
+The linear function is most interpretable when feature differences are on a
+meaningful scale, commonly after normalization. The Gaussian function provides
+a smooth similarity whose decay is controlled by `sigma`.
 
----
+For a data matrix with multiple features, `build_similarity_matrix` computes a
+similarity matrix for each feature and combines the feature-level values using
+the selected similarity T-norm. The diagonal is set to one.
 
-## 2. Fuzzy Similarity Functions Table
-
-| Name         | Formula                                 | Alias Names     | Reference Page |
-| ------------ | ----------------------------------------------------  | --------------- | -------------- |
-| **Linear**   | `sim = max(0, 1 - abs(x - y))`          | linear           | [1]|
-| **Gaussian** | `sim = exp(-(x - y)^2/(2 * sigma^2))`       | gaussian, gauss | [1]  |
-
----
-
-## 3. Notes
-
-* Each similarity function supports pairwise vector diff input.
-* Can be used with any T-norm for constructing a full similarity matrix.
-* More functions (e.g., cosine, Jaccard, Tversky) are marked for future addition.
-
----
-
-## 4. References
-
-1. **frsutils Core Source** — See implementation in `similarities.py`.
-
----
-
-## 5. Example Usage
+## Public API example
 
 ```python
-from frsutils.core.similarities import build_similarity_matrix
+import numpy as np
 
-X = np.array([[0.1, 0.2], [0.2, 0.1]])
+from frsutils import build_similarity_matrix
+
+X = np.array([[0.1, 0.2], [0.2, 0.1]], dtype=float)
 
 similarity_matrix = build_similarity_matrix(
     X,
     similarity="gaussian",
-    sigma=0.5,
-    similarity_tnorm="minimum"
+    similarity_sigma=0.5,
+    similarity_tnorm="minimum",
 )
-print(similarity_matrix)
 ```
+
+Use package-root imports in user code. The classes in `frsutils.core` are
+implementation details and may change independently of the public API.
+
+## References
+
+1. Dubois, D., & Prade, H. (1990). Rough fuzzy sets and fuzzy rough sets.
+   *International Journal of General Systems*, 17(2–3), 191–209.
+   <https://doi.org/10.1080/03081079008935107>
+2. Radzikowska, A. M., & Kerre, E. E. (2002). A comparative study of fuzzy rough
+   sets. *Fuzzy Sets and Systems*, 126(2), 137–155.
+   <https://doi.org/10.1016/S0165-0114(01)00032-X>

@@ -6,10 +6,10 @@ It does **not** change runtime approximation behavior. The goal is to make
 performance and equivalence claims measurable instead of relying on informal
 manual timing.
 
-## Added artifact
+## Benchmark entry point
 
 ```text
-frsutils/benchmarks/benchmark_fuzzy_rough_execution.py
+benchmarks/benchmark_fuzzy_rough_execution.py
 ```
 
 The benchmark script compares:
