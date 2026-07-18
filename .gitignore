@@ -12,7 +12,6 @@ frsutils.egg-info/
 temp/
 logs/*.csv
 logs/*.json
-.vscode
 **/__pycache__/
 datasets/
 test_reports/

@@ -47,6 +47,17 @@
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "validate_installed_public_api.py",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "scripts.validate_installed_public_api",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
