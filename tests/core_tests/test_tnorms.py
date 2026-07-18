@@ -6,6 +6,7 @@ import pytest
 
 from frsutils.core.tnorms import TNorm
 from tests import reference_data_store as ds
+from tests._cupy_test_support import require_usable_cupy
 
 
 CALL_TESTSETS = ds.get_tnorm_call_testsets()
@@ -41,24 +42,6 @@ def _default_params_for_tnorm(tnorm_name):
 def _build_tnorm(tnorm_name):
     """Create a registered T-norm using stable default test parameters."""
     return TNorm.create(tnorm_name, **_default_params_for_tnorm(tnorm_name))
-
-
-def _cupy_module():
-    """Return CuPy or skip when the installed CuPy runtime is unusable."""
-    cp = pytest.importorskip("cupy")
-
-    # Importing CuPy is not enough: environments with missing NVRTC/CUDA runtime
-    # pieces can import CuPy but fail when the first ufunc kernel is compiled.
-    # Run a tiny ufunc smoke check so such environments skip CuPy backend tests
-    # instead of reporting false failures in T-norm logic.
-    try:
-        x = cp.asarray([0.0, 1.0])
-        y = cp.asarray([1.0, 0.0])
-        cp.asnumpy(cp.minimum(x, y))
-    except Exception as exc:  # pragma: no cover - depends on local CUDA runtime.
-        pytest.skip(f"CuPy is importable but unusable in this environment: {exc}")
-
-    return cp
 
 
 def _cupy_to_numpy(value, cp):
@@ -216,7 +199,7 @@ def test_tnorm_numpy_backend_matches_reference_values(tnorm_name, testset):
 @pytest.mark.parametrize("testset", CALL_TESTSETS)
 def test_tnorm_cupy_backend_matches_reference_values(tnorm_name, testset):
     """Validate CuPy backend computations against NumPy expected values."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     a_cp = cp.asarray(testset["a_b"][:, 0])
     b_cp = cp.asarray(testset["a_b"][:, 1])
@@ -234,7 +217,7 @@ def test_tnorm_cupy_backend_matches_reference_values(tnorm_name, testset):
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_backend_matches_numpy_for_zero_dimensional_inputs(tnorm_name):
     """Check CuPy backend behavior for scalar-like zero-dimensional arrays."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     a_np = np.asarray(0.73)
     b_np = np.asarray(0.18)
@@ -250,7 +233,7 @@ def test_tnorm_cupy_backend_matches_numpy_for_zero_dimensional_inputs(tnorm_name
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_backend_matches_numpy_for_matrix_inputs(tnorm_name):
     """Compare CuPy and NumPy backend computations on matrix inputs."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     a_np = np.array([[0.0, 0.25, 0.5], [0.75, 1.0, 0.33]])
     b_np = np.array([[1.0, 0.75, 0.5], [0.25, 0.0, 0.67]])
@@ -264,7 +247,7 @@ def test_tnorm_cupy_backend_matches_numpy_for_matrix_inputs(tnorm_name):
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_backend_broadcasts_column_and_row_inputs(tnorm_name):
     """Check CuPy backend broadcasting for column-row array inputs."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     column_np = np.array([[0.0], [0.25], [0.5], [0.75], [1.0]])
     row_np = np.array([[0.1, 0.4, 0.7, 1.0]])
@@ -351,7 +334,7 @@ def test_tnorm_numpy_reduce_backend_matches_reference_values_along_axis_zero(tno
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_reduce_backend_matches_reference_values_along_axis_zero(tnorm_name):
     """Validate CuPy backend reduction against independent expected values."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
 
     result_cp = obj.reduce_backend(cp.asarray(REDUCE_TEST_ARRAY), xp=cp)
@@ -366,7 +349,7 @@ def test_tnorm_cupy_reduce_backend_matches_reference_values_along_axis_zero(tnor
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_reduce_backend_matches_numpy_for_vector_input(tnorm_name):
     """Compare CuPy and NumPy reduction for one-dimensional input."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     vector_np = REDUCE_TEST_ARRAY[:, 0]
 
@@ -379,7 +362,7 @@ def test_tnorm_cupy_reduce_backend_matches_numpy_for_vector_input(tnorm_name):
 @pytest.mark.parametrize("tnorm_name", REGISTERED_TNORM_NAMES)
 def test_tnorm_cupy_reduce_backend_returns_single_row_values(tnorm_name):
     """Check CuPy reduction behavior for a single-row matrix."""
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     obj = _build_tnorm(tnorm_name)
     single_row_np = REDUCE_TEST_ARRAY[:1, :]
 

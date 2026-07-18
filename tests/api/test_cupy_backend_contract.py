@@ -6,6 +6,7 @@ import pytest
 
 from frsutils import build_similarity_engine, build_similarity_matrix, compute_approximations
 from frsutils.core.backends import build_array_backend
+from tests._cupy_test_support import require_usable_cupy
 
 
 X_GPU = np.array(
@@ -22,20 +23,6 @@ X_GPU = np.array(
 Y_GPU = np.array([0, 0, 0, 1, 1, 1])
 
 
-def _require_cupy_device():
-    """Return CuPy after a real CUDA allocation and synchronization smoke test."""
-    cp = pytest.importorskip("cupy")
-    try:
-        if cp.cuda.runtime.getDeviceCount() < 1:
-            pytest.skip("CuPy is installed but no CUDA device is available.")
-        probe = cp.arange(4, dtype=cp.float64)
-        cp.cuda.Stream.null.synchronize()
-        np.testing.assert_allclose(cp.asnumpy(probe * probe), [0.0, 1.0, 4.0, 9.0])
-    except Exception as exc:  # pragma: no cover - environment-specific CUDA path
-        pytest.skip(f"CuPy CUDA device is not available: {exc}")
-    return cp
-
-
 def test_cupy_backend_optional_dependency_boundary_is_explicit():
     """Requesting CuPy either resolves a CuPy backend or raises a clear ImportError."""
     try:
@@ -48,7 +35,7 @@ def test_cupy_backend_optional_dependency_boundary_is_explicit():
 
 def test_cupy_similarity_engine_matches_dense_numpy_when_cuda_is_available():
     """Real CuPy blocks remain device-resident and materialize exactly to NumPy."""
-    cp = _require_cupy_device()
+    cp = require_usable_cupy()
     expected = build_similarity_matrix(X_GPU, similarity="linear", similarity_tnorm="minimum")
     engine = build_similarity_engine(
         X_GPU,
@@ -80,7 +67,7 @@ def test_cupy_blockwise_approximations_match_dense_when_cuda_is_available(
     expected_gpu_accumulators,
 ):
     """CuPy-backed blockwise approximations must equal the dense CPU reference."""
-    _require_cupy_device()
+    require_usable_cupy()
     dense = compute_approximations(
         X_GPU,
         Y_GPU,

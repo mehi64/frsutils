@@ -14,6 +14,7 @@ nav:
   - Home: index.md
   - User guide:
       - Public API: user/public_api.md
+      - Core computation contracts: user/computation_contracts.md
       - Configuration: user/configuration.md
       - Backends and execution: user/backends.md
       - Benchmarks: user/performance_benchmarking.md
@@ -55,7 +56,7 @@ markdown_extensions:
       generic: true
   - toc:
       permalink: true
-      
+
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js

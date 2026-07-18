@@ -6,6 +6,7 @@ import pytest
 
 from frsutils import compute_approximations
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
+from tests._cupy_test_support import require_usable_cupy
 
 
 X_ITFRS_PHASE4 = np.array(
@@ -189,20 +190,9 @@ def test_itfrs_fake_cupy_result_dictionary_preserves_gpu_contract_metadata(monke
     )
 
 
-def _require_cupy_device():
-    """Return CuPy or skip when CuPy/CUDA is unavailable."""
-    cp = pytest.importorskip("cupy")
-    try:
-        if cp.cuda.runtime.getDeviceCount() < 1:
-            pytest.skip("CuPy is installed but no CUDA device is available.")
-    except Exception as exc:  # pragma: no cover - environment-specific CUDA path
-        pytest.skip(f"CuPy CUDA device is not available: {exc}")
-    return cp
-
-
 def test_itfrs_real_cupy_blockwise_matches_dense_when_cuda_is_available():
     """Real CuPy ITFRS should match dense NumPy when CUDA is available."""
-    _require_cupy_device()
+    require_usable_cupy()
 
     dense = compute_approximations(
         X_ITFRS_PHASE4,

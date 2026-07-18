@@ -6,6 +6,7 @@ import numpy as np
 from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier, validate_range_0_1
 from frsutils.utils.logger.logger_util import get_logger
 from tests import reference_data_store as ds
+from tests._cupy_test_support import require_usable_cupy
 
 
 logger = get_logger(env="test",
@@ -657,14 +658,9 @@ def test_validate_inputs_false_bypasses_input_range_validation(quant_type):
 # Optional CuPy Backend Behavior
 # ----------------------------
 #region<Optional CuPy Backend Behavior>
-def _import_cupy_or_skip():
-    """Return CuPy or skip the test when CuPy is unavailable."""
-    return pytest.importorskip("cupy", reason="CuPy is not installed in this test environment.")
-
-
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
 def test_compute_backend_cupy_returns_cupy_array_and_matches_numpy(quant_type):
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
     x_np = np.array([[0.0, 0.2, 0.35], [0.5, 0.65, 0.8]], dtype=float)
     x_cp = cp.asarray(x_np)
@@ -679,7 +675,7 @@ def test_compute_backend_cupy_returns_cupy_array_and_matches_numpy(quant_type):
 
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
 def test_compute_backend_cupy_preserves_scalar_like_shape(quant_type):
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
     x_cp = cp.asarray(0.5, dtype=float)
 
@@ -696,7 +692,7 @@ def test_compute_backend_cupy_preserves_scalar_like_shape(quant_type):
     np.array([0.5, 1.1], dtype=float),
 ])
 def test_compute_backend_cupy_rejects_out_of_range_inputs(quant_type, x_np):
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
     x_cp = cp.asarray(x_np)
 
@@ -706,7 +702,7 @@ def test_compute_backend_cupy_rejects_out_of_range_inputs(quant_type, x_np):
 
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
 def test_compute_backend_cupy_validate_inputs_false_bypasses_range_validation(quant_type):
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8, validate_inputs=False)
     x_np = np.array([-0.1, 0.5, 1.1], dtype=float)
     x_cp = cp.asarray(x_np)
@@ -719,7 +715,7 @@ def test_compute_backend_cupy_validate_inputs_false_bypasses_range_validation(qu
 
 @pytest.mark.parametrize("quant_type", list(registered_fqs.keys()))
 def test_compute_backend_cupy_rejects_nan_inputs(quant_type):
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     fq = FuzzyQuantifier.create(quant_type, alpha=0.2, beta=0.8)
     x_cp = cp.asarray([0.5, cp.nan], dtype=float)
 

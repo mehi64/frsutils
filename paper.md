@@ -19,7 +19,7 @@ bibliography: paper.bib
 
 # Summary
 
-`frsutils` is a scientific Python library for computing fuzzy-rough set
+`frsutils` is a scientific Python library for computing core fuzzy-rough set
 approximations. Fuzzy-rough models describe whether an observation belongs
 certainly, possibly, or ambiguously to a concept when observations are related
 by graded similarity rather than exact equality. The library provides a compact

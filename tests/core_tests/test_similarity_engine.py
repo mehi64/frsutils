@@ -63,6 +63,19 @@ def test_as_2d_feature_matrix_converts_array_like_input_to_float_array():
     np.testing.assert_allclose(result, np.array(X, dtype=float))
 
 
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+def test_as_2d_feature_matrix_rejects_non_finite_values(invalid_value):
+    X = np.array([[0.0, invalid_value], [1.0, 2.0]], dtype=float)
+
+    with pytest.raises(ValueError, match="finite numeric"):
+        _as_2d_feature_matrix(X)
+
+
+def test_as_2d_feature_matrix_rejects_non_numeric_values_clearly():
+    with pytest.raises(ValueError, match="finite numeric"):
+        _as_2d_feature_matrix([["not-a-number", 1.0]])
+
+
 @pytest.mark.parametrize("block_size", [1, 2, 10])
 def test_validate_block_size_accepts_positive_integers(block_size):
     assert _validate_block_size(block_size) == block_size
@@ -294,6 +307,56 @@ def test_calculate_similarity_block_rejects_invalid_row_or_col_matrices(X_rows, 
 
     with pytest.raises(ValueError):
         calculate_similarity_block(X_rows, X_cols, similarity_func, tnorm_func)
+
+
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+@pytest.mark.parametrize("invalid_side", ["rows", "cols"])
+def test_calculate_similarity_block_numpy_rejects_non_finite_inputs(
+    invalid_value,
+    invalid_side,
+):
+    similarity_func = Similarity.create("linear")
+    tnorm_func = TNorm.create("minimum")
+    X_rows = X_ENGINE[0:2].copy()
+    X_cols = X_ENGINE[2:4].copy()
+
+    if invalid_side == "rows":
+        X_rows[0, 0] = invalid_value
+    else:
+        X_cols[0, 0] = invalid_value
+
+    with pytest.raises(ValueError, match="finite numeric"):
+        calculate_similarity_block(X_rows, X_cols, similarity_func, tnorm_func)
+
+
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+@pytest.mark.parametrize("invalid_side", ["rows", "cols"])
+def test_calculate_similarity_block_cupy_rejects_non_finite_inputs(
+    monkeypatch,
+    invalid_value,
+    invalid_side,
+):
+    install_fake_cupy_module(monkeypatch)
+    backend = build_array_backend("cupy")
+    similarity_func = Similarity.create("linear")
+    tnorm_func = TNorm.create("minimum")
+    X_rows = X_ENGINE[0:2].copy()
+    X_cols = X_ENGINE[2:4].copy()
+
+    if invalid_side == "rows":
+        X_rows[0, 0] = invalid_value
+    else:
+        X_cols[0, 0] = invalid_value
+
+    with pytest.raises(ValueError, match="finite numeric"):
+        calculate_similarity_block(
+            X_rows,
+            X_cols,
+            similarity_func,
+            tnorm_func,
+            backend=backend,
+            return_backend_array=True,
+        )
 
 
 def test_calculate_similarity_block_returns_float64_numpy_array():

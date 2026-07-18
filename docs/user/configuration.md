@@ -94,7 +94,7 @@ role of that T-norm.
 | -------- | ---------------------------------------------------- | ----------------------------------------------- |
 | `itfrs`  | upper T-norm, lower implicator                       | `minimum`, `lukasiewicz`                        |
 | `owafrs` | upper T-norm, lower implicator, upper OWA, lower OWA | `minimum`, `lukasiewicz`, `linear`, `linear`    |
-| `vqrs`   | lower fuzzy quantifier, upper fuzzy quantifier       | linear quantifiers with `alpha=0.1`, `beta=0.6` |
+| `vqrs`   | lower fuzzy quantifier, upper fuzzy quantifier       | quadratic lower `Q(0.2, 1.0)` and upper `Q(0.0, 0.6)` |
 
 Similarity configuration is shared by all three models. The public API defaults
 to `similarity="linear"` and `similarity_tnorm="minimum"`.
@@ -208,6 +208,22 @@ ub_fuzzy_quantifier_name="quadratic"
 ub_fuzzy_quantifier_alpha=0.1
 ub_fuzzy_quantifier_beta=0.8
 ```
+
+The VQRS defaults intentionally use different quantifiers:
+
+```python
+lb_fuzzy_quantifier_name="quadratic"
+lb_fuzzy_quantifier_alpha=0.2
+lb_fuzzy_quantifier_beta=1.0
+
+ub_fuzzy_quantifier_name="quadratic"
+ub_fuzzy_quantifier_alpha=0.0
+ub_fuzzy_quantifier_beta=0.6
+```
+
+The lower quantifier represents a stricter `most` interpretation and the
+upper quantifier represents a more permissive `some` interpretation. This
+keeps the default lower and upper approximations semantically distinct.
 
 The optional validation flags use the same routing rule:
 
@@ -336,7 +352,11 @@ scorer = FuzzyRoughPositiveRegionScorer(
 )
 
 scores = scorer.fit_score(X, y)
+signed_boundary = scorer.signed_boundary_
 ```
+
+The fitted `boundary_` attribute is retained as a backward-compatible alias of
+`signed_boundary_`.
 
 For current registered components, prefer the explicit scorer parameters shown
 on this page. `extra_params` remains available for contract-defined flat

@@ -75,6 +75,12 @@ CPU-only environments are supported. If `backend="cupy"` is requested but CuPy
 or CUDA is unavailable, the corresponding rows are marked as `skipped` rather
 than crashing the whole benchmark run.
 
+For release correctness evidence, use
+`scripts/capture_cuda_validation.py` in addition to this timing harness. The
+capture script records CUDA/GPU versions and a fixed dense NumPy versus
+blockwise CuPy parity matrix; benchmark timing rows remain workload-specific
+observations and must not be treated as general speedup guarantees.
+
 ## Paired NumPy/CuPy blockwise comparison
 
 For larger in-memory datasets, use paired comparison mode. This runs blockwise

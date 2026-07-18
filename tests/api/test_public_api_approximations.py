@@ -11,6 +11,7 @@ from frsutils import (
     compute_boundary_region,
     compute_lower_approximation,
     compute_positive_region,
+    compute_signed_boundary,
     compute_upper_approximation,
 )
 
@@ -43,8 +44,20 @@ def test_convenience_wrappers_match_full_result():
 
     np.testing.assert_allclose(compute_lower_approximation(X_SMALL, Y_SMALL), result.lower)
     np.testing.assert_allclose(compute_upper_approximation(X_SMALL, Y_SMALL), result.upper)
+    np.testing.assert_allclose(compute_signed_boundary(X_SMALL, Y_SMALL), result.signed_boundary)
     np.testing.assert_allclose(compute_boundary_region(X_SMALL, Y_SMALL), result.boundary)
     np.testing.assert_allclose(compute_positive_region(X_SMALL, Y_SMALL), result.positive_region)
+
+
+def test_signed_boundary_aliases_preserve_legacy_boundary_contract():
+    """Explicit and legacy signed-boundary names should return identical arrays."""
+    result = compute_approximations(X_SMALL, Y_SMALL, model="owafrs")
+
+    np.testing.assert_allclose(result.signed_boundary, result.boundary)
+    np.testing.assert_allclose(
+        compute_signed_boundary(X_SMALL, Y_SMALL, model="owafrs"),
+        compute_boundary_region(X_SMALL, Y_SMALL, model="owafrs"),
+    )
 
 
 def test_compute_approximations_accepts_precomputed_similarity_matrix():

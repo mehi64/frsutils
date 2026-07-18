@@ -1,70 +1,64 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """Dense NumPy reference implementation of the ITFRS model.
 
-This module defines the direct ITFRS model that consumes a precomputed
-similarity matrix. Backend-aware blockwise execution is provided by the
-public approximation API and the approximation-engine layer.
+Backend-aware exact blockwise execution is provided by the approximation-engine
+layer and exposed through the public API.
 """
 
-from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-import frsutils.core.tnorms as tn
-import frsutils.core.implicators as imp
-from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
 import numpy as np
+
+import frsutils.core.implicators as imp
+import frsutils.core.tnorms as tn
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.itfrs_components import build_itfrs_components_from_config
 
 
 @FuzzyRoughModel.register("itfrs")
 class ITFRS(FuzzyRoughModel):
     """Dense Implicator-TNorm Fuzzy Rough Set approximation model.
 
-    This class is the direct NumPy reference implementation used with an
-    already materialized pairwise similarity matrix. Use
-    ``compute_approximations(..., model="itfrs", engine="blockwise")`` for
-    blockwise execution and optional CuPy-backed similarity blocks.
-
     Parameters
     ----------
     similarity_matrix : ndarray of shape (n_samples, n_samples)
-        Precomputed pairwise similarity matrix.
+        Dense fuzzy-relation matrix using the ``rows_are_queries`` orientation.
     labels : array-like of shape (n_samples,)
-        Class labels aligned with the similarity matrix. Labels are stored as a
-        NumPy array so direct dense computations can use vectorized indexing.
+        Class labels aligned with the relation matrix.
     ub_tnorm : TNorm
-        T-norm used for the upper approximation.
+        T-norm used to aggregate upper-approximation evidence.
     lb_implicator : Implicator
-        Implicator used for the lower approximation.
-    logger : object, default=None
+        Implicator used to aggregate lower-approximation evidence.
+    logger : logging.Logger or None, default=None
         Optional logger.
     """
-    def __init__(self, 
-                 similarity_matrix: np.ndarray, 
-                 labels: np.ndarray, 
-                 ub_tnorm: tn.TNorm, 
-                 lb_implicator: imp.Implicator,
-                 logger=None):
-        """Initialize the ITFRS instance."""
-        label_array = np.asarray(labels) if labels is not None else None
-        super().__init__(similarity_matrix,
-                          label_array,
-                          logger=logger)
-        
-        self.validate_params(ub_tnorm=ub_tnorm, 
-                             lb_implicator=lb_implicator)
 
+    def __init__(
+        self,
+        similarity_matrix: np.ndarray,
+        labels: np.ndarray,
+        ub_tnorm: tn.TNorm,
+        lb_implicator: imp.Implicator,
+        logger=None,
+    ):
+        """Initialize a dense ITFRS reference model."""
+        label_array = np.asarray(labels) if labels is not None else None
+        super().__init__(similarity_matrix, label_array, logger=logger)
+
+        self.validate_params(
+            ub_tnorm=ub_tnorm,
+            lb_implicator=lb_implicator,
+        )
         self.ub_tnorm = ub_tnorm
         self.lb_implicator = lb_implicator
-        
         self.logger.debug(f"{self.__class__.__name__} initialized.")
 
-
     def lower_approximation(self) -> np.ndarray:
-        """Compute the lower approximation using the implicator.
-                
-                Returns
-                -------
-                np.ndarray
-                    Lower approximation array (n,)
-                
+        """Compute dense ITFRS lower-approximation values.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Row-wise minimum implicator values after excluding each diagonal
+            self-comparison.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         implication_vals = self.lb_implicator(self.similarity_matrix, label_mask)
@@ -72,13 +66,13 @@ class ITFRS(FuzzyRoughModel):
         return np.min(implication_vals, axis=1)
 
     def upper_approximation(self) -> np.ndarray:
-        """Compute the upper approximation using the T-norm.
-                
-                Returns
-                -------
-                np.ndarray
-                    Upper approximation array (n,)
-                
+        """Compute dense ITFRS upper-approximation values.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Row-wise maximum T-norm values after excluding each diagonal
+            self-comparison.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.ub_tnorm(self.similarity_matrix, label_mask)
@@ -86,115 +80,112 @@ class ITFRS(FuzzyRoughModel):
         return np.max(tnorm_vals, axis=1)
 
     def to_dict(self, include_data: bool = False) -> dict:
-        """Serialize the ITFRS model to a dictionary.
-                
-                Parameters
-                ----------
-                include_data : bool
-                    If True, include similarity_matrix and labels in the output.
-                
-                Returns
-                -------
-                dict
-                    Dictionary representation of the model.
-                
+        """Serialize the ITFRS model.
+
+        Parameters
+        ----------
+        include_data : bool, default=False
+            Include ``similarity_matrix`` and ``labels`` when True.
+
+        Returns
+        -------
+        dict
+            Serialized component configuration and optional data arrays.
         """
         data = {
             "type": "itfrs",
             "ub_tnorm": self.ub_tnorm.to_dict(),
-            "lb_implicator": self.lb_implicator.to_dict()
+            "lb_implicator": self.lb_implicator.to_dict(),
         }
-
         if include_data:
             data["similarity_matrix"] = self.similarity_matrix.tolist()
             data["labels"] = self.labels.tolist()
-
         return data
 
-
     @classmethod
-    def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "ITFRS":
-        """Reconstruct an ITFRS model from a serialized dictionary.
-                
-                Parameters
-                ----------
-                data : dict
-                    Serialized dictionary (from to_dict)
-                similarity_matrix : object
-                    Optional matrix to override or fill in if not in data
-                labels : object
-                    Optional label vector to override or fill in if not in data
-                logger : object
-                    Optional logger
-                
-                Returns
-                -------
-                'ITFRS'
-                    ITFRS instance
-                
+    def from_dict(
+        cls,
+        data: dict,
+        similarity_matrix=None,
+        labels=None,
+        logger=None,
+    ) -> "ITFRS":
+        """Reconstruct an ITFRS model from serialized configuration.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary produced by :meth:`to_dict`.
+        similarity_matrix : array-like or None, default=None
+            Matrix used when serialized data are absent.
+        labels : array-like or None, default=None
+            Labels used when serialized data are absent.
+        logger : logging.Logger or None, default=None
+            Optional logger.
+
+        Returns
+        -------
+        ITFRS
+            Reconstructed dense ITFRS model.
         """
-        
-        # Rebuild operators
         tnorm = tn.TNorm.from_dict(data["ub_tnorm"])
         implicator = imp.Implicator.from_dict(data["lb_implicator"])
-
-        # Use matrix and labels from dict if present, else fallback to args
-        sim = np.array(data["similarity_matrix"]) if "similarity_matrix" in data else similarity_matrix
+        sim = (
+            np.array(data["similarity_matrix"])
+            if "similarity_matrix" in data
+            else similarity_matrix
+        )
         lbl = np.array(data["labels"]) if "labels" in data else labels
-
         if sim is None or lbl is None:
-            raise ValueError("similarity_matrix and labels must be provided either in data or as arguments.")
-
+            raise ValueError(
+                "similarity_matrix and labels must be provided either in data "
+                "or as arguments."
+            )
         return cls(sim, lbl, tnorm, implicator, logger=logger)
 
     def describe_params_detailed(self) -> dict:
-        """Describe internal T-norm and implicator parameters.
-                
-                Returns
-                -------
-                dict
-                    Dictionary describing parameters of components.
-                
-        """
+        """Return detailed metadata for the configured ITFRS components."""
         return {
             "ub_tnorm": self.ub_tnorm.describe_params_detailed(),
-            "lb_implicator": self.lb_implicator.describe_params_detailed()
+            "lb_implicator": self.lb_implicator.describe_params_detailed(),
         }
-    
+
     def _get_params(self) -> dict:
-        """Describe internal T-norm and implicator parameters.
-                
-                Returns
-                -------
-                dict
-                    Dictionary containing T-norm and implicator used in itfrs.
-                
-        """
+        """Return component and data parameters used by this model."""
         return {
             "ub_tnorm": self.ub_tnorm,
             "lb_implicator": self.lb_implicator,
-            "similarity_matrix":self.similarity_matrix,
-            "labels":self.labels
+            "similarity_matrix": self.similarity_matrix,
+            "labels": self.labels,
         }
 
     @classmethod
-    def validate_params(cls, **kwargs):
-        """validation hook.
-        
+    def validate_params(cls, **kwargs) -> None:
+        """Validate ITFRS component objects at construction time.
+
         Parameters
         ----------
-        kwargs : object
-            Parameter value.
+        **kwargs : object
+            Must contain ``ub_tnorm`` and ``lb_implicator``.
+
+        Raises
+        ------
+        ValueError
+            If either component has the wrong type.
         """
-        
-        tnrm = kwargs.get("ub_tnorm")
-        if tnrm is None or not isinstance(tnrm, tn.TNorm):
-            raise ValueError("Parameter 'tnorm' must be provided and be an instance of derived classes from TNorm.")
+        tnorm = kwargs.get("ub_tnorm")
+        if tnorm is None or not isinstance(tnorm, tn.TNorm):
+            raise ValueError(
+                "Parameter 'tnorm' must be provided and be an instance of "
+                "a TNorm subclass."
+            )
 
-        impli = kwargs.get("lb_implicator")
-        if impli is None or not isinstance(impli, imp.Implicator):
-            raise ValueError("Parameter 'implicator' must be provided and be an instance of derived classes from Implicator.")
-
+        implicator = kwargs.get("lb_implicator")
+        if implicator is None or not isinstance(implicator, imp.Implicator):
+            raise ValueError(
+                "Parameter 'implicator' must be provided and be an instance of "
+                "an Implicator subclass."
+            )
 
     @classmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict) -> "ITFRS":
@@ -202,31 +193,39 @@ class ITFRS(FuzzyRoughModel):
 
         Parameters
         ----------
-        similarity_matrix : array-like of shape (n_samples, n_samples), default=None
-            Optional dense similarity matrix. Overrides matrix data in `config`
-            when provided.
-        labels : array-like of shape (n_samples,), default=None
-            Optional label vector. Overrides labels in `config` when provided.
+        similarity_matrix : array-like of shape (n_samples, n_samples), optional
+            Optional dense matrix overriding matrix data in ``config``.
+        labels : array-like of shape (n_samples,), optional
+            Optional labels overriding label data in ``config``.
         **config : dict
-            Flat ITFRS config, internal nested config under `_nested_config`, or
-            serialized operator specs.
+            Flat ITFRS config, nested config under ``_nested_config``, or
+            serialized component specifications.
 
         Returns
         -------
         ITFRS
-            Dense ITFRS model configured with the requested operators.
+            Configured dense ITFRS model.
         """
         config = dict(config)
         ub_tnorm, lb_implicator = build_itfrs_components_from_config(
             config,
             require_explicit_components=True,
         )
-
-        sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)
-        lbl = labels if labels is not None else (np.array(config["labels"]) if "labels" in config else None)
-
+        sim = similarity_matrix
+        if sim is None and "similarity_matrix" in config:
+            sim = np.array(config["similarity_matrix"])
+        lbl = labels
+        if lbl is None and "labels" in config:
+            lbl = np.array(config["labels"])
         if sim is None or lbl is None:
-            raise ValueError("similarity_matrix and labels must be provided either as arguments or in the config dictionary.")
-
-        logger = config.get("logger", None)
-        return cls(sim, lbl, ub_tnorm, lb_implicator, logger=logger)
+            raise ValueError(
+                "similarity_matrix and labels must be provided either as "
+                "arguments or in the config dictionary."
+            )
+        return cls(
+            sim,
+            lbl,
+            ub_tnorm,
+            lb_implicator,
+            logger=config.get("logger"),
+        )

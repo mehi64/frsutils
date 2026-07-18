@@ -58,9 +58,13 @@ or concept.
 The fuzzy-rough degree to which each sample possibly belongs to a target class
 or concept.
 
-## Boundary region
+## Signed boundary
 
-The difference between upper and lower approximation degrees.
+The un-clipped difference between upper and lower approximation degrees:
+`upper - lower`. It can be negative when a model configuration does not
+guarantee that the upper approximation is at least the lower approximation.
+The older name `boundary region` remains available in the API for backward
+compatibility.
 
 ## Positive region
 

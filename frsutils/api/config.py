@@ -12,6 +12,7 @@ from typing import Any, Dict, Mapping, Optional, Set
 
 from frsutils.core.fuzzy_quantifiers import FuzzyQuantifier
 from frsutils.core.implicators import Implicator
+from frsutils.core.models.vqrs_components import build_default_vqrs_flat_config
 from frsutils.core.owa_weights import OWAWeights
 from frsutils.core.similarities import Similarity
 from frsutils.core.tnorms import TNorm
@@ -124,14 +125,7 @@ _DEFAULT_MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "ub_owa_method_name": "linear",
         "lb_owa_method_name": "linear",
     },
-    "vqrs": {
-        "lb_fuzzy_quantifier_name": "linear",
-        "ub_fuzzy_quantifier_name": "linear",
-        "lb_fuzzy_quantifier_alpha": 0.1,
-        "lb_fuzzy_quantifier_beta": 0.6,
-        "ub_fuzzy_quantifier_alpha": 0.1,
-        "ub_fuzzy_quantifier_beta": 0.6,
-    },
+    "vqrs": build_default_vqrs_flat_config(),
 }
 
 

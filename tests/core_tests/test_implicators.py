@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from frsutils.core.implicators import Implicator
 from tests import reference_data_store as ds
+from tests._cupy_test_support import require_usable_cupy
 from frsutils.utils.logger.logger_util import get_logger
 
 logger = get_logger(env="test", experiment_name="test_implicators")
@@ -206,20 +207,10 @@ def test_implicator_branch_edge_cases_match_expected_values(implicator_name, a, 
     np.testing.assert_allclose(result, expected, atol=1e-12)
 
 
-def _import_cupy_or_skip():
-    """Return CuPy when a working CUDA-backed installation is available."""
-    cp = pytest.importorskip("cupy")
-    try:
-        cp.asnumpy(cp.asarray([0.0]))
-    except Exception as exc:  # pragma: no cover - depends on local CUDA setup.
-        pytest.skip(f"CuPy is installed but unavailable in this environment: {exc}")
-    return cp
-
-
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_compute_backend_cupy_matches_numpy(implicator_name):
     """Check that CuPy backend execution matches NumPy backend execution."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a_np = np.array([0.0, 0.2, 0.5, 0.8, 1.0])
     b_np = np.array([0.0, 0.4, 0.5, 0.3, 1.0])
@@ -235,7 +226,7 @@ def test_implicator_compute_backend_cupy_matches_numpy(implicator_name):
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_compute_backend_cupy_returns_cupy_array(implicator_name):
     """Check that CuPy backend execution keeps the result on the CuPy backend."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a = cp.asarray([0.0, 0.2, 0.5, 0.8, 1.0])
     b = cp.asarray([0.0, 0.4, 0.5, 0.3, 1.0])
@@ -249,7 +240,7 @@ def test_implicator_compute_backend_cupy_returns_cupy_array(implicator_name):
 @pytest.mark.parametrize("shape", [(), (1,), (1, 1)])
 def test_implicator_compute_backend_cupy_handles_scalar_like_arrays(implicator_name, shape):
     """Check that CuPy backend execution handles scalar-like equal-shape arrays."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a_np = np.full(shape, 0.73)
     b_np = np.full(shape, 0.18)
@@ -267,7 +258,7 @@ def test_implicator_compute_backend_cupy_handles_scalar_like_arrays(implicator_n
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_compute_backend_cupy_rejects_mismatched_shapes(implicator_name):
     """Check that CuPy backend validation rejects incompatible input shapes."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a = cp.asarray([0.1, 0.2, 0.3])
     b = cp.asarray([[0.1, 0.2, 0.3]])
@@ -279,7 +270,7 @@ def test_implicator_compute_backend_cupy_rejects_mismatched_shapes(implicator_na
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_compute_backend_cupy_rejects_out_of_range_values(implicator_name):
     """Check that CuPy backend validation rejects values outside [0, 1]."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a = cp.asarray([0.2, 1.2])
     b = cp.asarray([0.3, 0.4])
@@ -291,7 +282,7 @@ def test_implicator_compute_backend_cupy_rejects_out_of_range_values(implicator_
 @pytest.mark.parametrize("implicator_name, a, b, expected", BRANCH_EDGE_CASES)
 def test_implicator_compute_backend_cupy_branch_edge_cases(implicator_name, a, b, expected):
     """Check branch-sensitive formulas with CuPy backend arrays."""
-    cp = _import_cupy_or_skip()
+    cp = require_usable_cupy()
     obj = Implicator.create(implicator_name)
     a_cp = cp.asarray(a)
     b_cp = cp.asarray(b)

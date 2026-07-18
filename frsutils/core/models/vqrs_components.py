@@ -15,13 +15,33 @@ from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 _DEFAULT_LB_FUZZY_QUANTIFIER = {
-    "name": "linear",
-    "params": {"alpha": 0.1, "beta": 0.6},
+    "name": "quadratic",
+    "params": {"alpha": 0.2, "beta": 1.0},
 }
 _DEFAULT_UB_FUZZY_QUANTIFIER = {
-    "name": "linear",
-    "params": {"alpha": 0.1, "beta": 0.6},
+    "name": "quadratic",
+    "params": {"alpha": 0.0, "beta": 0.6},
 }
+
+
+def build_default_vqrs_flat_config() -> dict[str, Any]:
+    """Build an independent flat configuration for the VQRS defaults.
+
+    Returns
+    -------
+    dict[str, Any]
+        Flat lower- and upper-quantifier parameters. The lower quantifier
+        represents a stricter ``most`` interpretation, while the upper
+        quantifier represents a more permissive ``some`` interpretation.
+    """
+    return {
+        "lb_fuzzy_quantifier_name": _DEFAULT_LB_FUZZY_QUANTIFIER["name"],
+        "lb_fuzzy_quantifier_alpha": _DEFAULT_LB_FUZZY_QUANTIFIER["params"]["alpha"],
+        "lb_fuzzy_quantifier_beta": _DEFAULT_LB_FUZZY_QUANTIFIER["params"]["beta"],
+        "ub_fuzzy_quantifier_name": _DEFAULT_UB_FUZZY_QUANTIFIER["name"],
+        "ub_fuzzy_quantifier_alpha": _DEFAULT_UB_FUZZY_QUANTIFIER["params"]["alpha"],
+        "ub_fuzzy_quantifier_beta": _DEFAULT_UB_FUZZY_QUANTIFIER["params"]["beta"],
+    }
 
 
 def _is_nested_frs_config(config: Mapping[str, Any]) -> bool:
@@ -90,7 +110,8 @@ def build_vqrs_components_from_config(
         private ``_nested_config`` key used by public builders.
     require_explicit_components : bool, default=False
         If True, missing lower or upper fuzzy quantifier specs raise
-        ``ValueError``. If False, the VQRS default linear quantifiers are used.
+        ``ValueError``. If False, the VQRS default quadratic quantifiers are
+        used.
 
     Returns
     -------

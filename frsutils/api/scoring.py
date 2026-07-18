@@ -17,6 +17,7 @@ from .approximations import compute_approximations
 from .config import canonicalize_flat_public_config
 from .results import FuzzyRoughApproximationResult
 
+
 class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     """Estimate fuzzy-rough positive-region scores for fitted samples.
 
@@ -73,6 +74,23 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
     extra_params : Mapping or None, default=None
         Optional contract-defined flat parameters not represented by explicit
         constructor arguments.
+
+    Attributes
+    ----------
+    result_ : FuzzyRoughApproximationResult
+        Full approximation result from the most recent successful fit.
+    positive_region_ : ndarray of shape (n_samples,)
+        Positive-region scores for the fitted samples.
+    lower_ : ndarray of shape (n_samples,)
+        Lower-approximation scores for the fitted samples.
+    upper_ : ndarray of shape (n_samples,)
+        Upper-approximation scores for the fitted samples.
+    signed_boundary_ : ndarray of shape (n_samples,)
+        Unclipped signed-boundary scores computed as ``upper_ - lower_``.
+    boundary_ : ndarray of shape (n_samples,)
+        Backward-compatible alias of ``signed_boundary_``.
+    n_samples_in_ : int
+        Number of labels used during the most recent successful fit.
     """
 
     def __init__(
@@ -204,7 +222,8 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         self.positive_region_ = result.positive_region
         self.lower_ = result.lower
         self.upper_ = result.upper
-        self.boundary_ = result.boundary
+        self.signed_boundary_ = result.signed_boundary
+        self.boundary_ = self.signed_boundary_
         self.n_samples_in_ = len(np.asarray(y))
         return self
 
@@ -269,5 +288,6 @@ class FuzzyRoughPositiveRegionScorer(BaseEstimator):
         """
         check_is_fitted(self, "result_")
         return self.result_
+
 
 __all__ = ["FuzzyRoughPositiveRegionScorer"]

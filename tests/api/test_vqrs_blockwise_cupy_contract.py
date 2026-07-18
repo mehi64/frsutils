@@ -6,6 +6,7 @@ import pytest
 
 from frsutils import compute_approximations
 from tests._fake_cupy_backend import FakeCupyArray, install_fake_cupy_module
+from tests._cupy_test_support import require_usable_cupy
 
 
 X_VQRS_CUPY = np.array(
@@ -153,20 +154,9 @@ def test_vqrs_fake_cupy_supports_object_labels(monkeypatch):
     _assert_same_vqrs_outputs(gpu_like, dense)
 
 
-def _require_cupy_device():
-    """Return CuPy or skip when CuPy/CUDA is unavailable."""
-    cp = pytest.importorskip("cupy")
-    try:
-        if cp.cuda.runtime.getDeviceCount() < 1:
-            pytest.skip("CuPy is installed but no CUDA device is available.")
-    except Exception as exc:  # pragma: no cover - environment-specific CUDA path
-        pytest.skip(f"CuPy CUDA device is not available: {exc}")
-    return cp
-
-
 def test_vqrs_real_cupy_blockwise_matches_dense_when_cuda_is_available():
     """Real CuPy VQRS blockwise execution must match dense NumPy when available."""
-    _require_cupy_device()
+    require_usable_cupy()
 
     dense = compute_approximations(X_VQRS_CUPY, Y_VQRS_CUPY, **_vqrs_kwargs(), engine="dense")
     gpu = compute_approximations(

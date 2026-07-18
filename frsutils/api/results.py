@@ -22,7 +22,8 @@ class FuzzyRoughApproximationResult:
     upper : ndarray of shape (n_samples,)
         Upper-approximation score for each sample.
     boundary : ndarray of shape (n_samples,)
-        Boundary-region score for each sample, usually upper - lower.
+        Signed boundary score for each sample, computed as upper - lower.
+        Values are not clipped and can therefore be negative.
     positive_region : ndarray of shape (n_samples,)
         Positive-region score for each sample.
     model : str
@@ -62,6 +63,21 @@ class FuzzyRoughApproximationResult:
     used_blockwise: bool = False
     used_gpu_similarity_blocks: bool = False
     used_gpu_approximation_accumulators: bool = False
+
+    @property
+    def signed_boundary(self) -> np.ndarray:
+        """Return the signed boundary array stored in ``boundary``.
+
+        Returns
+        -------
+        np.ndarray
+            Signed values computed as ``upper - lower``.
+
+        Notes
+        -----
+        ``boundary`` remains the serialized field for backward compatibility.
+        """
+        return self.boundary
 
     def as_dict(self, *, include_similarity_matrix: bool = False) -> Dict[str, Any]:
         """Convert this result into a plain dictionary.

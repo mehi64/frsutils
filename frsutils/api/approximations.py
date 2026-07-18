@@ -89,7 +89,9 @@ def _as_validated_similarity_matrix(
     Parameters
     ----------
     similarity_matrix : Optional[Any]
-        Optional pairwise similarity matrix.
+        Optional fuzzy-relation matrix. Entry ``[i, j]`` is interpreted as
+        ``R(x_i, x_j)``; rows are query samples and columns are evidence
+        samples.
     labels : np.ndarray
         One-dimensional label vector used to check matrix size.
 
@@ -455,7 +457,7 @@ def compute_approximations(
     backend: str = "numpy",
     **flat_config: Any,
 ) -> FuzzyRoughApproximationResult:
-    """Compute fuzzy-rough lower, upper, boundary, and positive-region values.
+    """Compute fuzzy-rough lower, upper, signed-boundary, and positive-region values.
 
     Dense execution uses direct model classes with materialized similarity
     matrices. ITFRS, VQRS, and OWAFRS direct classes are dense NumPy reference
@@ -478,7 +480,9 @@ def compute_approximations(
     similarity : str or None, default=None
         Optional similarity alias for matrix construction.
     similarity_matrix : ndarray of shape (n_samples, n_samples) or None, default=None
-        Optional precomputed pairwise similarity matrix.
+        Optional precomputed fuzzy-relation matrix. Entry ``[i, j]`` is
+        interpreted as ``R(x_i, x_j)``. Rows are query samples whose
+        approximations are returned, and columns are evidence samples.
     config : Mapping[str, Any] or None, default=None
         Optional flat public approximation configuration mapping.
     return_similarity_matrix : bool, default=False
@@ -495,7 +499,9 @@ def compute_approximations(
     Returns
     -------
     result : FuzzyRoughApproximationResult
-        Named approximation arrays and execution metadata.
+        Named approximation arrays and execution metadata. ``result.boundary``
+        and ``result.signed_boundary`` both expose the un-clipped signed
+        difference ``upper - lower``.
 
     Raises
     ------
@@ -610,7 +616,7 @@ def compute_upper_approximation(X: Optional[np.ndarray], y: np.ndarray, **kwargs
     return compute_approximations(X, y, **kwargs).upper
 
 def compute_boundary_region(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
-    """Compute only the boundary-region values.
+    """Compute signed boundary values using the legacy function name.
 
     Parameters
     ----------
@@ -624,9 +630,36 @@ def compute_boundary_region(X: Optional[np.ndarray], y: np.ndarray, **kwargs: An
     Returns
     -------
     np.ndarray
-        Boundary-region array.
+        Signed array computed as upper minus lower. Values are not clipped.
+
+    Notes
+    -----
+    This function is retained for backward compatibility. Use
+    :func:`compute_signed_boundary` when the signed interpretation should be
+    explicit.
     """
-    return compute_approximations(X, y, **kwargs).boundary
+    return compute_signed_boundary(X, y, **kwargs)
+
+
+def compute_signed_boundary(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
+    """Compute only the signed boundary values.
+
+    Parameters
+    ----------
+    X : Optional[np.ndarray]
+        Input feature matrix, or None when similarity_matrix is provided in kwargs.
+    y : np.ndarray
+        Label vector.
+    kwargs : Any
+        Parameters forwarded to compute_approximations.
+
+    Returns
+    -------
+    np.ndarray
+        Signed array computed as upper minus lower. Values are not clipped and
+        can therefore be negative.
+    """
+    return compute_approximations(X, y, **kwargs).signed_boundary
 
 def compute_positive_region(X: Optional[np.ndarray], y: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Compute only the positive-region values.
@@ -652,5 +685,6 @@ __all__ = [
     "compute_boundary_region",
     "compute_lower_approximation",
     "compute_positive_region",
+    "compute_signed_boundary",
     "compute_upper_approximation",
 ]

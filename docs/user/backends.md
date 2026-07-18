@@ -2,6 +2,8 @@
 
 This page describes the possible backends in frsutils. Terms such as dense execution, blockwise execution, backend, and public output are defined in the [glossary](glossary.md).
 
+For the model-independent interpretation of relation rows, self-comparisons, boundary values, and dense/blockwise equivalence, see [Core computation contracts](computation_contracts.md).
+
 ## Execution modes
 
 FRsutils exposes execution modes through the canonical public API,
@@ -74,6 +76,36 @@ python -m pip install -e ".[gpu-cuda12x]"
 
 The CUDA extra uses CuPy 14.x and includes CuPy's CUDA component dependencies.
 The core package does not install CuPy or CUDA dependencies.
+
+## Archiveable CUDA validation artifact
+
+A release that mentions real CUDA execution should include a machine-readable
+validation artifact generated on the release GPU:
+
+```bash
+python scripts/capture_cuda_validation.py \
+  --require-cuda \
+  --output-json cuda_validation_report.json
+```
+
+The script first proves that CuPy can discover a device, allocate arrays, execute
+a kernel, synchronize, and return a value to NumPy. It then compares dense
+NumPy against blockwise CuPy for two configurations of each public model and
+multiple block sizes. The JSON records:
+
+- operating system, Python, NumPy, FRsutils, and CuPy versions;
+- CUDA runtime and driver versions;
+- GPU name, compute capability, memory, and device count;
+- captured `nvidia-smi` and `nvcc --version` outputs;
+- maximum absolute differences for lower, upper, boundary, and positive-region
+  arrays;
+- public output dtypes and backend-residency metadata;
+- explicit claim boundaries, including the absence of GPU-resident OWAFRS
+  approximation accumulation.
+
+A report with `status="unavailable"` or skipped real-CUDA tests is useful for
+CPU-only diagnostics, but it is not evidence that GPU numerical execution was
+validated. Archive only a `status="success"` report as release evidence.
 
 ## Validated CUDA environment
 
@@ -313,4 +345,4 @@ Fuzzy quantifiers:
 - `linear`
 - `quadratic`
 
-# 
+#

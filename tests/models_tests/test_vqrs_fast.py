@@ -90,6 +90,17 @@ def test_dense_vqrs_matches_reference_interim_and_approximations():
     )
 
 
+def test_dense_model_signed_boundary_preserves_boundary_region_alias():
+    """Dense models should expose the explicit signed-boundary method."""
+    model = _build_reference_model()
+
+    np.testing.assert_allclose(
+        model.signed_boundary(),
+        model.boundary_region(),
+        atol=1e-12,
+    )
+
+
 def test_dense_vqrs_accepts_list_labels_and_stores_numpy_labels():
     """Array-like labels should work in the direct dense reference model."""
     model = _build_reference_model(labels=["minority", "minority", "majority", "majority"])
@@ -340,6 +351,25 @@ def _assert_same_vqrs_components(left, right):
     assert type(left_tnorm) is type(right_tnorm)
     assert left_lb.to_dict() == right_lb.to_dict()
     assert left_ub.to_dict() == right_ub.to_dict()
+
+
+def test_vqrs_shared_component_builder_uses_distinct_scientific_defaults():
+    """Default VQRS components should represent distinct most/some quantifiers."""
+    lb_quantifier, ub_quantifier, _ = build_vqrs_components_from_config(None)
+
+    assert isinstance(lb_quantifier, QuadraticFuzzyQuantifier)
+    assert isinstance(ub_quantifier, QuadraticFuzzyQuantifier)
+    assert lb_quantifier.alpha == pytest.approx(0.2)
+    assert lb_quantifier.beta == pytest.approx(1.0)
+    assert ub_quantifier.alpha == pytest.approx(0.0)
+    assert ub_quantifier.beta == pytest.approx(0.6)
+
+    evidence = np.linspace(0.0, 1.0, 101)
+    lower = lb_quantifier(evidence)
+    upper = ub_quantifier(evidence)
+
+    assert np.all(lower <= upper)
+    assert np.any(lower < upper)
 
 
 def test_vqrs_shared_component_builder_supports_flat_config():

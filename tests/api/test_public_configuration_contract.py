@@ -132,6 +132,19 @@ def test_public_similarity_default_matches_approximation_default():
     np.testing.assert_allclose(result.positive_region, expected.positive_region)
 
 
+def test_public_vqrs_defaults_use_distinct_lower_and_upper_quantifiers():
+    """Public VQRS defaults should expose the shared most/some configuration."""
+    result = compute_approximations(X_SMALL, Y_SMALL, model="vqrs")
+
+    assert result.config["lb_fuzzy_quantifier_name"] == "quadratic"
+    assert result.config["lb_fuzzy_quantifier_alpha"] == pytest.approx(0.2)
+    assert result.config["lb_fuzzy_quantifier_beta"] == pytest.approx(1.0)
+    assert result.config["ub_fuzzy_quantifier_name"] == "quadratic"
+    assert result.config["ub_fuzzy_quantifier_alpha"] == pytest.approx(0.0)
+    assert result.config["ub_fuzzy_quantifier_beta"] == pytest.approx(0.6)
+    assert np.any(result.lower < result.upper)
+
+
 def test_scorer_exposes_parameterized_component_contract_to_sklearn():
     """The scorer exposes current routed component parameters to clone and get_params."""
     scorer = FuzzyRoughPositiveRegionScorer(

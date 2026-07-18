@@ -136,13 +136,25 @@ python -m pytest \
   tests/api/test_itfrs_blockwise_cupy_contract.py \
   tests/api/test_vqrs_blockwise_cupy_contract.py \
   tests/api/test_owafrs_blockwise_cupy_contract.py \
+  tests/api/test_real_cupy_parity_matrix.py \
   -o addopts="" -vv -rs
 ```
 
 These tests verify real device allocation, backend-resident similarity blocks,
-dense/blockwise numerical parity, public NumPy outputs, output dtypes, and the
-model-specific accumulator claims. A skipped real-CUDA test is not evidence of
-GPU correctness; record at least one complete run on the release environment.
+dense/blockwise numerical parity across multiple configurations and block sizes,
+public NumPy outputs, output dtypes, and the model-specific accumulator claims.
+All real-CUDA tests use one shared usability probe, so an importable but broken
+CUDA runtime skips consistently instead of producing misleading formula-test
+failures.
+
+A skipped real-CUDA test is not evidence of GPU correctness. Capture a complete
+release artifact on the target GPU:
+
+```bash
+python scripts/capture_cuda_validation.py \
+  --require-cuda \
+  --output-json cuda_validation_report.json
+```
 
 ## Targeted test modules
 
@@ -183,23 +195,33 @@ Test installation from the built wheel in an isolated environment:
 python -m venv /tmp/frsutils-wheel-smoke
 /tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
 /tmp/frsutils-wheel-smoke/bin/python -m pip install dist/frsutils-*.whl
-cd /tmp
-/tmp/frsutils-wheel-smoke/bin/python -c "import frsutils; print(frsutils.__file__)"
 /tmp/frsutils-wheel-smoke/bin/python -m pip check
+
+package_dir=$(
+  /tmp/frsutils-wheel-smoke/bin/python -c \
+    "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).parent)"
+)
+chmod -R a-w "$package_dir"
+mkdir -p /tmp/frsutils-wheel-read-only-cwd
+chmod a-w /tmp/frsutils-wheel-read-only-cwd
+cd /tmp/frsutils-wheel-read-only-cwd
+PYTHONDONTWRITEBYTECODE=1 /tmp/frsutils-wheel-smoke/bin/python \
+  /path/to/frsutils/scripts/validate_installed_public_api.py \
+  --require-installed \
+  --require-package-read-only \
+  --require-cwd-read-only \
+  --output-json /tmp/wheel_public_api_validation.json
 ```
 
-Repeat the same procedure with the source distribution before a release:
+Repeat the same procedure with the source distribution before a release,
+installing `dist/frsutils-*.tar.gz` into a separate environment and writing a
+separate report such as `/tmp/sdist_public_api_validation.json`.
 
-```bash
-python -m venv /tmp/frsutils-sdist-smoke
-/tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
-/tmp/frsutils-sdist-smoke/bin/python -m pip install dist/frsutils-*.tar.gz
-cd /tmp
-/tmp/frsutils-sdist-smoke/bin/python -c "import frsutils; print(frsutils.__file__)"
-/tmp/frsutils-sdist-smoke/bin/python -m pip check
-```
-
-On Windows, replace `bin/python` with `Scripts/python.exe`.
+The validator performs real dense and blockwise computations for all three
+public models, checks scorer fitted attributes and cloning, and fails on default
+logging output or filesystem side effects. On Windows, replace `bin/python`
+with `Scripts/python.exe` and omit the two read-only flags because POSIX
+permission-bit checks do not map directly to Windows ACLs.
 
 ## Continuous integration
 

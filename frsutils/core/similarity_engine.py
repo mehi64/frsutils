@@ -45,29 +45,34 @@ class SimilarityBlock:
 
 def _as_2d_feature_matrix(X: Any) -> np.ndarray:
     """Convert and validate feature matrix input for similarity engines.
-        
-        Parameters
-        ----------
-        X : Any
-            Candidate feature matrix.
-        
-        Returns
-        -------
-        np.ndarray
-            Two-dimensional NumPy array.
-        
-        Raises
-        ------
-        ValueError
-            If X is missing or not two-dimensional.
-        
+
+    Parameters
+    ----------
+    X : Any
+        Candidate feature matrix.
+
+    Returns
+    -------
+    np.ndarray
+        Finite two-dimensional NumPy array.
+
+    Raises
+    ------
+    ValueError
+        If ``X`` is missing, not two-dimensional, non-numeric, or contains
+        non-finite values.
     """
     if X is None:
         raise ValueError("X must be provided when building a similarity engine.")
 
-    X_array = np.asarray(X, dtype=float)
+    try:
+        X_array = np.asarray(X, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("X must contain only finite numeric values.") from exc
     if X_array.ndim != 2:
         raise ValueError("X must be a 2D array-like feature matrix.")
+    if not np.isfinite(X_array).all():
+        raise ValueError("X must contain only finite numeric values.")
     return X_array
 
 
@@ -343,8 +348,8 @@ def calculate_similarity_block(
     TypeError
         If ``backend`` is not an ``ArrayBackend`` descriptor.
     ValueError
-        If either feature input is missing, is not two-dimensional, or has an
-        incompatible feature count.
+        If either feature input is missing, is not a finite two-dimensional
+        numeric matrix, or has an incompatible feature count.
 
     Notes
     -----
@@ -360,10 +365,21 @@ def calculate_similarity_block(
     if is_cupy_backend(effective_backend):
         if X_rows is None or X_cols is None:
             raise ValueError("X_rows and X_cols must be 2D array-like feature matrices.")
-        X_rows_array = effective_backend.asarray(X_rows, dtype=np.float64)
-        X_cols_array = effective_backend.asarray(X_cols, dtype=np.float64)
+        try:
+            X_rows_array = effective_backend.asarray(X_rows, dtype=np.float64)
+            X_cols_array = effective_backend.asarray(X_cols, dtype=np.float64)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "X_rows and X_cols must contain only finite numeric values."
+            ) from exc
         if X_rows_array.ndim != 2 or X_cols_array.ndim != 2:
             raise ValueError("X_rows and X_cols must be 2D array-like feature matrices.")
+        if not bool(effective_backend.xp.isfinite(X_rows_array).all()) or not bool(
+            effective_backend.xp.isfinite(X_cols_array).all()
+        ):
+            raise ValueError(
+                "X_rows and X_cols must contain only finite numeric values."
+            )
     else:
         X_rows_array = _as_2d_feature_matrix(X_rows)
         X_cols_array = _as_2d_feature_matrix(X_cols)

@@ -1,224 +1,237 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""OWAFRS model implementation for OWA-based fuzzy-rough approximations.
+"""Dense NumPy reference implementation of the OWAFRS model.
 
-This module belongs to the core fuzzy-rough computation layer.
+Exact row-buffered blockwise execution is provided by the approximation-engine
+layer. Optional CuPy support is limited to similarity-block generation.
 """
 
-from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
-import frsutils.core.tnorms as tn
-import frsutils.core.owa_weights as owa_weights
-import frsutils.core.implicators as imp
-from frsutils.core.models.owafrs_components import build_owafrs_components_from_config
-from frsutils.utils.logger.logger_util import get_logger
 import numpy as np
+
+import frsutils.core.implicators as imp
+import frsutils.core.owa_weights as owa_weights
+import frsutils.core.tnorms as tn
+from frsutils.core.models.fuzzy_rough_model import FuzzyRoughModel
+from frsutils.core.models.owafrs_components import build_owafrs_components_from_config
 
 
 @FuzzyRoughModel.register("owafrs")
 class OWAFRS(FuzzyRoughModel):
-    """Dense NumPy reference model for OWA-based fuzzy-rough approximations.
-
-    OWAFRS computes lower and upper approximations from a fully materialized
-    similarity matrix, class labels, an upper T-norm, a lower implicator, and
-    lower/upper OWA weighting strategies. Scalable blockwise execution and
-    optional CuPy-backed similarity blocks are handled outside this class by
-    :mod:`frsutils.core.approximation_engines`.
+    """Dense OWA-based fuzzy-rough approximation model.
 
     Parameters
     ----------
     similarity_matrix : ndarray of shape (n_samples, n_samples)
-        Dense pairwise similarity matrix.
+        Dense fuzzy-relation matrix using the ``rows_are_queries`` orientation.
     labels : array-like of shape (n_samples,)
-        Class labels aligned with the similarity matrix.
+        Class labels aligned with the relation matrix.
     ub_tnorm : TNorm
         T-norm used for upper-approximation evidence.
     lb_implicator : Implicator
         Implicator used for lower-approximation evidence.
-    ub_owa_method, lb_owa_method : OWAWeights
-        OWA weighting strategies for upper and lower approximation aggregation.
-    logger : object, optional
-        Optional logger used for diagnostic messages.
+    ub_owa_method : OWAWeights
+        OWA weighting strategy for upper-approximation aggregation.
+    lb_owa_method : OWAWeights
+        OWA weighting strategy for lower-approximation aggregation.
+    logger : logging.Logger or None, default=None
+        Optional logger.
     """
 
-    def __init__(self,
-                 similarity_matrix: np.ndarray,
-                 labels: np.ndarray,
-                 ub_tnorm: tn.TNorm,
-                 lb_implicator: imp.Implicator,
-                 ub_owa_method: owa_weights.OWAWeights,
-                 lb_owa_method: owa_weights.OWAWeights,
-                 logger=None):
-        
-        """Initialize the dense OWAFRS reference model."""
+    def __init__(
+        self,
+        similarity_matrix: np.ndarray,
+        labels: np.ndarray,
+        ub_tnorm: tn.TNorm,
+        lb_implicator: imp.Implicator,
+        ub_owa_method: owa_weights.OWAWeights,
+        lb_owa_method: owa_weights.OWAWeights,
+        logger=None,
+    ):
+        """Initialize a dense OWAFRS reference model."""
         labels_array = np.asarray(labels) if labels is not None else None
-
-        super().__init__(similarity_matrix,
-                          labels_array,
-                          logger=logger)
-        self.validate_params(ub_tnorm=ub_tnorm, 
-                             lb_implicator=lb_implicator,
-                             ub_owa_method=ub_owa_method,
-                             lb_owa_method=lb_owa_method)
-
+        super().__init__(similarity_matrix, labels_array, logger=logger)
+        self.validate_params(
+            ub_tnorm=ub_tnorm,
+            lb_implicator=lb_implicator,
+            ub_owa_method=ub_owa_method,
+            lb_owa_method=lb_owa_method,
+        )
         self.ub_tnorm = ub_tnorm
         self.lb_implicator = lb_implicator
-
         self.ub_owa_method = ub_owa_method
         self.lb_owa_method = lb_owa_method
 
-        n = self.labels.shape[0]
-
-        # n-1 because the same instance is not included in calculations
-        self.lb_owa_weights = lb_owa_method.weights(n-1, order='asc')
-        self.ub_owa_weights = ub_owa_method.weights(n-1, order='desc')
-
+        n_nonself = self.labels.shape[0] - 1
+        self.lb_owa_weights = lb_owa_method.weights(n_nonself, order="asc")
+        self.ub_owa_weights = ub_owa_method.weights(n_nonself, order="desc")
         self.logger.debug(f"{self.__class__.__name__} initialized.")
 
-
     def lower_approximation(self) -> np.ndarray:
-        """Compute dense OWAFRS lower approximation values.
+        """Compute dense OWAFRS lower-approximation values.
 
         Returns
         -------
-        lower : ndarray of shape (n_samples,)
-            OWA-aggregated lower approximation values.
+        ndarray of shape (n_samples,)
+            OWA-aggregated implication values after removing one diagonal
+            self-comparison from each row.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         implication_vals = self.lb_implicator(self.similarity_matrix, label_mask)
-        
-        # to omitt the same instance from calculations, the
-        # main diagonal is set to 0.0. then each row is sorted in descending order
-        # then the last row is sliced because the last row always contains 0.0.
-        # finally, the matrix is multiplied by the owa weights.
         np.fill_diagonal(implication_vals, 0.0)
         sorted_matrix = np.sort(implication_vals, axis=1)[:, ::-1][:, :-1]
         return np.matmul(sorted_matrix, self.lb_owa_weights)
 
-
     def upper_approximation(self) -> np.ndarray:
-        """Compute dense OWAFRS upper approximation values.
+        """Compute dense OWAFRS upper-approximation values.
 
         Returns
         -------
-        upper : ndarray of shape (n_samples,)
-            OWA-aggregated upper approximation values.
+        ndarray of shape (n_samples,)
+            OWA-aggregated T-norm values after removing one diagonal
+            self-comparison from each row.
         """
         label_mask = (self.labels[:, None] == self.labels[None, :]).astype(float)
         tnorm_vals = self.ub_tnorm(self.similarity_matrix, label_mask)
-        
-        # to omitt the same instance from calculations, the
-        # main diagonal is set to 0.0. then each row is sorted in descending order
-        # then the last row is sliced because the last row always contains 0.0.
-        # finally, the matrix is multiplied by the owa weights.
         np.fill_diagonal(tnorm_vals, 0.0)
         sorted_matrix = np.sort(tnorm_vals, axis=1)[:, ::-1][:, :-1]
         return np.matmul(sorted_matrix, self.ub_owa_weights)
 
     def to_dict(self, include_data: bool = False) -> dict:
-        """Serialize the OWAFRS model to a dictionary.
+        """Serialize the OWAFRS model.
 
         Parameters
         ----------
         include_data : bool, default=False
-            If True, include ``similarity_matrix`` and ``labels`` in the output.
+            Include ``similarity_matrix`` and ``labels`` when True.
 
         Returns
         -------
-        data : dict
-            Serialized OWAFRS component configuration and optional data arrays.
+        dict
+            Serialized component configuration and optional data arrays.
         """
         data = {
             "type": "owafrs",
             "ub_tnorm": self.ub_tnorm.to_dict(),
             "lb_implicator": self.lb_implicator.to_dict(),
             "ub_owa_method": self.ub_owa_method.to_dict(),
-            "lb_owa_method": self.lb_owa_method.to_dict()
+            "lb_owa_method": self.lb_owa_method.to_dict(),
         }
-
         if include_data:
             data["similarity_matrix"] = self.similarity_matrix.tolist()
             data["labels"] = self.labels.tolist()
-
         return data
-    
+
     @classmethod
-    def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None) -> "OWAFRS":
-        """Reconstruct an OWAFRS model from a serialized dictionary.
+    def from_dict(
+        cls,
+        data: dict,
+        similarity_matrix=None,
+        labels=None,
+        logger=None,
+    ) -> "OWAFRS":
+        """Reconstruct an OWAFRS model from serialized configuration.
 
         Parameters
         ----------
         data : dict
-            Serialized dictionary produced by :meth:`to_dict`.
-        similarity_matrix : array-like of shape (n_samples, n_samples), optional
-            Dense similarity matrix. When provided, this value overrides any
-            matrix embedded in ``data``.
-        labels : array-like of shape (n_samples,), optional
-            Class labels. When provided, this value overrides any labels embedded
-            in ``data``.
-        logger : object, optional
-            Optional logger for the reconstructed model.
+            Dictionary produced by :meth:`to_dict`.
+        similarity_matrix : array-like or None, default=None
+            Optional matrix override. External data take precedence over
+            serialized matrix data.
+        labels : array-like or None, default=None
+            Optional label override. External data take precedence over
+            serialized labels.
+        logger : logging.Logger or None, default=None
+            Optional logger.
 
         Returns
         -------
         OWAFRS
             Reconstructed dense OWAFRS model.
         """
-        
-        # Rebuild operators
         tnorm = tn.TNorm.from_dict(data["ub_tnorm"])
         implicator = imp.Implicator.from_dict(data["lb_implicator"])
+        upper_owa = owa_weights.OWAWeights.from_dict(data["ub_owa_method"])
+        lower_owa = owa_weights.OWAWeights.from_dict(data["lb_owa_method"])
 
-        # External arrays intentionally override embedded arrays so serialized
-        # component configs can be reused on new datasets.
-        sim = similarity_matrix if similarity_matrix is not None else (np.array(data["similarity_matrix"]) if "similarity_matrix" in data else None)
-        lbl = labels if labels is not None else (np.array(data["labels"]) if "labels" in data else None)
-
+        sim = similarity_matrix
+        if sim is None and "similarity_matrix" in data:
+            sim = np.array(data["similarity_matrix"])
+        lbl = labels
+        if lbl is None and "labels" in data:
+            lbl = np.array(data["labels"])
         if sim is None or lbl is None:
-            raise ValueError("similarity_matrix and labels must be provided either in data or as arguments.")
+            raise ValueError(
+                "similarity_matrix and labels must be provided either in data "
+                "or as arguments."
+            )
+        return cls(
+            sim,
+            lbl,
+            tnorm,
+            implicator,
+            upper_owa,
+            lower_owa,
+            logger=logger,
+        )
 
-        ub_owa_method = owa_weights.OWAWeights.from_dict(data["ub_owa_method"])
-        lb_owa_method = owa_weights.OWAWeights.from_dict(data["lb_owa_method"])
-        
-        return cls(sim, lbl, tnorm, implicator, ub_owa_method, lb_owa_method, logger=logger)
-
-   
     def describe_params_detailed(self) -> dict:
-        """Return detailed parameter metadata for this component."""
+        """Return detailed metadata for the configured OWAFRS components."""
         return {
             "ub_tnorm": self.ub_tnorm.describe_params_detailed(),
             "lb_implicator": self.lb_implicator.describe_params_detailed(),
             "ub_owa_method": self.ub_owa_method.describe_params_detailed(),
-            "lb_owa_method": self.lb_owa_method.describe_params_detailed()
+            "lb_owa_method": self.lb_owa_method.describe_params_detailed(),
         }
 
     @classmethod
-    def validate_params(cls, **kwargs):
-        """Validate OWAFRS component objects at construction time."""
-        
-        tnrm = kwargs.get("ub_tnorm")
-        if tnrm is None or not isinstance(tnrm, tn.TNorm):
-            raise ValueError("Parameter 'tnorm' must be provided and be an instance of derived classes from TNorm.")
+    def validate_params(cls, **kwargs) -> None:
+        """Validate OWAFRS component objects at construction time.
 
-        impli = kwargs.get("lb_implicator")
-        if impli is None or not isinstance(impli, imp.Implicator):
-            raise ValueError("Parameter 'implicator' must be provided and be an instance of derived classes from Implicator.")
+        Parameters
+        ----------
+        **kwargs : object
+            Must contain the upper T-norm, lower implicator, and both OWA
+            weighting strategies.
 
-        ub_owa_method = kwargs.get("ub_owa_method")
-        if ub_owa_method is None or not isinstance(ub_owa_method, owa_weights.OWAWeights):
-            raise ValueError("Parameter 'ub_owa_method' must be provided and be an instance of derived classes from OWAWeights.")
-        
-        lb_owa_method = kwargs.get("lb_owa_method")
-        if lb_owa_method is None or not isinstance(lb_owa_method, owa_weights.OWAWeights):
-            raise ValueError("Parameter 'lb_owa_method' must be provided and be an instance of derived classes from OWAWeights.")
+        Raises
+        ------
+        ValueError
+            If any component has the wrong type.
+        """
+        tnorm = kwargs.get("ub_tnorm")
+        if not isinstance(tnorm, tn.TNorm):
+            raise ValueError(
+                "Parameter 'tnorm' must be provided and be an instance of "
+                "a TNorm subclass."
+            )
+        implicator = kwargs.get("lb_implicator")
+        if not isinstance(implicator, imp.Implicator):
+            raise ValueError(
+                "Parameter 'implicator' must be provided and be an instance of "
+                "an Implicator subclass."
+            )
+        upper_owa = kwargs.get("ub_owa_method")
+        if not isinstance(upper_owa, owa_weights.OWAWeights):
+            raise ValueError(
+                "Parameter 'ub_owa_method' must be provided and be an instance "
+                "of an OWAWeights subclass."
+            )
+        lower_owa = kwargs.get("lb_owa_method")
+        if not isinstance(lower_owa, owa_weights.OWAWeights):
+            raise ValueError(
+                "Parameter 'lb_owa_method' must be provided and be an instance "
+                "of an OWAWeights subclass."
+            )
 
     def _get_params(self) -> dict:
-        """Return dense OWAFRS component and data parameters."""
+        """Return component and data parameters used by this model."""
         return {
             "ub_tnorm": self.ub_tnorm,
             "lb_implicator": self.lb_implicator,
-            "ub_owa_method":self.ub_owa_method,
-            "lb_owa_method":self.lb_owa_method,
-            "similarity_matrix":self.similarity_matrix,
-            "labels":self.labels
+            "ub_owa_method": self.ub_owa_method,
+            "lb_owa_method": self.lb_owa_method,
+            "similarity_matrix": self.similarity_matrix,
+            "labels": self.labels,
         }
 
     @classmethod
@@ -227,31 +240,33 @@ class OWAFRS(FuzzyRoughModel):
 
         Parameters
         ----------
-        similarity_matrix : array-like of shape (n_samples, n_samples), default=None
-            Optional dense similarity matrix. Overrides matrix data in ``config``
-            when provided.
-        labels : array-like of shape (n_samples,), default=None
-            Optional label vector. Overrides labels in ``config`` when provided.
+        similarity_matrix : array-like of shape (n_samples, n_samples), optional
+            Optional dense matrix overriding matrix data in ``config``.
+        labels : array-like of shape (n_samples,), optional
+            Optional labels overriding label data in ``config``.
         **config : dict
-            Flat OWAFRS config, internal nested config under ``_nested_config``,
-            serialized component specs, or direct component instances.
+            Flat OWAFRS config, nested config under ``_nested_config``,
+            serialized component specifications, or direct component objects.
 
         Returns
         -------
         OWAFRS
-            Dense OWAFRS model configured with the requested components.
+            Configured dense OWAFRS model.
         """
         config = dict(config)
-        ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method = build_owafrs_components_from_config(
+        components = build_owafrs_components_from_config(
             config,
             require_explicit_components=True,
         )
-
-        sim = similarity_matrix if similarity_matrix is not None else (np.array(config["similarity_matrix"]) if "similarity_matrix" in config else None)
-        lbl = labels if labels is not None else (np.array(config["labels"]) if "labels" in config else None)
-
+        sim = similarity_matrix
+        if sim is None and "similarity_matrix" in config:
+            sim = np.array(config["similarity_matrix"])
+        lbl = labels
+        if lbl is None and "labels" in config:
+            lbl = np.array(config["labels"])
         if sim is None or lbl is None:
-            raise ValueError("similarity_matrix and labels must be provided either as arguments or in the config dictionary.")
-
-        logger = config.get("logger", None)
-        return cls(sim, lbl, ub_tnorm, lb_implicator, ub_owa_method, lb_owa_method, logger=logger)
+            raise ValueError(
+                "similarity_matrix and labels must be provided either as "
+                "arguments or in the config dictionary."
+            )
+        return cls(sim, lbl, *components, logger=config.get("logger"))

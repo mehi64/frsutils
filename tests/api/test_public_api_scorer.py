@@ -6,8 +6,6 @@ import logging
 import numpy as np
 import pytest
 from sklearn.base import clone
-
-from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 from sklearn.exceptions import NotFittedError
 
 from frsutils import (
@@ -16,6 +14,7 @@ from frsutils import (
     build_similarity_matrix,
     compute_positive_region,
 )
+from frsutils.utils.init_helpers import normalize_flat_config_to_nested
 
 
 X_SMALL = np.array(
@@ -98,7 +97,47 @@ def test_positive_region_scorer_exposes_full_result():
     np.testing.assert_allclose(result.positive_region, scorer.positive_region_)
     np.testing.assert_allclose(result.lower, scorer.lower_)
     np.testing.assert_allclose(result.upper, scorer.upper_)
+    np.testing.assert_allclose(result.signed_boundary, scorer.signed_boundary_)
     np.testing.assert_allclose(result.boundary, scorer.boundary_)
+    assert scorer.boundary_ is scorer.signed_boundary_
+
+
+@pytest.mark.parametrize("model", ["itfrs", "vqrs", "owafrs"])
+@pytest.mark.parametrize("engine", ["dense", "blockwise"])
+def test_positive_region_scorer_exposes_consistent_fitted_attributes(model, engine):
+    """Every model and engine exposes one consistent fitted-attribute contract."""
+    scorer = FuzzyRoughPositiveRegionScorer(
+        model=model,
+        similarity="linear",
+        engine=engine,
+        block_size=2,
+        **MODEL_SCORER_CONFIGS[model],
+    )
+
+    scorer.fit(X_SMALL, Y_SMALL)
+    result = scorer.as_result()
+
+    expected_attributes = {
+        "result_",
+        "positive_region_",
+        "lower_",
+        "upper_",
+        "signed_boundary_",
+        "boundary_",
+        "n_samples_in_",
+    }
+    assert expected_attributes.issubset(vars(scorer))
+    np.testing.assert_allclose(scorer.positive_region_, result.positive_region)
+    np.testing.assert_allclose(scorer.lower_, result.lower)
+    np.testing.assert_allclose(scorer.upper_, result.upper)
+    np.testing.assert_allclose(scorer.signed_boundary_, result.signed_boundary)
+    np.testing.assert_allclose(scorer.boundary_, result.boundary)
+    np.testing.assert_allclose(
+        scorer.signed_boundary_,
+        scorer.upper_ - scorer.lower_,
+    )
+    assert scorer.boundary_ is scorer.signed_boundary_
+    assert scorer.n_samples_in_ == len(Y_SMALL)
 
 
 def test_positive_region_scorer_accepts_precomputed_similarity_matrix():
@@ -150,7 +189,16 @@ def test_positive_region_scorer_is_sklearn_clone_compatible():
     assert cloned.block_size == 2
     assert cloned.ub_owa_method_name == "linear"
     assert cloned.lb_owa_method_name == "harmonic"
-    assert not hasattr(cloned, "positive_region_")
+    for fitted_attribute in (
+        "result_",
+        "positive_region_",
+        "lower_",
+        "upper_",
+        "signed_boundary_",
+        "boundary_",
+        "n_samples_in_",
+    ):
+        assert not hasattr(cloned, fitted_attribute)
     assert cloned.fit_score(X_SMALL, Y_SMALL).shape == (len(Y_SMALL),)
 
 

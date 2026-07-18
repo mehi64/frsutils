@@ -93,6 +93,20 @@ python -c "import cupy as cp; print(cp.cuda.runtime.getDeviceCount()); print(cp.
 A result containing one or more devices and the array `[0 1 4 9 16]` confirms
 that a CUDA computation completed successfully.
 
+For release-grade evidence, capture the environment and the full model parity
+matrix in one archiveable JSON artifact:
+
+```bash
+python scripts/capture_cuda_validation.py \
+  --require-cuda \
+  --output-json cuda_validation_report.json
+```
+
+The report records Python, NumPy, CuPy, CUDA runtime/driver, GPU metadata, the
+`nvidia-smi`/`nvcc` command outputs, and dense NumPy versus blockwise CuPy
+numerical differences for ITFRS, VQRS, and OWAFRS. OWAFRS is reported as using
+GPU-backed similarity blocks only; its OWA aggregation remains CPU-resident.
+
 If CuPy or the first numerical CUDA operation fails, inspect the detected GPU and
 CuPy configuration first:
 
@@ -229,8 +243,6 @@ artifact checks. Detailed test and release procedures remain in
 [`tests/test_procedures.md`](tests/test_procedures.md) and
 [`docs/developer/release.md`](docs/developer/release.md).
 
-
-
 ## Installing pytest to run tests
 
 The `dev` dependency group includes `pytest` and the test-related dependencies
@@ -238,7 +250,6 @@ used by FRsutils:
 
 ```bash
 python -m pip install pytest
-
 ```
 
 ## Quick start
@@ -272,6 +283,7 @@ result = compute_approximations(
 print(result.lower)
 print(result.upper)
 print(result.boundary)
+print(result.signed_boundary)
 print(result.positive_region)
 
 scores = compute_positive_region(X, y, model="itfrs", similarity="linear")
@@ -291,6 +303,7 @@ from frsutils import (
     build_similarity_matrix,
     compute_approximations,
     compute_positive_region,
+    compute_signed_boundary,
 )
 ```
 
@@ -299,6 +312,7 @@ Main user-facing entry points include:
 - `compute_approximations`
 - `compute_lower_approximation`
 - `compute_upper_approximation`
+- `compute_signed_boundary`
 - `compute_boundary_region`
 - `compute_positive_region`
 - `build_similarity_matrix`
@@ -464,7 +478,7 @@ the archived executable artifact.
   author = {Amiri, Mehran},
   title = {frsutils: Fuzzy-Rough Set Utilities for Python},
   url = {https://github.com/mehi64/frsutils},
-  version = {0.1.0},
+  version = {0.1.1},
   year = {2026}
 }
 ```

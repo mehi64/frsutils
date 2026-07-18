@@ -142,6 +142,7 @@ jobs:
               "docs/user/reference_study.md",
               "docs/developer/archive_and_doi.md",
               "docs/developer/joss_submission_checklist.md",
+              "scripts/validate_installed_public_api.py",
               "scripts/validate_joss_submission.py",
               "RELEASE_NOTES_v0.1.0.md",
               "tests/reference_data_loader.py",
@@ -174,29 +175,63 @@ jobs:
           print(f"Validated source distribution contents: {sdist.name}")
           PY
 
-      - name: Install and import the built wheel
+      - name: Validate the built wheel in a read-only environment
         run: |
           python -m venv /tmp/frsutils-wheel-smoke
           /tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
           /tmp/frsutils-wheel-smoke/bin/python -m pip install dist/*.whl
-          cd /tmp
-          /tmp/frsutils-wheel-smoke/bin/python -c \
-            "import frsutils; print(frsutils.__file__)"
           /tmp/frsutils-wheel-smoke/bin/python -m pip check
 
-      - name: Install and import the built source distribution
+          mkdir -p "$GITHUB_WORKSPACE/test_reports"
+          package_dir=$(
+            /tmp/frsutils-wheel-smoke/bin/python -c \
+              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).parent)"
+          )
+          chmod -R a-w "$package_dir"
+          rm -rf /tmp/frsutils-wheel-read-only-cwd
+          mkdir -p /tmp/frsutils-wheel-read-only-cwd
+          chmod a-w /tmp/frsutils-wheel-read-only-cwd
+          cd /tmp/frsutils-wheel-read-only-cwd
+          PYTHONDONTWRITEBYTECODE=1 \
+            /tmp/frsutils-wheel-smoke/bin/python \
+            "$GITHUB_WORKSPACE/scripts/validate_installed_public_api.py" \
+            --require-installed \
+            --require-package-read-only \
+            --require-cwd-read-only \
+            --output-json \
+            "$GITHUB_WORKSPACE/test_reports/wheel_public_api_validation.json"
+
+      - name: Validate the built source distribution in a read-only environment
         run: |
           python -m venv /tmp/frsutils-sdist-smoke
           /tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
           /tmp/frsutils-sdist-smoke/bin/python -m pip install dist/*.tar.gz
-          cd /tmp
-          /tmp/frsutils-sdist-smoke/bin/python -c \
-            "import frsutils; print(frsutils.__file__)"
           /tmp/frsutils-sdist-smoke/bin/python -m pip check
 
-      - name: Upload distribution artifacts
+          mkdir -p "$GITHUB_WORKSPACE/test_reports"
+          package_dir=$(
+            /tmp/frsutils-sdist-smoke/bin/python -c \
+              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).parent)"
+          )
+          chmod -R a-w "$package_dir"
+          rm -rf /tmp/frsutils-sdist-read-only-cwd
+          mkdir -p /tmp/frsutils-sdist-read-only-cwd
+          chmod a-w /tmp/frsutils-sdist-read-only-cwd
+          cd /tmp/frsutils-sdist-read-only-cwd
+          PYTHONDONTWRITEBYTECODE=1 \
+            /tmp/frsutils-sdist-smoke/bin/python \
+            "$GITHUB_WORKSPACE/scripts/validate_installed_public_api.py" \
+            --require-installed \
+            --require-package-read-only \
+            --require-cwd-read-only \
+            --output-json \
+            "$GITHUB_WORKSPACE/test_reports/sdist_public_api_validation.json"
+
+      - name: Upload distribution and validation artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frsutils-distributions
-          path: dist/*
+          path: |
+            dist/*
+            test_reports/*.json
           if-no-files-found: error

@@ -31,7 +31,8 @@ def _as_similarity_matrix(similarity_matrix: Any) -> np.ndarray:
     Parameters
     ----------
     similarity_matrix : Any
-        Candidate square pairwise similarity matrix.
+        Candidate square fuzzy-relation matrix. Entry ``[i, j]`` represents
+        ``R(x_i, x_j)`` under the public ``rows_are_queries`` convention.
 
     Returns
     -------
@@ -145,7 +146,8 @@ def build_fuzzy_rough_model(
         Optional explicit model alias. Must agree with ``type`` in flat config
         when both are provided.
     similarity_matrix : Any
-        Pairwise similarity matrix used by the model.
+        Fuzzy-relation matrix used by the model. Entry ``[i, j]`` represents
+        ``R(x_i, x_j)``; row ``i`` is aggregated for sample ``x_i``.
     labels : Any
         Label vector aligned with the similarity matrix.
     config : Mapping[str, Any] or None, default=None

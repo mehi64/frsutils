@@ -1,134 +1,158 @@
 # SPDX-License-Identifier: BSD-3-Clause
-"""Base abstractions for fuzzy-rough approximation models.
-
-This module belongs to the core fuzzy-rough computation layer.
-"""
+"""Base abstractions and shared validation for fuzzy-rough models."""
 
 from abc import abstractmethod
+from typing import Any
+
 import numpy as np
-from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
+
 from frsutils.utils.base_component_with_logger import BaseComponentWithLogger
+from frsutils.utils.constructor_utils.registry_factory_mixin import RegistryFactoryMixin
 
 
 class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
-    """Abstract base class for fuzzy-rough approximation models.
+    """Abstract base class for dense fuzzy-rough approximation models.
 
     Parameters
     ----------
     similarity_matrix : ndarray of shape (n_samples, n_samples)
-        Finite fuzzy-relation matrix with values in the interval [0, 1].
+        Finite fuzzy-relation matrix with values in ``[0, 1]``. Entry
+        ``similarity_matrix[i, j]`` represents ``R(x_i, x_j)``.
     labels : ndarray of shape (n_samples,)
-        One-dimensional label vector aligned with the matrix.
+        One-dimensional label vector aligned with the matrix rows and columns.
+    logger : logging.Logger or None, default=None
+        Optional logger used by the component base class.
 
     Notes
     -----
-    Core model construction requires at least two samples. The low-level model
-    contract does not require symmetry or a unit diagonal, which allows direct
-    use of finite fuzzy relations as well as conventional similarity matrices.
-    Each model excludes self-comparisons explicitly where its definition
-    requires it.
+    The relation orientation is ``rows_are_queries``: row ``i`` is aggregated
+    to produce the approximation value returned for sample ``x_i`` and column
+    ``j`` contributes evidence from sample ``x_j``. Symmetry and a unit
+    diagonal are not required. Each concrete model excludes self-comparisons
+    according to its current model contract.
     """
 
-    def __init__(self, 
-                 similarity_matrix: np.ndarray, 
-                 labels: np.ndarray,
-                 logger=None):
-        
-        """Initialize the FuzzyRoughModel instance."""
+    relation_orientation = "rows_are_queries"
+
+    def __init__(
+        self,
+        similarity_matrix: np.ndarray,
+        labels: np.ndarray,
+        logger=None,
+    ):
+        """Initialize shared dense-model data after validating its contract."""
         BaseComponentWithLogger.__init__(self, logger)
-        self.validate_params_base(similarity_matrix=similarity_matrix, 
-                                  labels=labels)
-        
+        self.validate_params_base(
+            similarity_matrix=similarity_matrix,
+            labels=labels,
+        )
         self.similarity_matrix = similarity_matrix
         self.labels = labels
 
     @abstractmethod
     def lower_approximation(self) -> np.ndarray:
-        """Abstract method to compute lower approximation.
-                
-                Returns
-                -------
-                np.ndarray
-                    Array of lower approximation values.
-                
+        """Compute lower-approximation values for all samples.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Lower-approximation values in row order.
         """
         raise NotImplementedError("lower_approximation is not implemented")
 
     @abstractmethod
     def upper_approximation(self) -> np.ndarray:
-        """Abstract method to compute upper approximation.
-                
-                Returns
-                -------
-                np.ndarray
-                    Array of upper approximation values.
-                
+        """Compute upper-approximation values for all samples.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Upper-approximation values in row order.
         """
         raise NotImplementedError("upper_approximation is not implemented")
 
+    def signed_boundary(self) -> np.ndarray:
+        """Compute the un-clipped signed boundary as upper minus lower.
 
-    def boundary_region(self) -> np.ndarray:
-        """Compute the boundary region (upper - lower).
-                
-                Returns
-                -------
-                np.ndarray
-                    Difference of upper and lower approximation arrays.
-                
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Signed difference between upper and lower approximations.
+
+        Notes
+        -----
+        Values may be negative when custom component choices do not guarantee
+        ``lower <= upper``.
         """
         return self.upper_approximation() - self.lower_approximation()
 
+    def boundary_region(self) -> np.ndarray:
+        """Return signed-boundary values through the legacy method name.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            The same values returned by :meth:`signed_boundary`.
+        """
+        return self.signed_boundary()
+
     def positive_region(self) -> np.ndarray:
-        """Return the positive region (same as lower approx).
-                
-                Returns
-                -------
-                np.ndarray
-                    Lower approximation values.
-                
+        """Return positive-region scores using the current lower-score contract.
+
+        Returns
+        -------
+        ndarray of shape (n_samples,)
+            Lower-approximation values.
         """
         return self.lower_approximation()
 
     @abstractmethod
     def to_dict(self, include_data: bool = False) -> dict:
-        """Parameters
-                ----------
-                include_data : bool
-                    If True, include similarity matrix and labels in output.
-                
-                Returns
-                -------
-                dict
-                    Serialized dictionary representation of the model.
-                
+        """Serialize the model configuration and optionally its data.
+
+        Parameters
+        ----------
+        include_data : bool, default=False
+            Include the similarity matrix and labels when True.
+
+        Returns
+        -------
+        dict
+            Serialized model representation.
         """
         raise NotImplementedError
 
-
     @classmethod
     @abstractmethod
-    def from_dict(cls, data: dict, similarity_matrix=None, labels=None, logger=None):
-        """Parameters
-                ----------
-                data : dict
-                    Serialized dict.
-                similarity_matrix : object
-                    Optional matrix override.
-                labels : object
-                    Optional label override.
-                logger : object
-                    Optional logger override.
-                
-                Returns
-                -------
-                object
-                    Reconstructed model instance.
-                
+    def from_dict(
+        cls,
+        data: dict,
+        similarity_matrix=None,
+        labels=None,
+        logger=None,
+    ):
+        """Reconstruct a model from serialized component configuration.
+
+        Parameters
+        ----------
+        data : dict
+            Serialized model representation.
+        similarity_matrix : array-like or None, default=None
+            Optional data override for the serialized matrix.
+        labels : array-like or None, default=None
+            Optional data override for serialized labels.
+        logger : logging.Logger or None, default=None
+            Optional logger for the reconstructed model.
+
+        Returns
+        -------
+        FuzzyRoughModel
+            Reconstructed concrete model instance.
         """
-        raise NotImplementedError       
+        raise NotImplementedError
 
     @classmethod
-    def validate_params_base(cls, **kwargs):
+    def validate_params_base(cls, **kwargs: Any) -> None:
         """Validate the shared dense-model matrix and label contract.
 
         Parameters
@@ -173,23 +197,20 @@ class FuzzyRoughModel(RegistryFactoryMixin, BaseComponentWithLogger):
     @classmethod
     @abstractmethod
     def from_config(cls, similarity_matrix=None, labels=None, **config: dict):
-        """Alternate constructor from flat config dict.
-                
-                Parameters
-                ----------
-                config : dict
-                    Config dictionary.
-                similarity_matrix : object
-                    Optional matrix.
-                labels : object
-                    Optional labels.
-                logger : object
-                    Optional logger.
-                
-                Returns
-                -------
-                object
-                    Model instance.
-                
+        """Construct a concrete model from flat or nested configuration.
+
+        Parameters
+        ----------
+        similarity_matrix : array-like or None, default=None
+            Optional dense similarity matrix.
+        labels : array-like or None, default=None
+            Optional label vector.
+        **config : dict
+            Model-specific flat or nested component configuration.
+
+        Returns
+        -------
+        FuzzyRoughModel
+            Configured concrete model instance.
         """
         raise NotImplementedError("Subclasses must implement from_config().")

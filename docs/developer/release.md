@@ -13,7 +13,7 @@ archive procedure is documented in the
 ## Release candidate identity
 
 - Package name: `frsutils`
-- Current package version in the inspected metadata: `0.1.0`
+- Current package version in the inspected metadata: `0.1.1`
 - License: `BSD-3-Clause`
 - Public API boundary: `frsutils`
 - JOSS paper files: `paper.md`, `paper.bib`
@@ -64,19 +64,31 @@ For backend details, see [Backends](../user/backends.md).
 ## Public API release checks
 
 - [ ] The canonical import path is documented as `frsutils`.
+
 - [ ] User-facing examples avoid importing from internal `frsutils.core` modules.
+
 - [ ] `frsutils.__all__` exposes the intended public objects only.
+
 - [ ] Top-level `frsutils` does not accidentally expose internal implementation
   
       modules.
+
 - [ ] `examples/public_api_quickstart.py` runs successfully.
+
 - [ ] Downstream-style code can use only `frsutils` without importing internals.
 
-Recommended command:
+Recommended commands:
 
 ```bash
 python -m pytest tests/api -q -rs
+python scripts/validate_installed_public_api.py \
+  --output-json test_reports/source_public_api_validation.json
 ```
+
+The second command exercises every public model through dense and blockwise
+execution, validates scorer fitted attributes and cloning, verifies the
+`signed_boundary` aliases, and fails if default public calls write to standard
+output, standard error, or the current working directory.
 
 ## Core model release checks
 
@@ -101,12 +113,21 @@ python -m pytest tests/models_tests -m slow -o addopts="" -q -rs
 ## Backend and CuPy checks
 
 - [ ] NumPy backend tests pass.
+
 - [ ] Fake-CuPy contract tests pass in normal CI.
+
 - [ ] Real CuPy/CUDA tests skip cleanly when CuPy is unavailable.
+
+- [ ] `cuda_validation_report.json` was generated with `--require-cuda`, has
+  
+      `status="success"`, and is archived with the release evidence.
+
 - [ ] Any benchmark-based CuPy claim was generated on a machine with compatible
   
       CuPy/CUDA installed.
+
 - [ ] No documentation claims full GPU-native execution.
+
 - [ ] OWAFRS documentation does not claim GPU-resident approximation
   
       accumulators.
@@ -126,23 +147,22 @@ python -m pytest tests/api/test_owafrs_blockwise_cupy_contract.py -q -rs
 Real CUDA validation is optional for ordinary CPU-only CI, but it is required
 before a release makes claims about real CuPy/CUDA numerical execution.
 
-Capture the environment:
+Capture the environment and numerical evidence in one JSON artifact:
 
 ```bash
-nvidia-smi
-nvcc --version
-python --version
-python -m pip freeze
-python -c "import cupy as cp; cp.show_config()"
+python scripts/capture_cuda_validation.py \
+  --require-cuda \
+  --output-json cuda_validation_report.json
 ```
 
-Run a direct CUDA smoke test:
+The command exits non-zero unless device discovery, allocation, kernel execution,
+and every dense NumPy versus blockwise CuPy parity case succeeds. Keep the JSON
+next to the release validation record. It includes package versions, CUDA
+runtime/driver values, GPU metadata, command outputs, numerical differences,
+and the model-specific residency claims.
 
-```bash
-python -c "import cupy as cp; x = cp.arange(10, dtype=cp.float32); print(cp.asnumpy(x * x))"
-```
-
-Run the real-CUDA contract tests:
+Run the real-CUDA contract tests, including the multi-configuration parity
+matrix:
 
 ```bash
 python -m pytest \
@@ -150,6 +170,7 @@ python -m pytest \
   tests/api/test_itfrs_blockwise_cupy_contract.py \
   tests/api/test_vqrs_blockwise_cupy_contract.py \
   tests/api/test_owafrs_blockwise_cupy_contract.py \
+  tests/api/test_real_cupy_parity_matrix.py \
   -o addopts="" -vv -rs
 ```
 
@@ -260,6 +281,32 @@ raise SystemExit(1 if missing else 0)
 CHECK_CITATIONS
 ```
 
+## Installed-distribution public API validation
+
+The package CI job validates both the wheel and source distribution from
+isolated virtual environments. For each artifact, it removes write permission
+from the installed `frsutils` package tree, runs from a read-only working
+directory, and executes:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 /path/to/venv/bin/python \
+  /path/to/repository/scripts/validate_installed_public_api.py \
+  --require-installed \
+  --require-package-read-only \
+  --require-cwd-read-only \
+  --output-json /writable/report/path/public_api_validation.json
+```
+
+This check is stronger than an import-only smoke test. It performs real dense
+and blockwise computations for ITFRS, VQRS, and OWAFRS; validates NumPy output
+and execution metadata; checks scorer fitted-state and `sklearn.clone`
+contracts; and proves that default logging does not require a writable package
+or current directory. The generated wheel and sdist JSON reports are uploaded
+with the distribution artifacts.
+
+On Windows, run the same validator without the two read-only flags because
+POSIX permission-bit checks are not portable to Windows ACLs.
+
 ## Final validation commands
 
 Focused release smoke:
@@ -288,27 +335,37 @@ kept out of commits.
 ## Open-source repository checks
 
 - [ ] GitHub Issues are enabled in repository settings.
+
 - [ ] The issue forms and pull request template render correctly.
+
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, and
   
       `CHANGELOG.md` are linked from the README.
+
 - [ ] The CI workflow passes for Python 3.10, 3.11, and 3.12.
+
 - [ ] The package job builds and validates both wheel and source distribution.
+
 - [ ] GitHub Pages uses **GitHub Actions** as its publishing source.
+
 - [ ] The documentation workflow deploys the current `main` branch successfully.
 
 ## Repository hygiene before release
 
 - [ ] Run `git status --short`.
+
 - [ ] Stage only intended source, tests, examples, docs, metadata, and paper
   
       files.
+
 - [ ] Do not stage generated reports, benchmark outputs, cache directories, IDE
   
       files, local environments, or local logs.
+
 - [ ] Confirm no temporary milestone file names remain in user-facing docs or
   
       examples.
+
 - [ ] Confirm all changed Python files keep the short BSD-3-Clause SPDX header
   
       style.
@@ -334,16 +391,21 @@ placeholder identifier.
 ## JOSS submission steps
 
 - [ ] Confirm the repository is public or will be public for review.
+
 - [ ] Confirm `LICENSE`, `CITATION.cff`, `pyproject.toml`, `README.md`,
   
       `paper.md`, and `paper.bib` are included.
+
 - [ ] Confirm the software archive DOI/version are available if requested during
   
       JOSS review.
+
 - [ ] Submit the JOSS paper through the JOSS submission process.
+
 - [ ] After the JOSS review issue is opened, respond to reviewer/editor comments
   
       in the issue.
+
 - [ ] At acceptance time, follow editor instructions for final release, archive
   
       DOI, and version metadata.
@@ -352,21 +414,21 @@ placeholder identifier.
 
 Fill this section after the final local run.
 
-- Final validation date: 2026-07-17
+- Final validation date: 2026-07-18
 - Python version: 3.13.5 for the final CPU validation and 3.11.6 for the recorded real-CUDA validation; CI remains configured for 3.10, 3.11, and 3.12
 - Operating system: Ubuntu 24.04.4 LTS, Linux 6.8.0-111-generic, x86_64
 - GPU: NVIDIA GeForce GTX 1050 Mobile, 4 GiB, compute capability 6.1
 - NVIDIA/CUDA environment: driver 535.309.01, driver-reported CUDA 12.2, system CUDA Toolkit 12.0
 - Python GPU packages: NumPy 2.3.5, CuPy 14.1.1, `nvidia-cuda-runtime-cu12` 12.0.146, and `cuda-pathfinder` 1.5.6
 - Real-CUDA smoke result: device discovery, element-wise kernel execution, and 1000 x 1000 matrix multiplication completed successfully
-- Current default-suite result after final core hardening: 2926 passed, 149 optional-backend skips, and 6633 slow tests deselected
+- Current default-suite result after API release hardening: 3006 passed, 167 optional-backend skips, and 6633 slow tests deselected
 - Former logger regression: `tests/core_tests/test_implicators.py::test_help[goedel]` now passes
-- Exhaustive slow result: all 6633 slow tests passed in four deterministic shards; this includes exhaustive OWAFRS combinations and the public ITFRS/VQRS/OWAFRS execution matrix
-- Core coverage result: 96 percent branch-aware coverage, protected by a 95 percent CI floor
+- Exhaustive slow result: all 6633 collected slow-test node IDs passed through deterministic shard execution; this includes exhaustive OWAFRS combinations and the public ITFRS/VQRS/OWAFRS execution matrix
+- Coverage result: 97 percent branch-aware coverage for `frsutils.api` and at least 95 percent for `frsutils.core`, both protected by 95 percent CI floors
 - JOSS paper and metadata validation: `python scripts/validate_joss_submission.py` passed
 - Documentation validation: `mkdocs build --strict` passed with no unreferenced migration page remaining
-- Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed smoke tests in isolated environments
-- Release tag: pending `v0.1.0` after the release commit is pushed and CI is green
+- Distribution validation: wheel and sdist built successfully; `twine check` passed; both artifacts installed and passed dense/blockwise public-API validation from read-only package trees and read-only working directories
+- Release tag: pending `v0.1.1` after the release commit is pushed and CI is green
 - Software archive DOI: pending release publication and archival
 - JOSS submission/review URL: pending
 - Final JOSS DOI after acceptance: pending
@@ -376,14 +438,21 @@ Fill this section after the final local run.
 The repository is submit-ready when all of the following are true:
 
 - [ ] Full test suite passes, including slow tests.
+
 - [ ] Example smoke commands pass.
+
 - [ ] `paper.md` and `paper.bib` exist and citation keys are complete.
+
 - [ ] README and docs links resolve.
+
 - [ ] License metadata is consistent across `LICENSE`, `pyproject.toml`,
   
       `CITATION.cff`, README, and source SPDX headers.
+
 - [ ] User-facing files do not contain temporary milestone file names.
+
 - [ ] Optional CuPy/GPU support is described conservatively.
+
 - [ ] Repository has no generated reports or local caches staged for commit.
 
 ## Research-impact artifact checks
@@ -405,13 +474,19 @@ python -m pytest tests/studies -q -rs
 Review these conditions:
 
 - [ ] Every row in `dense_blockwise_equivalence.csv` has `passed=True`.
+
 - [ ] `benchmark_results.json` has no failed cases.
+
 - [ ] `environment.json` identifies the release commit and reports a clean
   
       worktree.
+
 - [ ] `study_manifest.json` was regenerated after all study outputs.
+
 - [ ] The committed tables and figures match `study_config.json`.
+
 - [ ] Research-impact wording in `paper.md` claims only what the artifact shows.
+
 - [ ] No unpublished FRSMOTE implementation, result, or repository is required
   
       to reproduce the study.

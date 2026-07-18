@@ -10,6 +10,8 @@ The grouped `frsutils.api` namespace exposes the same facade objects. User code,
 notebooks, examples, and downstream research packages should prefer one of these
 public import paths instead of importing from `frsutils.core` or `frsutils.utils`.
 
+The shared interpretation rules for relation orientation, self-comparisons, VQRS defaults, boundary values, and backend equivalence are collected in [Core computation contracts](computation_contracts.md).
+
 ## Purpose
 
 FRsutils is a fuzzy-rough computation library for research workflows. Its public
@@ -17,7 +19,7 @@ API provides task-oriented helpers for:
 
 - pairwise similarity construction,
 - lower and upper fuzzy-rough approximations,
-- boundary and positive regions,
+- signed-boundary and positive-region values,
 - dense and exact blockwise execution,
 - dense fuzzy-rough model construction,
 - reusable positive-region scoring.
@@ -33,7 +35,7 @@ The supported fuzzy-rough model aliases are:
 | Task | Public API |
 | --- | --- |
 | Compute all approximation outputs | `compute_approximations` |
-| Compute one output | `compute_lower_approximation`, `compute_upper_approximation`, `compute_boundary_region`, `compute_positive_region` |
+| Compute one output | `compute_lower_approximation`, `compute_upper_approximation`, `compute_signed_boundary`, `compute_boundary_region`, `compute_positive_region` |
 | Build a pairwise similarity matrix | `build_similarity_matrix` |
 | Build a dense or blockwise similarity engine | `build_similarity_engine` |
 | Build a dense fuzzy-rough model object | `build_fuzzy_rough_model` |
@@ -52,6 +54,7 @@ from frsutils import (
     compute_boundary_region,
     compute_lower_approximation,
     compute_positive_region,
+    compute_signed_boundary,
     compute_upper_approximation,
 )
 ```
@@ -110,6 +113,7 @@ fields rather than positional tuple entries:
 result.lower
 result.upper
 result.boundary
+result.signed_boundary
 result.positive_region
 ```
 
@@ -117,13 +121,19 @@ The public result contract is:
 
 ```python
 np.allclose(result.boundary, result.upper - result.lower)
+np.allclose(result.signed_boundary, result.boundary)
 np.allclose(result.positive_region, result.lower)
 ```
+
+`signed_boundary` is the explicit name for the un-clipped difference
+`upper - lower`. The result field `boundary`, the model method
+`boundary_region()`, and the helper `compute_boundary_region()` remain
+available for backward compatibility. Signed boundary values can be negative
+when a custom model configuration does not guarantee `lower <= upper`.
 
 Public result arrays are NumPy arrays, including results produced by optional
 CuPy-backed blockwise internals.
 
-<<<<<<< HEAD
 ### Input validation and minimum dataset size
 
 All public approximation entry points use the same minimum-size contract:
@@ -141,8 +151,6 @@ least `2 x 2`.
 This validation is performed at the public boundary so mathematically undefined
 or model-dependent edge behavior does not leak into research workflows.
 
-=======
->>>>>>> origin/main
 ### Dense execution
 
 Dense execution materializes or consumes a full pairwise similarity matrix and
@@ -158,14 +166,11 @@ result = compute_approximations(
 )
 ```
 
-<<<<<<< HEAD
 Dense approximation execution is NumPy-only. `backend="numpy"` and
 `backend="auto"` are accepted; `backend="cupy"` raises a clear error rather
 than being silently ignored. Use blockwise execution for optional CuPy-backed
 computation.
 
-=======
->>>>>>> origin/main
 A precomputed similarity matrix can be supplied in dense mode:
 
 ```python
@@ -180,6 +185,18 @@ result = compute_approximations(
     engine="dense",
 )
 ```
+
+For precomputed relations, FRsutils uses the explicit
+`rows_are_queries` orientation:
+
+```text
+similarity_matrix[i, j] = R(x_i, x_j)
+```
+
+Row `i` is aggregated to produce the approximation value returned for sample
+`x_i`; column `j` provides evidence from sample `x_j`. Symmetric similarity
+matrices are unaffected by this distinction, but transposing an asymmetric
+relation can change the result.
 
 When a precomputed matrix is supplied, do not also pass `similarity` or
 `similarity_*` settings. FRsutils did not construct that matrix and therefore
@@ -279,8 +296,9 @@ result = compute_approximations(
 The public defaults are ITFRS with a minimum upper T-norm and Lukasiewicz lower
 implicator; linear similarity aggregated by the minimum T-norm is used when
 similarity settings are omitted. OWAFRS defaults to linear upper and lower OWA
-weights. VQRS defaults to linear lower and upper quantifiers with
-`alpha=0.1` and `beta=0.6`.
+weights. VQRS defaults to a stricter quadratic lower quantifier
+`Q(0.2, 1.0)` and a more permissive quadratic upper quantifier
+`Q(0.0, 0.6)`.
 
 See [Public configuration contract](configuration.md) for the complete selector,
 prefix, alias, parameter, default, validation, and backward-compatibility rules.
@@ -410,6 +428,11 @@ scorer = FuzzyRoughPositiveRegionScorer(
 scores = scorer.fit_score(X, y)
 result = scorer.as_result()
 ```
+
+After a successful fit, the scorer exposes `result_`, `positive_region_`,
+`lower_`, `upper_`, `signed_boundary_`, and `n_samples_in_`. The legacy
+`boundary_` attribute remains available as an alias of `signed_boundary_`; both
+refer to the same unclipped `upper_ - lower_` array.
 
 The scorer follows scikit-learn conventions for parameter handling, cloning,
 `get_params`, and `set_params`. It computes fuzzy-rough scores for the fitted

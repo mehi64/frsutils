@@ -149,3 +149,93 @@ def test_dense_core_models_accept_finite_asymmetric_non_reflexive_relations(
     assert upper.shape == (2,)
     assert np.isfinite(lower).all()
     assert np.isfinite(upper).all()
+
+
+def test_itfrs_uses_rows_as_query_samples_for_asymmetric_relations() -> None:
+    """ITFRS aggregates row ``i`` to produce the result for sample ``i``."""
+    relation = np.array(
+        [
+            [0.7, 0.9, 0.2],
+            [0.1, 0.8, 0.6],
+            [0.4, 0.3, 0.9],
+        ],
+        dtype=float,
+    )
+    labels = np.array(["a", "a", "b"], dtype=object)
+    model = _build_itfrs(relation, labels)
+
+    np.testing.assert_allclose(model.lower_approximation(), [0.8, 0.4, 0.6])
+    np.testing.assert_allclose(model.upper_approximation(), [0.9, 0.1, 0.0])
+    assert model.relation_orientation == "rows_are_queries"
+
+    transposed = _build_itfrs(relation.T, labels)
+    assert not np.allclose(
+        model.lower_approximation(),
+        transposed.lower_approximation(),
+    )
+
+
+def test_vqrs_uses_rows_as_query_samples_for_asymmetric_relations() -> None:
+    """VQRS computes supporting and total evidence from each relation row."""
+    relation = np.array(
+        [
+            [0.7, 0.9, 0.2],
+            [0.1, 0.8, 0.6],
+            [0.4, 0.3, 0.9],
+        ],
+        dtype=float,
+    )
+    labels = np.array(["a", "a", "b"], dtype=object)
+    identity_quantifier = LinearFuzzyQuantifier(alpha=0.0, beta=1.0)
+    model = VQRS(
+        relation,
+        labels,
+        lb_fuzzy_quantifier=identity_quantifier,
+        ub_fuzzy_quantifier=identity_quantifier,
+    )
+
+    expected = np.array([0.9 / 1.1, 0.1 / 0.7, 0.0], dtype=float)
+    np.testing.assert_allclose(model.lower_approximation(), expected)
+    np.testing.assert_allclose(model.upper_approximation(), expected)
+    assert model.relation_orientation == "rows_are_queries"
+
+    transposed = VQRS(
+        relation.T,
+        labels,
+        lb_fuzzy_quantifier=identity_quantifier,
+        ub_fuzzy_quantifier=identity_quantifier,
+    )
+    assert not np.allclose(
+        model.lower_approximation(),
+        transposed.lower_approximation(),
+    )
+
+
+def test_owafrs_uses_rows_as_query_samples_for_asymmetric_relations() -> None:
+    """OWAFRS sorts and aggregates each relation row for its query sample."""
+    relation = np.array(
+        [
+            [0.7, 0.9, 0.2],
+            [0.1, 0.8, 0.6],
+            [0.4, 0.3, 0.9],
+        ],
+        dtype=float,
+    )
+    labels = np.array(["a", "a", "b"], dtype=object)
+    model = _build_owafrs(relation, labels)
+
+    np.testing.assert_allclose(
+        model.lower_approximation(),
+        [13.0 / 15.0, 3.0 / 5.0, 19.0 / 30.0],
+    )
+    np.testing.assert_allclose(
+        model.upper_approximation(),
+        [3.0 / 5.0, 1.0 / 15.0, 0.0],
+    )
+    assert model.relation_orientation == "rows_are_queries"
+
+    transposed = _build_owafrs(relation.T, labels)
+    assert not np.allclose(
+        model.lower_approximation(),
+        transposed.lower_approximation(),
+    )

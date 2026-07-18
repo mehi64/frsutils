@@ -58,6 +58,7 @@ def test_public_result_arrays_are_numpy_vectors_for_dense_and_blockwise(model):
             assert isinstance(value, np.ndarray)
             assert value.shape == (len(Y_RESULT),)
         np.testing.assert_allclose(result.boundary, result.upper - result.lower, atol=1e-12)
+        np.testing.assert_allclose(result.signed_boundary, result.boundary, atol=1e-12)
         np.testing.assert_allclose(result.positive_region, result.lower, atol=1e-12)
 
 

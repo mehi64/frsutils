@@ -25,11 +25,14 @@ Current repository status:
 - [x] The paper is within the 750–1750 word range.
 - [x] Statement of need identifies the problem and target users.
 - [x] State of the field compares `frsutils` with `RoughSets` and
+  
       `fuzzy-rough-learn` and gives a build-versus-contribute justification.
 - [x] Software design explains API, execution, memory, and backend trade-offs.
 - [x] Research impact is supported by reproducible real-data and benchmark
+  
       artifacts rather than aspirational language.
 - [x] AI disclosure identifies the tools/models, scope of assistance, human
+  
       verification, and author responsibility.
 - [x] All paper citation keys resolve in `paper.bib`.
 - [x] `CITATION.cff`, `pyproject.toml`, and source headers use BSD-3-Clause.
@@ -42,15 +45,19 @@ Current repository status:
 
 - [ ] Regenerate the reference study from a clean release checkout.
 - [ ] Confirm `git_worktree_dirty` is `false` in the regenerated environment
+  
       metadata.
 - [ ] Run the default test suite on all supported Python versions through CI.
 - [ ] Run the exhaustive slow suite and retain the local JUnit report outside
+  
       the repository.
 - [ ] Build wheel and source distribution and run `twine check`.
 - [ ] Install the built wheel in an isolated environment and run an import and
+  
       computation smoke test.
 - [ ] Build documentation with `mkdocs build --strict`.
 - [ ] Download and inspect the JOSS paper PDF artifact produced by GitHub
+  
       Actions.
 
 ## Public repository checks
@@ -60,11 +67,13 @@ Current repository status:
 - [ ] GitHub Issues are enabled and outside users can create issues.
 - [ ] Pull requests can be proposed by outside users.
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SUPPORT.md`, and the issue
+  
       templates are visible from the default branch.
 - [ ] Public history exceeds six months and shows iterative development.
 - [ ] At least one tagged release and the changelog are visible.
 - [ ] CI, documentation, and paper workflows are green on the release commit.
 - [ ] A colleague or independent user has installed and exercised the release;
+  
       record the resulting issue, discussion, or acknowledgement when possible.
 
 ## Author and paper metadata
@@ -86,20 +95,26 @@ Current repository status:
 - [ ] Copy the version-specific Zenodo DOI into `CITATION.cff` and README.
 - [ ] Run the validator with `--require-archive-doi`.
 - [ ] If review changes the release, archive a new final version and provide
+  
       that DOI to JOSS.
 
 ## Submission
 
 - [ ] Submit the repository URL, release version, paper path, and author details
+  
       through the JOSS submission form.
 - [ ] Confirm the submission does not present new scientific results; the study
+  
       is framed as software validation and reproducibility evidence.
 - [ ] Participate personally in the public review issue; generative AI must not
+  
       be used for author–editor or author–reviewer conversation except for
       translation.
 - [ ] At acceptance, provide the final software archive DOI and release version
+  
       requested by the editor.
 - [ ] After publication, add the JOSS article DOI as the preferred citation in
+  
       `CITATION.cff`.
 
 ## Current unresolved external items

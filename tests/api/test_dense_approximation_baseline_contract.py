@@ -21,17 +21,28 @@ Y_BASELINE = DENSE_BASELINE_CASE["labels"]
 SIMILARITY_SPEC = DENSE_BASELINE_CASE["similarity"]
 EXPECTED_BY_MODEL = DENSE_BASELINE_CASE["expected_by_model"]
 MODEL_NAMES = tuple(EXPECTED_BY_MODEL)
+LOCKED_MODEL_CONFIG = {
+    "vqrs": {
+        "lb_fuzzy_quantifier_name": "linear",
+        "lb_fuzzy_quantifier_alpha": 0.1,
+        "lb_fuzzy_quantifier_beta": 0.6,
+        "ub_fuzzy_quantifier_name": "linear",
+        "ub_fuzzy_quantifier_alpha": 0.1,
+        "ub_fuzzy_quantifier_beta": 0.6,
+    }
+}
 
 
 @pytest.mark.parametrize("model_name", MODEL_NAMES)
 def test_dense_approximation_baseline_exact_values(model_name):
-    """Public dense approximation output stays fixed for the small dense fixture."""
+    """Public dense execution matches the locked configured baseline fixture."""
     result = compute_approximations(
         X_BASELINE,
         Y_BASELINE,
         model=model_name,
         similarity=SIMILARITY_SPEC["name"],
         return_similarity_matrix=True,
+        **LOCKED_MODEL_CONFIG.get(model_name, {}),
     )
     expected = EXPECTED_BY_MODEL[model_name]
 

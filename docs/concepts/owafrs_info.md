@@ -12,7 +12,9 @@ expects a fully materialized finite fuzzy-relation matrix with values in
 `[0, 1]`, a one-dimensional label vector, an upper T-norm, a lower implicator,
 and lower and upper OWA weighting strategies. The low-level relation matrix may
 be asymmetric and need not have a unit diagonal because OWAFRS excludes
-self-comparisons explicitly before sorting.
+self-comparisons explicitly before sorting. FRsutils uses
+`relation[i, j] = R(x_i, x_j)`: row `i` is sorted and OWA-aggregated for sample
+`x_i`. Transposing an asymmetric relation can therefore change the result.
 
 The direct dense model requires at least two samples because OWAFRS excludes the
 self-comparison on the diagonal and then applies OWA aggregation to the remaining
@@ -36,11 +38,15 @@ result = compute_approximations(X, y, model="owafrs", engine="blockwise")
 frsutils reports the following public outputs:
 
 ```text
-boundary_region = upper_approximation - lower_approximation
+signed_boundary = upper_approximation - lower_approximation
 positive_region = lower_approximation
 ```
 
-Public output arrays are NumPy arrays.
+`boundary_region` remains available as a backward-compatible name for the same
+signed difference. FRsutils does not clip this value, so valid OWA/component
+choices can produce negative values when they do not guarantee
+`lower_approximation <= upper_approximation`. Public output arrays are NumPy
+arrays.
 
 ## Backend status
 

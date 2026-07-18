@@ -11,6 +11,7 @@ from .approximations import (
     compute_boundary_region,
     compute_lower_approximation,
     compute_positive_region,
+    compute_signed_boundary,
     compute_upper_approximation,
 )
 
@@ -57,6 +58,7 @@ __all__ = [
     "compute_boundary_region",
     "compute_lower_approximation",
     "compute_positive_region",
+    "compute_signed_boundary",
     "compute_upper_approximation",
     "get_fuzzy_rough_model_class",
     "list_fuzzy_rough_models",

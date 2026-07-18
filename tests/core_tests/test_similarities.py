@@ -12,6 +12,7 @@ from frsutils.core.similarities import (
 )
 from frsutils.core.tnorms import TNorm
 from tests import reference_data_store as ds
+from tests._cupy_test_support import require_usable_cupy
 from frsutils.utils.logger.logger_util import get_logger
 
 
@@ -19,22 +20,6 @@ logger = get_logger(env="test",
                     experiment_name="test_similarities1")
 similarity_testsets = ds.get_similarity_testing_testsets()
 registered_similarities = Similarity.list_available()
-
-def _cupy_module():
-    """Return CuPy or skip when the installed CuPy runtime is unusable."""
-    cp = pytest.importorskip("cupy")
-
-    # Importing CuPy is not enough. Some machines can import the module but
-    # fail on the first ufunc because CUDA/NVRTC runtime pieces are missing.
-    try:
-        diff = cp.asarray([[0.0, 0.5]])
-        cp.asnumpy(cp.maximum(0.0, 1.0 - cp.abs(diff)))
-        cp.asnumpy(cp.exp(-(diff ** 2)))
-    except Exception as exc:  # pragma: no cover - depends on local CUDA runtime.
-        pytest.skip(f"CuPy is importable but unusable in this environment: {exc}")
-
-    return cp
-
 
 def _cupy_to_numpy(value, cp):
     """Convert a CuPy scalar or array result to a NumPy-compatible value."""
@@ -502,7 +487,7 @@ def test_build_similarity_matrix_matches_expected(testset):
     [LinearSimilarity(), GaussianSimilarity(sigma=0.67)],
 )
 def test_compute_backend_cupy_matches_numpy_for_matrices(similarity):
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     diff_np = np.array([[0.0, 0.25, -0.5], [0.75, -1.0, 0.33]])
 
     result_cp = similarity.compute_backend(cp.asarray(diff_np), xp=cp)
@@ -518,7 +503,7 @@ def test_compute_backend_cupy_matches_numpy_for_matrices(similarity):
     [LinearSimilarity(), GaussianSimilarity(sigma=0.67)],
 )
 def test_compute_backend_cupy_preserves_column_row_broadcasting(similarity):
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     column_np = np.array([[0.0], [0.25], [0.5], [0.75]])
     row_np = np.array([[0.1, 0.4, 0.7]])
     diff_np = column_np - row_np
@@ -538,7 +523,7 @@ def test_compute_backend_cupy_preserves_column_row_broadcasting(similarity):
     [LinearSimilarity(), GaussianSimilarity(sigma=0.67)],
 )
 def test_compute_backend_cupy_values_stay_in_unit_interval(similarity):
-    cp = _cupy_module()
+    cp = require_usable_cupy()
     diff_np = np.linspace(-2.0, 2.0, num=25).reshape(5, 5)
 
     result_np = _cupy_to_numpy(

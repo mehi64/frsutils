@@ -16,7 +16,6 @@ from frsutils.core.approximation_engines import (
     _as_nested_config,
     _backend_index_array,
     _diagonal_positions_for_block,
-    _set_block_diagonal_values,
     build_itfrs_components_from_config,
     compute_itfrs_blockwise,
     compute_owafrs_blockwise,
@@ -131,9 +130,9 @@ def _manual_vqrs_expected(
     labels_array = np.asarray(labels)
     similarity_matrix = np.asarray(similarity_matrix, dtype=float)
     if lb_fuzzy_quantifier is None:
-        lb_fuzzy_quantifier = LinearFuzzyQuantifier(alpha=0.1, beta=0.6)
+        lb_fuzzy_quantifier = QuadraticFuzzyQuantifier(alpha=0.2, beta=1.0)
     if ub_fuzzy_quantifier is None:
-        ub_fuzzy_quantifier = LinearFuzzyQuantifier(alpha=0.1, beta=0.6)
+        ub_fuzzy_quantifier = QuadraticFuzzyQuantifier(alpha=0.0, beta=0.6)
 
     label_mask = (labels_array[:, None] == labels_array[None, :]).astype(float)
     tnorm_values = np.minimum(similarity_matrix, label_mask)
@@ -396,63 +395,6 @@ def test_backend_index_array_converts_indices_for_non_numpy_namespace():
     assert xp.asarray_calls == [(indices, int)]
 
 
-def test_set_block_diagonal_values_mutates_requested_numpy_positions():
-    """Verify that set block diagonal values mutates requested numpy positions."""
-    values = np.zeros((3, 4), dtype=float)
-    row_indices = np.array([0, 2], dtype=int)
-    col_indices = np.array([1, 3], dtype=int)
-
-    _set_block_diagonal_values(
-        values,
-        row_indices,
-        col_indices,
-        xp=np,
-        lower_value=7.0,
-    )
-
-    expected = np.zeros((3, 4), dtype=float)
-    expected[0, 1] = 7.0
-    expected[2, 3] = 7.0
-    np.testing.assert_allclose(values, expected, atol=1e-12)
-
-
-def test_set_block_diagonal_values_returns_without_mutation_for_empty_indices():
-    """Verify that set block diagonal values returns without mutation for empty indices."""
-    values = np.ones((2, 2), dtype=float)
-    before = values.copy()
-
-    _set_block_diagonal_values(
-        values,
-        np.array([], dtype=int),
-        np.array([], dtype=int),
-        xp=np,
-        lower_value=0.0,
-    )
-
-    np.testing.assert_allclose(values, before, atol=1e-12)
-
-
-def test_set_block_diagonal_values_uses_backend_index_conversion_for_non_numpy_namespace():
-    """Verify that set block diagonal values uses backend index conversion for non numpy namespace."""
-    values = np.zeros((2, 2), dtype=float)
-    xp = FakeArrayNamespace()
-
-    _set_block_diagonal_values(
-        values,
-        np.array([0, 1], dtype=int),
-        np.array([1, 0], dtype=int),
-        xp=xp,
-        lower_value=3.0,
-        upper_value=99.0,
-    )
-
-    expected = np.array([[0.0, 3.0], [3.0, 0.0]], dtype=float)
-    np.testing.assert_allclose(values, expected, atol=1e-12)
-    assert len(xp.asarray_calls) == 2
-    assert xp.asarray_calls[0][1] is int
-    assert xp.asarray_calls[1][1] is int
-
-
 # -----------------------------------------------------------------------------
 # Component builders
 # -----------------------------------------------------------------------------
@@ -577,11 +519,11 @@ def test_build_vqrs_components_from_none_returns_default_quantifiers_and_tnorm()
     """Verify that build vqrs components from none returns default quantifiers and tnorm."""
     lb_quantifier, ub_quantifier, tnorm = build_vqrs_components_from_config(None)
 
-    assert isinstance(lb_quantifier, LinearFuzzyQuantifier)
-    assert isinstance(ub_quantifier, LinearFuzzyQuantifier)
-    assert lb_quantifier.alpha == pytest.approx(0.1)
-    assert lb_quantifier.beta == pytest.approx(0.6)
-    assert ub_quantifier.alpha == pytest.approx(0.1)
+    assert isinstance(lb_quantifier, QuadraticFuzzyQuantifier)
+    assert isinstance(ub_quantifier, QuadraticFuzzyQuantifier)
+    assert lb_quantifier.alpha == pytest.approx(0.2)
+    assert lb_quantifier.beta == pytest.approx(1.0)
+    assert ub_quantifier.alpha == pytest.approx(0.0)
     assert ub_quantifier.beta == pytest.approx(0.6)
     assert isinstance(tnorm, MinTNorm)
 
@@ -644,8 +586,8 @@ def test_build_vqrs_components_uses_defaults_for_missing_nested_specs():
     assert isinstance(lb_quantifier, QuadraticFuzzyQuantifier)
     assert lb_quantifier.alpha == pytest.approx(0.2)
     assert lb_quantifier.beta == pytest.approx(0.9)
-    assert isinstance(ub_quantifier, LinearFuzzyQuantifier)
-    assert ub_quantifier.alpha == pytest.approx(0.1)
+    assert isinstance(ub_quantifier, QuadraticFuzzyQuantifier)
+    assert ub_quantifier.alpha == pytest.approx(0.0)
     assert ub_quantifier.beta == pytest.approx(0.6)
     assert isinstance(tnorm, MinTNorm)
 
@@ -1032,11 +974,22 @@ VQRS_EXPECTED = VQRS_REFERENCE_CASE["expected"]
 
 
 @pytest.mark.parametrize("block_size", [1, 2, 10])
-def test_compute_vqrs_blockwise_matches_reference_default_quantifiers_for_block_sizes(block_size):
-    """Verify that compute vqrs blockwise matches reference default quantifiers for block sizes."""
+def test_compute_vqrs_blockwise_matches_locked_linear_reference_for_block_sizes(block_size):
+    """Verify blockwise VQRS against the locked explicit linear reference."""
     engine = FixedBlockSimilarityEngine(VQRS_SIMILARITY_MATRIX, block_size=block_size)
+    lower_spec = VQRS_REFERENCE_CASE["components"]["lower_quantifier"]
+    upper_spec = VQRS_REFERENCE_CASE["components"]["upper_quantifier"]
+    config = {
+        "type": "vqrs",
+        "lb_fuzzy_quantifier_name": lower_spec["name"],
+        "lb_fuzzy_quantifier_alpha": lower_spec["params"]["alpha"],
+        "lb_fuzzy_quantifier_beta": lower_spec["params"]["beta"],
+        "ub_fuzzy_quantifier_name": upper_spec["name"],
+        "ub_fuzzy_quantifier_alpha": upper_spec["params"]["alpha"],
+        "ub_fuzzy_quantifier_beta": upper_spec["params"]["beta"],
+    }
 
-    result = compute_vqrs_blockwise(engine, VQRS_LABELS)
+    result = compute_vqrs_blockwise(engine, VQRS_LABELS, config=config)
 
     assert isinstance(result, VQRSBlockwiseApproximation)
     np.testing.assert_allclose(result.lower, VQRS_EXPECTED["lower"], atol=1e-12)

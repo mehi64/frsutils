@@ -16,6 +16,8 @@ package and its stable package-root API.
   environment metadata, machine-readable outputs, figures, and checksums.
 - Continuous integration, package-build validation, documentation deployment,
   and JOSS paper validation workflows.
+- Machine-readable installed-package validation for wheel and source
+  distributions from read-only package trees and working directories.
 - Reviewable JSON scientific reference data protected by provenance metadata,
   SHA-256 manifests, schema checks, and read-only NumPy reconstruction.
 
@@ -38,17 +40,22 @@ The real-CUDA smoke checks completed successfully for device discovery,
 element-wise kernel execution, and matrix multiplication. The previously
 reported non-CUDA logger-encoding regression has been corrected and its
 targeted test now passes. After completion of the JSON reference-data
-migration and final core hardening, the default suite reported 2926 passed
-and 149 optional-backend skips, with 6633 slow tests deselected. The
-reference-data contract suite also passed. All 6633 slow tests completed in four
-deterministic shards, including exhaustive OWAFRS combinations and a public
-three-model dense/blockwise execution matrix. Branch-aware core coverage is 96
-percent and is protected by a 95 percent CI floor.
+migration and final API hardening, the default suite reported 3006 passed
+and 167 optional-backend skips, with 6633 slow tests deselected. The public API
+suite reported 544 passed and 25 optional-backend skips. All 6633 slow tests
+completed in four deterministic shards, including exhaustive OWAFRS
+combinations and a public three-model dense/blockwise execution matrix.
+Branch-aware coverage was 97 percent for `frsutils.api` and at least 95 percent
+for `frsutils.core`, with both protected by 95 percent CI floors. Built wheel
+and source distributions also passed real dense/blockwise public-API
+computations from read-only package trees and read-only working directories.
 
 Before publishing the release, run:
 
 ```bash
 python -m pytest tests -ra
+python scripts/validate_installed_public_api.py \
+  --output-json test_reports/source_public_api_validation.json
 python scripts/validate_joss_submission.py
 python -m build
 python -m twine check dist/*
