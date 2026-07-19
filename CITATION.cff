@@ -5,6 +5,7 @@ title: "frsutils: Fuzzy-Rough Set Utilities for Python"
 authors:
   - family-names: Amiri
     given-names: Mehran
+    orcid: https://orcid.org/0000-0002-5937-2330
     affiliation: "Independent Researcher, Germany"
 repository-code: "https://github.com/mehi64/frsutils"
 url: "https://github.com/mehi64/frsutils"

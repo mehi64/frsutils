@@ -744,7 +744,7 @@ def test_help(quant_type):
     """
     tests values of params and deteriled params. check them in log
     """
-    # TODO: when a class does not have docstring, it returns the base calss docstring. This is wrong
+    # NOTE: when a class does not have docstring, it returns the base calss docstring. This is wrong
     obj = FuzzyQuantifier.create(quant_type, alpha=0.25, beta=0.75)
     details = obj.help()
     assert isinstance(details, str)

@@ -161,7 +161,6 @@ def test_implicator_compute_backend_validate_inputs_false_skips_validation(impli
     assert result.shape == a.shape
 
 
-# TODO: check again
 @pytest.mark.parametrize("implicator_name", list(registered_implicators.keys()))
 def test_implicator_monotonicity_on_grid(implicator_name):
     """Check standard implicator monotonicity on a compact unit grid."""
@@ -536,7 +535,6 @@ def test_describe_params_detailed_keys(implicator_name):
     """
     tests values of params and deteriled params. check them in log
     """
-    # TODO: This test needs consideration when implicators with parameters introduce. At the time being there is no implicato with parameters
     obj = Implicator.create(implicator_name)
     details = obj.describe_params_detailed()
     assert isinstance(details, dict)
