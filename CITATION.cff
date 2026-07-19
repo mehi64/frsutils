@@ -10,7 +10,7 @@ authors:
 repository-code: "https://github.com/mehi64/frsutils"
 url: "https://github.com/mehi64/frsutils"
 version: "0.1.1"
-doi: https://doi.org/10.5281/zenodo.21441122
+doi: "10.5281/zenodo.21441122"
 date-released: "2026-07-18"
 license: BSD-3-Clause
 abstract: "frsutils is a scientific Python library for reusable fuzzy-rough set computations. It provides a stable public API for similarity matrices, ITFRS, VQRS, and OWAFRS lower and upper approximations, boundary regions, positive-region scores, dense reference execution, and exact blockwise execution."
