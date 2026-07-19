@@ -192,13 +192,16 @@ jobs:
           chmod a-w /tmp/frsutils-wheel-read-only-cwd
           cd /tmp/frsutils-wheel-read-only-cwd
           PYTHONDONTWRITEBYTECODE=1 \
-            /tmp/frsutils-wheel-smoke/bin/python \
-            "$GITHUB_WORKSPACE/scripts/validate_installed_public_api.py" \
-            --require-installed \
-            --require-package-read-only \
-            --require-cwd-read-only \
-            --output-json \
-            "$GITHUB_WORKSPACE/test_reports/wheel_public_api_validation.json"
+	  /tmp/frsutils-wheel-smoke/bin/python \
+	  "$GITHUB_WORKSPACE/scripts/validate_installed_public_api.py" \
+	  --require-installed \
+	  --require-package-read-only \
+	  --require-cwd-read-only \
+	  --output-json \
+	  "$GITHUB_WORKSPACE/test_reports/wheel_public_api_validation.json" || {
+	    cat "$GITHUB_WORKSPACE/test_reports/wheel_public_api_validation.json"
+	    exit 1
+	  }
 
       - name: Validate the built source distribution in a read-only environment
         run: |
@@ -224,7 +227,10 @@ jobs:
             --require-package-read-only \
             --require-cwd-read-only \
             --output-json \
-            "$GITHUB_WORKSPACE/test_reports/sdist_public_api_validation.json"
+            "$GITHUB_WORKSPACE/test_reports/sdist_public_api_validation.json" || {
+	  cat "$GITHUB_WORKSPACE/test_reports/sdist_public_api_validation.json"
+	  exit 1
+	}
 
       - name: Upload distribution and validation artifacts
         uses: actions/upload-artifact@v4
