@@ -1,0 +1,67 @@
+{
+  "artifacts": [
+    {
+      "path": "approximation_summary.csv",
+      "sha256": "6e99ec3ef8885ad6c60cfa5a485d40d2ff01d7e85fbd222567d338fa1f6a0f7d",
+      "size_bytes": 4250
+    },
+    {
+      "path": "benchmark_results.csv",
+      "sha256": "0586be0663a52a30b22ebd153eef84731633bbc25cc107ce10f4699ae54deb26",
+      "size_bytes": 5902
+    },
+    {
+      "path": "benchmark_results.json",
+      "sha256": "565069ba06d34ff6ea8425b346c6f713f09e408cc534e9aef2cf1de62e8825a6",
+      "size_bytes": 24703
+    },
+    {
+      "path": "dense_blockwise_equivalence.csv",
+      "sha256": "6cbbb215d7d94055c6465abcb6f74f92172a9142e570abf2d076b1928f75e1e5",
+      "size_bytes": 910
+    },
+    {
+      "path": "environment.json",
+      "sha256": "1a0cd4223739be39a40ccbe3511c69908675c8bbe4d69f7c37f5ca75e0a37bab",
+      "size_bytes": 692
+    },
+    {
+      "path": "figures/positive_region_distributions.png",
+      "sha256": "5475fe33ad2175d1bb8bcd3dbc0ee2ca44778199f565221800a80da22fa76149",
+      "size_bytes": 75870
+    },
+    {
+      "path": "figures/runtime_by_dataset_and_model.png",
+      "sha256": "db2bba901affba38d5315dc9611d001ec7f71be247fbc511576d9bafdc73d450",
+      "size_bytes": 76143
+    },
+    {
+      "path": "highest_boundary_gap_samples.csv",
+      "sha256": "6fdaf43d66db411becb466fc8371f186ea6e7f3872f6c57d710a226114c5018a",
+      "size_bytes": 11190
+    },
+    {
+      "path": "requirements-study.txt",
+      "sha256": "07a01d7341544f577f0186eca577b47d45713bba6e2b79cc33f50c5db751933b",
+      "size_bytes": 67
+    },
+    {
+      "path": "resolved_config.json",
+      "sha256": "09fea993ccf5de6d029f044d8080dce3170ab447b4f06a41427961ab70b8e1d7",
+      "size_bytes": 1457
+    },
+    {
+      "path": "runtime_results.csv",
+      "sha256": "2d16932a94ec5edd31f6d4d71b2ebe96f8847c6004a5992aab2b5b970eaefbb6",
+      "size_bytes": 3051
+    },
+    {
+      "path": "sample_scores.csv",
+      "sha256": "ec1a578fd7b9b933bab9a7276500c1f1b7a0a21722d2890a2850f995883d2c8f",
+      "size_bytes": 340554
+    }
+  ],
+  "generated_at_utc": "2026-07-19T08:43:46.668542+00:00",
+  "schema_version": 1,
+  "study": "fuzzy_rough_reference_study"
+}

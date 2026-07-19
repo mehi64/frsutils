@@ -1,0 +1,19 @@
+{
+  "backend": "numpy",
+  "command": "python studies/fuzzy_rough_reference_study/run_study.py --config studies/fuzzy_rough_reference_study/study_config.json",
+  "frsutils_version": "0.1.1",
+  "generated_at_utc": "2026-07-19T08:43:45.628492+00:00",
+  "git_commit": "53205d1c5b1e3a718b04e1a26cdbe54a7d9d3c87",
+  "git_worktree_dirty": false,
+  "logical_cpu_count": 8,
+  "machine": "x86_64",
+  "matplotlib_version": "3.9.2",
+  "numpy_version": "2.4.6",
+  "platform": "Linux-6.8.0-111-generic-x86_64-with-glibc2.39",
+  "processor": "x86_64",
+  "python_implementation": "CPython",
+  "python_version": "3.12.13",
+  "random_seed": 42,
+  "scikit_learn_version": "1.7.1",
+  "study_schema_version": 1
+}
