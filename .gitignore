@@ -8,7 +8,7 @@ build/
 frsutils.egg-info/
 *.zip
 *.csv
-!studies/fuzzy_rough_reference_study/results/*.csv
+studies/fuzzy_rough_reference_study/results/
 temp/
 logs/*.csv
 logs/*.json
@@ -22,3 +22,4 @@ site/
 .venv/
 venv/
 .vscode/
+
