@@ -461,7 +461,7 @@ version-specific archive DOI, use that DOI to identify the executable release.
   author = {Amiri, Mehran},
   title = {frsutils: Fuzzy-Rough Set Utilities for Python},
   url = {https://github.com/mehi64/frsutils},
-  doi = {https://doi.org/10.5281/zenodo.21441122}
+  doi = {10.5281/zenodo.21441122},
   version = {0.1.1},
   year = {2026}
 }

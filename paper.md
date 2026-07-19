@@ -10,12 +10,12 @@ tags:
 authors:
   - name: Mehran Amiri
     affiliation: 1
-    orcid: 
+
     corresponding: true
 affiliations:
   - name: Independent Researcher, Germany
     index: 1
-date: 18 July 2026
+date: 19 July 2026
 bibliography: paper.bib
 ---
 
@@ -146,15 +146,16 @@ artifacts, not a claim that one fuzzy-rough model or backend is universally
 superior. They make model semantics, execution choices, and
 numerical-equivalence evidence directly reproducible.
 
-Beyond the bundled study, `frsutils` is being used as a computational
-foundation in the author's ongoing research on fuzzy-rough methods for
-imbalanced learning. That work is being prepared for separate scientific
+Beyond the bundled study, `frsutils` is currently used as the fuzzy-rough computational layer in the author's ongoing FRSMOTE research on imbalanced learning, including the approximation and positive-region computations used by the experimental workflow. This research is being prepared for separate scientific publication. That work is being prepared for separate scientific
 publication and provides a concrete downstream research use case for the
 library. Its methodological details are outside the scope of this software paper
 and will be reported separately. The downstream study is not required to
 reproduce the public reference study, but its use of `frsutils` demonstrates
 that the library is serving as a reusable research dependency beyond its bundled
 validation artifacts.
+
+The archived frsutils 0.1.1 software release is available at
+https://doi.org/10.5281/zenodo.21441122.
 
 # AI usage disclosure
 
@@ -171,6 +172,10 @@ produced artifacts, and validated code behavior with automated tests and
 numerical comparisons. The author accepts full responsibility for the accuracy,
 originality, licensing compliance, and scientific claims of the submitted
 software and paper.
+
+# Conflict of interest
+
+The author declares no conflicts of interest related to this work.
 
 # Acknowledgements
 
