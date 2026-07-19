@@ -21,3 +21,4 @@ benchmark_smoke_output/
 site/
 .venv/
 venv/
+.vscode/

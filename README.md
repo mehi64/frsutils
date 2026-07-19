@@ -243,8 +243,6 @@ artifact checks. Detailed test and release procedures remain in
 [`tests/test_procedures.md`](tests/test_procedures.md) and
 [`docs/developer/release.md`](docs/developer/release.md).
 
-
-
 ## Quick start
 
 Use the package root as the canonical public API:
@@ -376,7 +374,7 @@ python studies/fuzzy_rough_reference_study/run_study.py
 ```
 
 See the [reference-study documentation](studies/fuzzy_rough_reference_study/README.md)
-and the [committed result snapshot](studies/fuzzy_rough_reference_study/results/README.md).
+and the created documents in the results folder.
 
 ## Project boundary
 
