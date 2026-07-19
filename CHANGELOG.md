@@ -8,18 +8,19 @@ and releases use semantic versioning.
 
 ## [0.1.1] - 2026-07-18
 
-This release prepares the repository and software artifact for JOSS submission
-while preserving the public API introduced in 0.1.0.
+This release strengthens scientific documentation, reproducibility evidence,
+package validation, and repository hygiene while preserving the public API
+introduced in 0.1.0.
 
 ### Added
 
-- A rewritten JOSS paper with substantive statement-of-need,
+- A revised software manuscript with substantive statement-of-need,
   state-of-the-field, software-design, research-impact, and AI-disclosure
   sections.
-- Automated JOSS metadata and paper validation, repository-level readiness
-  tests, and a draft-paper GitHub Actions workflow.
-- A final JOSS submission checklist, GitHub–Zenodo archival guide, and release
-  notes for version 0.1.1.
+- Automated manuscript and metadata validation, repository-level integrity
+  tests, and a paper-build GitHub Actions workflow.
+- A version-independent maintainer release process, software-archiving guide,
+  and release notes for version 0.1.1.
 - A reproducible real-dataset reference study for ITFRS, VQRS, and OWAFRS.
 - Dense/blockwise equivalence tables, repeated runtime observations,
   per-sample approximation outputs, environment metadata, figures, and artifact
@@ -48,8 +49,8 @@ while preserving the public API introduced in 0.1.0.
 
 ## [0.1.0] - 2026-07-11
 
-This is the first JOSS-oriented public release of the lowercase `frsutils`
-package and stable public API.
+This is the first public release of the lowercase `frsutils` package and its
+stable package-root API.
 
 ### Added
 
@@ -103,7 +104,7 @@ package and stable public API.
 - Project metadata and README documentation links point to the GitHub Pages
   site.
 - Source distributions include project documentation, examples, benchmarks,
-  tests, citation metadata, and JOSS paper sources.
+  tests, citation metadata, and software-manuscript sources.
 
 ## Earlier versions
 

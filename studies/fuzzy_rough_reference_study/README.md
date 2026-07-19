@@ -120,9 +120,10 @@ not universal performance guarantees. The benchmark's
 measure native NumPy or CuPy allocator memory. No memory-reduction or GPU-speedup
 claim is made from this study.
 
-## Final-release procedure
+## Provenance and reproducibility
 
-After the phase-three files are committed, rerun the complete command once from
-a clean checkout. Confirm that `environment.json` contains the release commit
-and reports `git_worktree_dirty: false`, then commit the regenerated results if
-runtime-dependent files changed.
+`environment.json` records the package version, Git commit, worktree state,
+Python dependencies, and platform information used to generate the snapshot. A
+canonical committed snapshot is expected to identify its source commit and report
+`git_worktree_dirty: false`. The checksum manifest allows consumers to verify
+that the distributed result files have not changed.

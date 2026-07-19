@@ -159,8 +159,9 @@ reimplementation of fuzzy-rough approximations.
 OpenAI ChatGPT, primarily the GPT-5.5 Thinking and GPT-5.6 Thinking models, was
 used during development. Assistance covered code generation and refactoring,
 test-scaffolding suggestions, documentation drafting and editing, review of API
-wording, preparation of the reproducible reference-study workflow, release and
-JOSS checklist preparation, and drafting and copy-editing portions of this
+wording, preparation of the reproducible reference-study workflow, release
+documentation and repository-quality review, and drafting and copy-editing
+portions of this
 manuscript. The author made the problem-framing, mathematical, architectural design,
 public-API, licensing, and release decisions. The author reviewed and modified
 all AI-assisted material, executed the software and examples, inspected the

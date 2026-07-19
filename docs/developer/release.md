@@ -1,36 +1,40 @@
-# Release and JOSS validation
+# Maintainer release process
 
-This page defines the reproducible release procedure for `frsutils` 0.1.1. Run
-all commands from the repository root and archive command outputs outside the
-source tree when they are useful as release evidence.
+This page defines the repeatable release process for `frsutils`. It is intended
+for maintainers and is version-independent. Run commands from the repository
+root, replace `<version>` with the version being published, and keep generated
+reports outside the source tree unless they are intentional project artifacts.
 
-## Release identity
+## Release contract
 
-- Package: `frsutils`
-- Target version: `0.1.1`
-- License: BSD-3-Clause
-- Supported Python versions: 3.10, 3.11, and 3.12
-- Public API boundary: package-root imports from `frsutils`
-- JOSS sources: `paper.md` and `paper.bib`
+Every release must preserve these public commitments:
 
-## Safe software claims
+- the canonical package and import name is `frsutils`;
+- the license is BSD-3-Clause;
+- the supported public API is exposed from the package root;
+- public approximation outputs are NumPy arrays;
+- ITFRS, VQRS, and OWAFRS dense and blockwise computations follow the
+  documented contracts;
+- optional CuPy behavior remains model-specific and limited to documented
+  execution paths.
 
-`frsutils` provides dense NumPy and exact blockwise fuzzy-rough approximation
-APIs for ITFRS, VQRS, and OWAFRS. Public outputs are NumPy arrays. Optional CuPy
-execution is model-specific and is available only through documented blockwise
-paths.
+The precise backend and GPU claim boundaries are documented in
+[Backends and execution](../user/backends.md).
 
-Do not claim:
+## 1. Select and record the release version
 
-- fully GPU-native execution;
-- GPU-resident OWAFRS aggregation;
-- guaranteed CuPy speedup;
-- universal runtime or memory improvements;
-- FRSMOTE as part of the stable `frsutils` public API.
+Choose the next semantic version and update the version-specific metadata in:
 
-See [Backends and execution](../user/backends.md) for the precise boundaries.
+- `pyproject.toml`;
+- `CITATION.cff`;
+- `CHANGELOG.md`;
+- the release-notes file for that version;
+- user-facing examples or citations that explicitly show a package version.
 
-## 1. Start from a clean repository
+The release date in `CITATION.cff` and the changelog must match the actual
+release date.
+
+## 2. Start from a clean repository
 
 ```bash
 git switch main
@@ -38,10 +42,11 @@ git pull --ff-only
 git status --short
 ```
 
-The final command must produce no output. Generated files, caches, local logs,
-IDE settings, and virtual environments must not be committed.
+The final command must produce no output. Generated documentation, build
+artifacts, caches, local logs, editor settings, virtual environments, and test
+reports must not be tracked.
 
-## 2. Install the release environment
+## 3. Create the validation environment
 
 ```bash
 python -m venv .venv
@@ -55,26 +60,17 @@ python -m pip check
 On Windows, activate `.venv\Scripts\Activate.ps1` and use the same Python
 commands.
 
-## 3. Validate metadata and documentation
+## 4. Validate metadata and documentation
 
 ```bash
 cffconvert --validate
-python scripts/validate_joss_submission.py
 mkdocs build --strict
 ```
 
-Inspect the generated site locally with `mkdocs serve`. Do not commit `site/`.
+Inspect the generated documentation with `mkdocs serve`. The generated `site/`
+directory is disposable and must not be committed.
 
-Verify that version `0.1.1` is consistent in:
-
-- `pyproject.toml`;
-- `CITATION.cff`;
-- `README.md`;
-- `CHANGELOG.md`;
-- `RELEASE_NOTES_v0.1.1.md`;
-- the release and archive documentation.
-
-## 4. Run the fast and default tests
+## 5. Run the default validation suite
 
 ```bash
 python -m pytest tests/reference_data_tests -ra
@@ -85,7 +81,7 @@ python benchmarks/benchmark_smoke.py --output-dir benchmark_smoke_output
 
 Remove `benchmark_smoke_output/` after inspection.
 
-## 5. Run the exhaustive slow tests
+## 6. Run exhaustive slow tests
 
 The recommended four-shard execution is:
 
@@ -97,15 +93,13 @@ for i in 0 1 2 3; do
 done
 ```
 
-Alternatively, run the complete suite in one process:
+The complete slow suite can also be run in one process:
 
 ```bash
 python -m pytest -o addopts="" -m slow -ra --durations=50
 ```
 
-Retain any JUnit or terminal reports outside the repository.
-
-## 6. Validate the public API and coverage
+## 7. Validate public API and coverage contracts
 
 ```bash
 mkdir -p test_reports
@@ -129,38 +123,35 @@ python -m pytest tests/core_tests tests/models_tests tests/api \
 
 Do not commit `test_reports/`, `.coverage`, or `htmlcov/`.
 
-## 7. Regenerate the reference study from the release commit
+## 8. Refresh the reference-study provenance
 
-The provenance record must identify the actual commit that will be released.
-Therefore, first commit all source, documentation, and metadata changes:
+The committed reference-study snapshot must identify the code that produced it.
+Commit all source, documentation, and metadata changes, verify a clean worktree,
+and regenerate the study:
 
 ```bash
 git add --all
-git commit -m "Prepare frsutils 0.1.1 for JOSS submission"
+git commit -m "Release frsutils <version>"
 git status --short
-```
-
-The worktree must be clean before regeneration:
-
-```bash
 python studies/fuzzy_rough_reference_study/run_study.py
 python -m pytest tests/studies -ra
 ```
 
-Confirm in `studies/fuzzy_rough_reference_study/results/environment.json`:
+Confirm in
+`studies/fuzzy_rough_reference_study/results/environment.json` that:
 
-- `frsutils_version` is `0.1.1`;
-- `git_commit` is the release-preparation commit;
+- `frsutils_version` matches the selected release version;
+- `git_commit` identifies the committed source state;
 - `git_worktree_dirty` is `false`.
 
-Also confirm that every row in `dense_blockwise_equivalence.csv` passes and that
-`benchmark_results.json` contains no failed cases. Commit the regenerated result
-snapshot, then rerun `git status --short`.
+Every row in `dense_blockwise_equivalence.csv` must pass, and
+`benchmark_results.json` must contain no failed case. Commit regenerated study
+artifacts when they differ from the repository snapshot.
 
-## 8. Optional real-CUDA validation
+## 9. Run optional real-CUDA validation
 
-Real-CUDA validation is required only when the release makes real-GPU numerical
-claims:
+Run real-CUDA validation only when an appropriate NVIDIA/CUDA environment is
+available and the release includes GPU-related changes:
 
 ```bash
 python scripts/capture_cuda_validation.py \
@@ -176,10 +167,10 @@ python -m pytest \
   -o addopts="" -vv -rs
 ```
 
-Keep the generated CUDA report as external release evidence unless it is
-intentionally archived with the release.
+Store the generated CUDA report outside the repository unless it is deliberately
+published as a release artifact.
 
-## 9. Build and validate distributions
+## 10. Build and validate distributions
 
 ```bash
 rm -rf build dist frsutils.egg-info
@@ -192,39 +183,45 @@ Install and exercise both artifacts in clean environments:
 ```bash
 python -m venv /tmp/frsutils-wheel-smoke
 /tmp/frsutils-wheel-smoke/bin/python -m pip install --upgrade pip
-/tmp/frsutils-wheel-smoke/bin/python -m pip install dist/frsutils-0.1.1-*.whl
+/tmp/frsutils-wheel-smoke/bin/python -m pip install dist/frsutils-<version>-*.whl
 /tmp/frsutils-wheel-smoke/bin/python -m pip check
 
 python -m venv /tmp/frsutils-sdist-smoke
 /tmp/frsutils-sdist-smoke/bin/python -m pip install --upgrade pip
-/tmp/frsutils-sdist-smoke/bin/python -m pip install dist/frsutils-0.1.1.tar.gz
+/tmp/frsutils-sdist-smoke/bin/python -m pip install dist/frsutils-<version>.tar.gz
 /tmp/frsutils-sdist-smoke/bin/python -m pip check
 ```
 
-GitHub Actions performs stronger read-only installed-package validation for both
-artifacts.
+GitHub Actions performs additional read-only installed-package validation for
+both artifacts.
 
-## 10. Final repository and paper checks
+## 11. Tag and publish
 
-Before tagging, confirm:
-
-- the repository is public and Issues are enabled;
-- CI, documentation, extended-test, and paper workflows are green;
-- README links and MkDocs navigation resolve;
-- `paper.md` contains the required JOSS sections and accurate claims;
-- the paper date and author metadata are final;
-- funding and AI-use disclosures are accurate;
-- no cache, generated site, local log, editor setting, or temporary report is
-  tracked;
-- `git status --short` is empty.
-
-## 11. Tag, release, and archive
+After all required workflows pass on the release commit:
 
 ```bash
-git tag -a v0.1.1 -m "frsutils 0.1.1"
+git tag -a v<version> -m "frsutils <version>"
 git push origin main
-git push origin v0.1.1
+git push origin v<version>
 ```
 
-Create the GitHub release from `RELEASE_NOTES_v0.1.1.md`, archive it through
-Zenodo, and follow the [software archive and DOI guide](archive_and_doi.md).
+Create the GitHub release from the corresponding release-notes file. Publish the
+wheel and source distribution to PyPI only after checking that `dist/` contains
+artifacts for the selected version and no older files.
+
+## 12. Verify the published package
+
+Install the published version without using the local cache:
+
+```bash
+python -m venv /tmp/frsutils-published-smoke
+/tmp/frsutils-published-smoke/bin/python -m pip install --upgrade pip
+/tmp/frsutils-published-smoke/bin/python -m pip install --no-cache-dir \
+  "frsutils==<version>"
+/tmp/frsutils-published-smoke/bin/python -m pip check
+/tmp/frsutils-published-smoke/bin/python -c \
+  "import frsutils; from importlib.metadata import version; print(version('frsutils'))"
+```
+
+Record an immutable software archive and DOI according to the
+[software archiving guide](archive_and_doi.md) when a citable archive is desired.

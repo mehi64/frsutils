@@ -1,86 +1,72 @@
-# Archive the software release and record its DOI
+# Software archiving and DOI metadata
 
-Use a version-specific software DOI for the exact `frsutils` release reviewed by
-JOSS. The JOSS article receives a separate DOI after acceptance.
+An immutable archive makes a specific `frsutils` release independently citable.
+This page describes a general GitHub–Zenodo workflow and is not tied to a
+particular package version or publication.
 
 ## Metadata source
 
-`CITATION.cff` is the source of software citation metadata. Before archiving,
-confirm the author, version `0.1.1`, release date, license, repository, abstract,
-and keywords. Add an ORCID only after the exact identifier has been verified.
+`CITATION.cff` is the source of software citation metadata. Before creating an
+archive, confirm that it contains the correct author, version, release date,
+license, repository URL, abstract, and keywords. Add identifiers only after they
+have been issued by the corresponding service.
 
 ## GitHub–Zenodo workflow
 
-1. Sign in to Zenodo and link the GitHub account that owns
-   `mehi64/frsutils`.
-2. In Zenodo's GitHub integration, synchronize repositories and enable
-   `mehi64/frsutils`.
-3. Push the clean release commit and wait for CI, documentation, extended-test,
-   and paper workflows to pass.
-4. Create and push the annotated tag:
+1. Sign in to Zenodo and link the GitHub account that owns the repository.
+2. Enable the `mehi64/frsutils` repository in Zenodo's GitHub integration.
+3. Publish a clean, annotated Git tag and matching GitHub release.
+4. Wait for Zenodo to ingest the release.
+5. Verify the Zenodo record:
 
-   ```bash
-   git switch main
-   git pull --ff-only
-   git status --short
-   git tag -a v0.1.1 -m "frsutils 0.1.1"
-   git push origin main
-   git push origin v0.1.1
-   ```
+   - resource type is **Software**;
+   - version matches the Git tag;
+   - license is BSD-3-Clause;
+   - author and repository metadata are correct;
+   - the archived source corresponds to the intended release.
 
-5. Create GitHub release `v0.1.1` and use
-   `RELEASE_NOTES_v0.1.1.md` as its description.
-6. Wait for Zenodo to ingest the release and confirm:
-
-   - software resource type;
-   - version `0.1.1`;
-   - BSD-3-Clause license;
-   - author and repository URL;
-   - source archive;
-   - version-specific DOI.
-
-7. Add the version DOI to `CITATION.cff`:
+6. Add the issued version-specific DOI to `CITATION.cff`:
 
    ```yaml
    identifiers:
      - type: doi
-       value: 10.5281/zenodo.XXXXXXX
-       description: Archived frsutils 0.1.1 software release
+       value: 10.5281/zenodo.<record>
+       description: Archived frsutils <version> software release
    ```
 
-8. Add the DOI badge and citation text to README, then validate:
+7. Add a DOI badge or citation link to the README when useful.
+8. Validate the updated citation file:
 
    ```bash
    cffconvert --validate
-   python scripts/validate_joss_submission.py --require-archive-doi
    ```
 
-9. Commit the DOI metadata update. Do not move or recreate the immutable
-   `v0.1.1` tag.
+9. Commit the DOI metadata update without moving or recreating the immutable
+   release tag.
+
+Use the version DOI when citing a specific executable release. The Zenodo
+concept DOI may be used when a citation should resolve to the software project
+across releases.
 
 ## Manual-upload alternative
 
-Use a manual deposit only if GitHub integration cannot be enabled:
+Use a manual deposit when GitHub integration is unavailable:
 
 ```bash
 git archive \
   --format=zip \
-  --prefix=frsutils-0.1.1/ \
-  --output=frsutils-0.1.1-source.zip \
-  v0.1.1
-sha256sum frsutils-0.1.1-source.zip
+  --prefix=frsutils-<version>/ \
+  --output=frsutils-<version>-source.zip \
+  v<version>
+sha256sum frsutils-<version>-source.zip
 ```
 
-Upload the archive as **Software**, copy metadata from `CITATION.cff`, select
-BSD-3-Clause, and publish the record. Zenodo can reserve a DOI before publication
-when the identifier must be embedded in the uploaded files.
+Upload the archive as **Software**, copy metadata from `CITATION.cff`, select the
+BSD-3-Clause license, and verify the generated checksum before publishing the
+record.
 
-## JOSS timing
+## Citation maintenance
 
-A software archive may be created before submission. If review changes software
-behavior or public APIs, create a new final release and provide JOSS with the DOI
-of that reviewed version.
-
-After JOSS publishes the article, add a `preferred-citation` block to
-`CITATION.cff` with the article DOI. Keep the software archive DOI as the
-identifier of the executable artifact.
+Keep the software archive DOI as the identifier of the executable artifact. A
+separate article, dataset, or methods publication may be recorded as a preferred
+citation only after its final bibliographic metadata and DOI are available.

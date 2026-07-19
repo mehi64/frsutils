@@ -38,12 +38,10 @@ component can be reviewed independently:
 
 ## Developer and release documentation
 
-- [Release and JOSS validation](developer/release.md): release commands, test
-  evidence, metadata checks, and safe software claims.
-- [Final JOSS submission checklist](developer/joss_submission_checklist.md):
-  automated and manual submission gates.
-- [Software archive and DOI guide](developer/archive_and_doi.md): GitHub–Zenodo
-  release archival and citation updates.
+- [Maintainer release process](developer/release.md): version-independent release
+  commands, validation steps, package builds, and publication checks.
+- [Software archiving and DOI metadata](developer/archive_and_doi.md): immutable
+  software archives, version-specific DOIs, and citation maintenance.
 
 ## Documentation policy
 

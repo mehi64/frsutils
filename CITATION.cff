@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use frsutils in academic work, research prototypes, benchmarks, or publications, please cite this software release. After the JOSS article is accepted, cite the JOSS article as the preferred citation."
+message: "If you use frsutils in academic work, research prototypes, benchmarks, or publications, please cite the exact software release using this metadata."
 type: software
 title: "frsutils: Fuzzy-Rough Set Utilities for Python"
 authors:
@@ -21,20 +21,3 @@ keywords:
   - upper approximation
   - similarity matrix
   - scientific Python
-# Add the version-specific software archive DOI after Zenodo has archived the
-# GitHub release. Use the version DOI, not only the concept DOI:
-# identifiers:
-#   - type: doi
-#     value: 10.5281/zenodo.XXXXXXX
-#     description: Archived frsutils 0.1.1 software release
-#
-# After JOSS acceptance, add a preferred-citation block with the article DOI:
-# preferred-citation:
-#   type: article
-#   title: "frsutils: Fuzzy-Rough Set Utilities for Python"
-#   authors:
-#     - family-names: Amiri
-#       given-names: Mehran
-#   journal: "Journal of Open Source Software"
-#   doi: "10.21105/joss.XXXXX"
-#   year: 2026

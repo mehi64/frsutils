@@ -395,9 +395,8 @@ Repository sources:
 - [Glossary](docs/user/glossary.md)
 - [Performance benchmarking](docs/user/performance_benchmarking.md)
 - [Reproducible reference study](docs/user/reference_study.md)
-- [Release and JOSS validation](docs/developer/release.md)
-- [Final JOSS submission checklist](docs/developer/joss_submission_checklist.md)
-- [Software archive and DOI guide](docs/developer/archive_and_doi.md)
+- [Maintainer release process](docs/developer/release.md)
+- [Software archiving and DOI metadata](docs/developer/archive_and_doi.md)
 
 After installing the developer environment with the `docs` extra, build the
 documentation locally with:
@@ -430,16 +429,11 @@ Run slow model-combination tests only when needed:
 python -m pytest tests/models_tests -m slow -o addopts="" -q
 ```
 
-**Before tagging or submitting to JOSS, run the automated validator and follow
-the maintainer guides:**
+Maintainers can use the following repository guides for repeatable releases and
+software archiving:
 
-```bash
-python scripts/validate_joss_submission.py
-```
-
-- [Release and JOSS validation](docs/developer/release.md)
-- [Final JOSS submission checklist](docs/developer/joss_submission_checklist.md)
-- [Software archive and DOI guide](docs/developer/archive_and_doi.md)
+- [Maintainer release process](docs/developer/release.md)
+- [Software archiving and DOI metadata](docs/developer/archive_and_doi.md)
 
 ## Community and project governance
 
@@ -461,10 +455,8 @@ This project is licensed under the BSD-3-Clause License. See
 ## Citation
 
 If you use `frsutils` in research, cite the exact software release described in
-[`CITATION.cff`](CITATION.cff). The version-specific Zenodo DOI will be added
-after release archival. After the JOSS article is accepted, its DOI will be
-recorded as the preferred citation while the software DOI continues to identify
-the archived executable artifact.
+[`CITATION.cff`](CITATION.cff). When the citation metadata contains a
+version-specific archive DOI, use that DOI to identify the executable release.
 
 ```bibtex
 @software{Amiri_frsutils_2026,

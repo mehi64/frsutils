@@ -44,6 +44,6 @@ It does not claim that one fuzzy-rough model is universally superior, that
 runtime values generalize to other hardware, or that Python-level memory
 measurements capture every native allocator.
 
-For a release, regenerate the snapshot after committing the release changes and
-confirm that `environment.json` records the release version, the release commit,
-and `git_worktree_dirty: false`.
+The committed snapshot includes `environment.json`, which records the package
+version, Git commit, worktree state, Python environment, and platform metadata.
+A clean provenance record reports `git_worktree_dirty: false`.

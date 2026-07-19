@@ -190,9 +190,8 @@ Each paired comparison row records:
 - GPU metadata flags for both sides.
 
 `python_peak_memory_bytes` is useful as a lightweight smoke metric, but it does
-not fully capture native NumPy/CuPy allocator memory. For final paper-quality
-memory claims, run the suite on a controlled machine and supplement it with OS
-or GPU memory tooling.
+not fully capture native NumPy/CuPy allocator memory. For rigorous memory claims, run the suite on a controlled machine and
+supplement it with OS or GPU memory tooling.
 
 ## Expected interpretation
 
@@ -216,8 +215,8 @@ OWAFRS + blockwise_cupy:
     used_gpu_approximation_accumulators remains False
 ```
 
-This preserves the OWAFRS non-GPU-resident decision in
-the current release/paper cycle.
+This reflects the current OWAFRS contract: similarity blocks may use CuPy,
+while OWA approximation accumulation remains CPU-resident.
 
 ## Tests
 
@@ -233,9 +232,9 @@ JSON/CSV artifacts are generated.
 
 ## Boundary
 
-The benchmark suite provides the harness, not final benchmark numbers. Final
-numbers should be generated later on a stable target machine with the intended
-CPU/GPU environment, fixed package versions, and documented run settings.
+The benchmark suite provides a reproducible harness rather than universal
+performance numbers. Reported results should come from a stable target machine
+with fixed package versions and documented CPU/GPU settings.
 
 ## Reference-study benchmark profile
 

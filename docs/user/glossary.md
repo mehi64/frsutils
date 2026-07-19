@@ -2,7 +2,7 @@
 
 This page defines the main execution and fuzzy-rough terms used in FRsutils.
 Definitions are intentionally short so they can be used consistently across the
-README, user docs, benchmark reports, and the JOSS paper.
+README, user documentation, benchmark reports, and the software manuscript.
 
 ## Dense execution
 

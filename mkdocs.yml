@@ -30,9 +30,8 @@ nav:
       - OWA weights: concepts/owa_weights_info.md
       - Fuzzy Quantifiers: concepts/fuzzy_quantifiers_info.md
   - Maintainer guide:
-      - Release and JOSS validation: developer/release.md
-      - Final JOSS submission checklist: developer/joss_submission_checklist.md
-      - Software archive and DOI: developer/archive_and_doi.md
+      - Release process: developer/release.md
+      - Software archiving and DOI metadata: developer/archive_and_doi.md
 
 theme:
   name: material

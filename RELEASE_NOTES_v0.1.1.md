@@ -1,9 +1,8 @@
 # frsutils 0.1.1
 
-`frsutils` 0.1.1 is the JOSS-submission release of the fuzzy-rough computation
-library. It keeps the package-root API introduced in 0.1.0 and concentrates on
-scientific documentation, reproducibility evidence, release validation, and
-repository hygiene.
+`frsutils` 0.1.1 strengthens the scientific documentation, reproducibility
+artifacts, release validation, and repository hygiene of the fuzzy-rough
+computation library while preserving the package-root API introduced in 0.1.0.
 
 ## Highlights
 
@@ -17,7 +16,7 @@ repository hygiene.
 - A reproducible real-dataset reference study with resolved configuration,
   environment metadata, machine-readable outputs, figures, and checksums.
 - Continuous integration, package-build validation, documentation deployment,
-  and JOSS paper validation workflows.
+  and manuscript-validation workflows.
 - Machine-readable installed-package validation for wheel and source
   distributions from read-only package trees and working directories.
 - Reviewable JSON scientific reference data protected by provenance metadata,
@@ -26,34 +25,25 @@ repository hygiene.
 
 ## Compatibility
 
-- Python 3.10, 3.11, and 3.12 are the supported release targets.
+- Python 3.10 or newer is required; continuous integration covers Python 3.10,
+  3.11, and 3.12.
 - Core dependencies are NumPy and scikit-learn.
 - NumPy remains the stable default backend.
 - CuPy is optional and is not installed with the core package.
 - The CUDA 12 optional environment is constrained to CuPy 14.x.
-- The recorded GPU environment is one validated configuration, not an
-  exhaustive compatibility guarantee.
+- Recorded GPU evidence represents a validated configuration, not an exhaustive
+  compatibility or performance guarantee.
 
-## Validation
+## Reproducibility and validation
 
-Before publishing the release, run:
+The repository includes automated checks for default and exhaustive tests,
+branch-aware API and core coverage, citation metadata, documentation builds,
+wheel and source-distribution contents, isolated installed-package behavior, and
+dense/blockwise numerical equivalence. The reference-study snapshot records its
+configuration, software environment, source revision, outputs, and checksums.
 
-```bash
-python -m pytest tests -ra
-python scripts/validate_installed_public_api.py \
-  --output-json test_reports/source_public_api_validation.json
-python scripts/validate_joss_submission.py
-python -m build
-python -m twine check dist/*
-mkdocs build --strict
-```
+## Citation
 
-Run the exhaustive slow suite and regenerate the reference study from the clean
-release commit as described in `docs/developer/release.md`.
-
-## Archival
-
-After the `v0.1.1` GitHub release is published and archived by Zenodo, record the
-version-specific archive DOI in `CITATION.cff` and the repository citation
-section. Do not insert an invented or placeholder DOI into active release
-metadata.
+Machine-readable software citation metadata is distributed in `CITATION.cff`.
+An immutable archive DOI, when present in that file, identifies the corresponding
+executable software release.
