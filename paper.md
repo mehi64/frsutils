@@ -145,14 +145,15 @@ artifacts, not a claim that one fuzzy-rough model or backend is universally
 superior. They make model semantics, execution choices, and
 numerical-equivalence evidence directly reproducible.
 
-Beyond the bundled study, `frsutils` is used as the fuzzy-rough computation
-layer in the author's ongoing FRSMOTE research workflow, where positive-region
-scores guide minority-sample selection for synthetic oversampling. This use
-motivated the package-root approximation contract, component configuration,
-and exact dense/blockwise equivalence requirements. The downstream method is
-not required to reproduce the public reference study, but it provides a concrete
-research use case in which the library replaces experiment-specific
-reimplementation of fuzzy-rough approximations.
+Beyond the bundled study, `frsutils` is being used as a computational
+foundation in the author's ongoing research on fuzzy-rough methods for
+imbalanced learning. That work is being prepared for separate scientific
+publication and provides a concrete downstream research use case for the
+library. Its methodological details are outside the scope of this software paper
+and will be reported separately. The downstream study is not required to
+reproduce the public reference study, but its use of `frsutils` demonstrates
+that the library is serving as a reusable research dependency beyond its bundled
+validation artifacts.
 
 # AI usage disclosure
 
