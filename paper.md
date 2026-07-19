@@ -138,7 +138,7 @@ download or unpublished code is required.
 
 The stored reference run contains nine real-data dense/blockwise comparisons;
 all satisfy the declared absolute tolerance of $10^{-12}$, with a maximum
-recorded discrepancy of approximately $6.7\times10^{-16}$. A separate fixed
+recorded discrepancy of approximately $9.71\times10^{-16}$. A separate fixed
 benchmark sweep records 27 successful model, engine, and problem-size cases in
 machine-readable CSV and JSON files. These results are software-validation
 artifacts, not a claim that one fuzzy-rough model or backend is universally
