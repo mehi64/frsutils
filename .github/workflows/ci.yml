@@ -183,8 +183,10 @@ jobs:
 
           mkdir -p "$GITHUB_WORKSPACE/test_reports"
           package_dir=$(
-            /tmp/frsutils-wheel-smoke/bin/python -c \
-              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).parent)"
+            cd /tmp
+            PYTHONDONTWRITEBYTECODE=1 \
+              /tmp/frsutils-wheel-smoke/bin/python -c \
+              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).resolve().parent)"
           )
           chmod -R a-w "$package_dir"
           rm -rf /tmp/frsutils-wheel-read-only-cwd
@@ -212,8 +214,10 @@ jobs:
 
           mkdir -p "$GITHUB_WORKSPACE/test_reports"
           package_dir=$(
-            /tmp/frsutils-sdist-smoke/bin/python -c \
-              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).parent)"
+            cd /tmp
+            PYTHONDONTWRITEBYTECODE=1 \
+              /tmp/frsutils-sdist-smoke/bin/python -c \
+              "import pathlib, frsutils; print(pathlib.Path(frsutils.__file__).resolve().parent)"
           )
           chmod -R a-w "$package_dir"
           rm -rf /tmp/frsutils-sdist-read-only-cwd
